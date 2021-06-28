@@ -27,13 +27,27 @@ def logL(m, b, xy, covs):
 
 
 def linear_ortho_maxlh(data_x, data_y, cov_xy):
-    """
-    Do a linear fit based on orthogonal distance, to data where each
+    """Do a linear fit based on orthogonal distance, to data where each
     point can have a different covariance between x and y. Uses the
     likelihood function from Hogg et al. (2010). The likelihood is
     maximized using the default scipy.optmize minizer, and the errors
     are estimated using the inverse Hessian of the likelihood at its
     maximum, as provided by the optimized result object.
+
+    IMPORTANT NOTE: the chi2 analog used is not the typical Delta.T *
+    C-1 * Delta, with Delta being the distance between the model point
+    and the observed point. In fact, the measurment could come from any
+    point on the line. Instead, a 1D model is used, which treats the
+    orthogonal displacement from the line as the random variable.
+
+    The equation used here is Delta.perp^2 / (v^T * C * v), where
+    Delta.perp and v are the orthogonal distance and direction (unit
+    vector), with respect to the mx + b line. (v^T * C * v) is the
+    correct expression for Delta.perp. In the eigen basis of the
+    covariance ellipse, Delta.perp = Delta.x * cos(theta) + Delta.y *
+    sin(theta), and Delta.x and Delta.y are independent. Therefore,
+    V(Delta.perp) = cos^2(theta) V(Delta.x) + sin^2(theta) V(Delta.y),
+    with theta the angle between the normal and the y-eigenvector.
 
     Returns
     -------
@@ -42,6 +56,7 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy):
     sigma_m: estimate of error on slop
     sigma_b: estimate of error on intercept
     rho_mb: estimate of pearson coefficient between m and b
+
     """
 
     xy = np.column_stack((data_x, data_y))

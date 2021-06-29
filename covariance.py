@@ -26,7 +26,6 @@ def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
         width, height = np.sqrt(np.abs(values)) * num_sigma
         orientation = vectors[:, 0]
         # angle = np.arctan2(orientation[1], orientation[0])
-
     else:
         width = sqrt(cov[0, 0])
         height = sqrt(cov[1, 1])

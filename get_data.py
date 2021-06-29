@@ -146,7 +146,7 @@ def get_bohlin78():
     )
 
     # remove sightlines with non-physical EBV values
-    indxs, = np.where(data["EBV"] > 0.0)
+    (indxs,) = np.where(data["EBV"] > 0.0)
     data = data[indxs]
 
     # get the units correct

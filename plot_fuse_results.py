@@ -15,6 +15,11 @@ from get_data import get_merged_table, get_bohlin78
 from covariance import plot_scatter_with_ellipses
 from fitting import linear_ortho_maxlh
 
+# some easily customizable constants
+BOHLIN_COLOR = "green"
+COMP_COLOR = "purple"
+SAMPLE_COLOR = "grey"
+
 
 def set_params(lw=1.5, universal_color="#262626", fontsize=16):
     """Configure some matplotlib rcParams.
@@ -156,7 +161,7 @@ def plot_results2(
     data_comp=None,
     data_bohlin=None,
     figsize=None,
-    alpha=0.25,
+    alpha=0.5,
 ):
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -171,14 +176,16 @@ def plot_results2(
                 ycol,
                 xerr=xcol_unc,
                 yerr=ycol_unc,
-                fmt="ro",
                 label="Bohlin (1978)",
+                mfc=BOHLIN_COLOR,
+                linestyle='none',
+                marker='.',
                 alpha=alpha,
             )
 
     if data_comp is not None:
         xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
-        plot_scatter_with_ellipses(ax, xs, ys, covs, 1, color="g", alpha=alpha)
+        plot_scatter_with_ellipses(ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha)
 
     if yparam[0:3] == "CAV":
         cparam = "AV"
@@ -187,12 +194,14 @@ def plot_results2(
     else:
         cparam = "AV"
     xs, ys, covs = get_xs_ys_covs(data, xparam, yparam, cparam)
-    plot_scatter_with_ellipses(ax, xs, ys, covs, 1, color="b", alpha=alpha)
+    plot_scatter_with_ellipses(
+        ax, xs, ys, covs, 1, color=SAMPLE_COLOR, alpha=alpha, marker="x"
+    )
 
     ax.set_xlabel(format_colname(xparam))
     ax.set_ylabel(format_colname(yparam))
 
-    return fig, ax
+    return fig
 
 
 def get_unc(param, data):

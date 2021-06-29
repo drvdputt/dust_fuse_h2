@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, print_function, division
-
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt

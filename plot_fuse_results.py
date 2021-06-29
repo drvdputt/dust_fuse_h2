@@ -256,14 +256,65 @@ def get_corr(xparam, yparam, x, y, xerr, yerr, cterm=None, cterm_unc=None):
     return corr
 
 
-def get_covs(xparam, yparam, x, y, xerr, yerr, cterm=None, cterm_unc=None):
-    corr = get_corr(xparam, yparam, x, y, xerr, yerr, cterm=cterm, cterm_unc=cterm_unc)
+def get_xs_ys_covs(data, xparam, yparam, cparam):
+    """
+    Return arrays of x, y, and cov(x,y) for a pair of parameters
+
+    """
+    x = data_comp[xparam]
+    xerr = get_unc(xparam, data_comp)
+    y = data_comp[yparam]
+    yerr = get_unc(yparam, data_comp)
+    cterm = data[cparam].data
+    cterm_unc = data_comp[cparam + "_unc"].data
+
+    if (xparam == "AV" and yparam == "NH_AV") or (
+        xparam == "EBV" and yparam == "NH_EBV"
+    ):
+        yfac = yerr / y
+        xfac = xerr / x
+        corr = -1.0 * xfac / yfac
+    elif (
+        xparam == "RV"
+        and yparam == "NH_AV"
+        and cterm is not None
+        and cterm_unc is not None
+    ):
+        avfac = cterm_unc / cterm
+        yfac = yerr / y
+        corr = -1.0 * avfac / yfac
+    elif xparam == "AV" and yparam == "RV":
+        yfac = yerr / y
+        xfac = xerr / x
+        corr = xfac / yfac
+    elif (
+        ((xparam == "RV") or (xparam == "AV"))
+        and ((yparam[0:3] == "CAV") or (yparam == "bump_area"))
+        and cterm is not None
+        and cterm_unc is not None
+    ):
+        avfac = cterm_unc / cterm
+        yfac = yerr / y
+        corr = -1.0 * avfac / yfac
+    elif (
+        ((xparam == "RV") or (xparam == "EBV"))
+        and (yparam[0:1] == "C")
+        and cterm is not None
+        and cterm_unc is not None
+    ):
+        ebvfac = cterm_unc / cterm
+        yfac = yerr / y
+        corr = ebvfac / yfac
+    else:
+        corr = np.full(len(x), 0.0)
+
     covs = np.array((len(x), 2, 2))
     covs[:, 0, 0] = np.square(xerr)
     covs[:, 1, 1] = np.square(yerr)
     covs[:, 0, 1] = xerr * yerr * corr
     covs[:, 1, 0] = covs[:, 0, 1]
-    return covs
+
+    return x, y, covs
 
 
 def plot_errorbar_corr(

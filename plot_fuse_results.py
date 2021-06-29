@@ -177,26 +177,22 @@ def plot_results2(
             )
 
     if data_comp is not None:
-        xcol = data_comp[xparam]
-        xcol_unc = get_unc(xparam, data_comp)
-        ycol = data_comp[yparam]
-        ycol_unc = get_unc(yparam, data_comp)
-        cov = get_covs(
-            xparam,
-            yparam,
-            xcol,
-            ycol,
-            xcol_unc,
-            ycol_unc,
-            cterm=data_comp["AV"].data,
-            cterm_unc=data_comp["AV_unc"].data,
-        )
-        plot_scatter_with_ellipses(ax, xcol, ycol, cov)
+        xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
+        plot_scatter_with_ellipses(ax, xs, ys, covs, 1, color="g", alpha=alpha)
 
-    xcol = data[xparam].data
-    xcol_unc = get_unc(xparam, data)
-    ycol = data[yparam].data
-    ycol_unc = get_unc(yparam, data)
+    if yparam[0:3] == "CAV":
+        cparam = "AV"
+    elif yparam[0:1] == "C":
+        cparam = "EBV"
+    else:
+        cparam = "AV"
+    xs, ys, covs = get_xs_ys_covs(data, xparam, yparam, cparam)
+    plot_scatter_with_ellipses(ax, xs, ys, covs, 1, color="b", alpha=alpha)
+
+    ax.set_xlabel(format_colname(xparam))
+    ax.set_ylabel(format_colname(yparam))
+
+    return fig, ax
 
 
 def get_unc(param, data):
@@ -261,12 +257,12 @@ def get_xs_ys_covs(data, xparam, yparam, cparam):
     Return arrays of x, y, and cov(x,y) for a pair of parameters
 
     """
-    x = data_comp[xparam]
-    xerr = get_unc(xparam, data_comp)
-    y = data_comp[yparam]
-    yerr = get_unc(yparam, data_comp)
-    cterm = data[cparam].data
-    cterm_unc = data_comp[cparam + "_unc"].data
+    x = data[xparam]
+    xerr = get_unc(xparam, data)
+    y = data[yparam]
+    yerr = get_unc(yparam, data)
+    cterm = data[cparam]
+    cterm_unc = get_unc(cparam, data)
 
     if (xparam == "AV" and yparam == "NH_AV") or (
         xparam == "EBV" and yparam == "NH_EBV"
@@ -308,12 +304,11 @@ def get_xs_ys_covs(data, xparam, yparam, cparam):
     else:
         corr = np.full(len(x), 0.0)
 
-    covs = np.array((len(x), 2, 2))
+    covs = np.zeros((len(x), 2, 2))
     covs[:, 0, 0] = np.square(xerr)
     covs[:, 1, 1] = np.square(yerr)
     covs[:, 0, 1] = xerr * yerr * corr
     covs[:, 1, 0] = covs[:, 0, 1]
-
     return x, y, covs
 
 

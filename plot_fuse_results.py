@@ -555,7 +555,9 @@ def plot_results(
     fitted_model_weights = fit(line_init, xcol, ycol, weights=1.0 / ycol_unc)
 
     # fit the data using the uncertainties as weights
-    fitted_model_weights_sc, mask_sc = or_fit(line_init, xcol, ycol, weights=1.0 / ycol_unc)
+    fitted_model_weights_sc, mask_sc = or_fit(
+        line_init, xcol, ycol, weights=1.0 / ycol_unc
+    )
     data_sc = np.ma.masked_array(ycol, mask=mask_sc)
 
     # print("linear fit params [slope, y-intercept]")
@@ -569,8 +571,8 @@ def plot_results(
     ax.plot(x_mod, fitted_model_weights(x_mod), "k--")
     ax.plot(x_mod, fitted_model_weights_sc(x_mod), "k.")
 
-    ax.plot(xcol, data_sc, 'ko')
-    print(data_sc)
+    ax.plot(xcol, data_sc, "ko")
+    # print(data_sc)
 
     if pxrange is not None:
         ax.set_xlim(pxrange)

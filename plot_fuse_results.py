@@ -201,6 +201,11 @@ def plot_results2(
     ax.set_xlabel(format_colname(xparam))
     ax.set_ylabel(format_colname(yparam))
 
+    if pxrange is not None:
+        ax.set_xlim(pxrange)
+    if pyrange is not None:
+        ax.set_ylim(pyrange)
+
     return fig
 
 

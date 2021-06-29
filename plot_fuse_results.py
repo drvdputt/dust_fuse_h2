@@ -14,6 +14,9 @@ from astropy.stats import sigma_clip
 
 from get_data import get_merged_table, get_bohlin78
 
+from covariance import plot_scatter_with_ellipses
+from fitting import linear_ortho_maxlh
+
 
 def set_params(lw=1.5, universal_color="#262626", fontsize=16):
     """Configure some matplotlib rcParams.
@@ -146,6 +149,58 @@ def format_colname(name):
     return out_name
 
 
+def plot_results2(
+    data,
+    xparam,
+    yparam,
+    pxrange=None,
+    pyrange=None,
+    data_comp=None,
+    data_bohlin=None,
+    figsize=None,
+    alpha=0.25,
+):
+    fig, ax = plt.subplots(figsize=figsize)
+
+    if data_bohlin is not None:
+        if (xparam in data_bohlin.colnames) and (yparam in data_bohlin.colnames):
+            xcol = data_bohlin[xparam]
+            xcol_unc = get_unc(xparam, data_bohlin)
+            ycol = data_bohlin[yparam]
+            ycol_unc = get_unc(yparam, data_bohlin)
+            ax.errorbar(
+                xcol,
+                ycol,
+                xerr=xcol_unc,
+                yerr=ycol_unc,
+                fmt="ro",
+                label="Bohlin (1978)",
+                alpha=alpha,
+            )
+
+    if data_comp is not None:
+        xcol = data_comp[xparam]
+        xcol_unc = get_unc(xparam, data_comp)
+        ycol = data_comp[yparam]
+        ycol_unc = get_unc(yparam, data_comp)
+        cov = get_covs(
+            xparam,
+            yparam,
+            xcol,
+            ycol,
+            xcol_unc,
+            ycol_unc,
+            cterm=data_comp["AV"].data,
+            cterm_unc=data_comp["AV_unc"].data,
+        )
+        plot_scatter_with_ellipses(ax, xcol, ycol, cov)
+
+    xcol = data[xparam].data
+    xcol_unc = get_unc(xparam, data)
+    ycol = data[yparam].data
+    ycol_unc = get_unc(yparam, data)
+
+
 def get_unc(param, data):
     """
     Returns the unc column if it is in the table
@@ -201,6 +256,16 @@ def get_corr(xparam, yparam, x, y, xerr, yerr, cterm=None, cterm_unc=None):
         corr = np.full(len(x), 0.0)
 
     return corr
+
+
+def get_covs(xparam, yparam, x, y, xerr, yerr, cterm=None, cterm_unc=None):
+    corr = get_corr(xparam, yparam, x, y, xerr, yerr, cterm=cterm, cterm_unc=cterm_unc)
+    covs = np.array((len(x), 2, 2))
+    covs[:, 0, 0] = np.square(xerr)
+    covs[:, 1, 1] = np.square(yerr)
+    covs[:, 0, 1] = xerr * yerr * corr
+    covs[:, 1, 0] = covs[:, 0, 1]
+    return covs
 
 
 def plot_errorbar_corr(

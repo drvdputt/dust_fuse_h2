@@ -177,7 +177,7 @@ def plot_results2(
                 xerr=xcol_unc,
                 yerr=ycol_unc,
                 label="Bohlin (1978)",
-                mfc=BOHLIN_COLOR,
+                color=BOHLIN_COLOR,
                 linestyle='none',
                 marker='.',
                 alpha=alpha,

@@ -1,7 +1,7 @@
 from scipy.linalg import eigh
 import numpy as np
-from math import sqrt
-from matplotlib.patches import Ellipse
+from math import sqrt, cos, sin
+from matplotlib.patches import Ellipse, Rectangle, Polygon
 from matplotlib import pyplot as plt
 
 
@@ -25,19 +25,34 @@ def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
         values, vectors = eigh(cov)
         width, height = np.sqrt(np.abs(values)) * num_sigma
         orientation = vectors[:, 0]
-        angle = np.arctan2(orientation[1], orientation[0])
-
-        if width / x > 1000:
-            pass
+        # angle = np.arctan2(orientation[1], orientation[0])
 
     else:
         width = sqrt(cov[0, 0])
         height = sqrt(cov[1, 1])
-        angle = 0
+        vectors = np.array([[1, 0], [0, 1]])
+        # angle = 0
 
-    return Ellipse(
-        position, width=width, height=height, angle=angle * 180 / np.pi, **kwargs
-    )
+    # print(position, width, height, angle)
+    # return Ellipse(
+    #     position, width=width, height=height, angle=angle * 180 / np.pi, **kwargs
+    # )
+
+    # I ended up using a Polygon just like Karl's plotting code. The
+    # ellipse is buggy when the difference in axes is extreme (1e22). I
+    # think it is because even a slight rotation will make the ellipse
+    # look extremely strechted, as the extremely long axis (~1e22)
+    # rotates into the short coordinate (~1).
+
+    # two vectors representing the axes of the ellipse
+    vw = vectors[:, 0] * width / 2
+    vh = vectors[:, 1] * height / 2
+
+    # generate corners
+    num_corners = 8
+    angles = np.linspace(0, 2 * np.pi, num_corners, endpoint=False)
+    corners = np.row_stack([position + vw * cos(a) + vh * sin(a) for a in angles])
+    return Polygon(corners, **kwargs)
 
 
 def draw_ellipses(ax, xs, ys, covs, num_sigma=1, **kwargs):

@@ -101,7 +101,7 @@ def hess_logL(m, b, xy, covs):
     return np.array([[d2_d1d2(0, 0), d2_d1d2(0, 1)], [d2_d1d2(0, 1), d2_d1d2(1, 1)]])
 
 
-def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None):
+def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True):
     """Do a linear fit based on orthogonal distance, to data where each
     point can have a different covariance between x and y. Uses the
     likelihood function from Hogg et al. (2010). The likelihood is
@@ -136,47 +136,70 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None):
     xy = np.column_stack((data_x, data_y))
 
     def to_minimize(v):
-        m, b = v
-        return -logL(m, b, xy, cov_xy)
+        m, b_perp = v
+        return -logL(m, b_perp, xy, cov_xy)
 
     def jac(v):
-        m, b = v
-        return -grad_logL(m, b, xy, cov_xy)
+        m, b_perp = v
+        return -grad_logL(m, b_perp, xy, cov_xy)
 
     reg = stats.linregress(data_x, data_y)
     initial_guess = [reg.slope, reg.intercept]
-    initial_guess[1] *= 1 / np.sqrt(1 + initial_guess[0]**2)
+    initial_guess[1] *= 1 / np.sqrt(1 + initial_guess[0] ** 2)
 
     res = optimize.minimize(to_minimize, initial_guess, method="Powell")
     # res = optimize.minimize(to_minimize, initial_guess, method="Newton-CG", jac=jac)
 
-    m, b = res.x
+    m, b_perp = res.x
 
     # not all minimize methods compute the inverse hessian
     if hasattr(res, "hess_inv"):
         hess_inv = res.hess_inv
     else:
-        hess = -hess_logL(m, b, xy, cov_xy)
+        hess = -hess_logL(m, b_perp, xy, cov_xy)
         hess_inv = np.linalg.inv(hess)
 
-    sigma_m, sigma_b = np.sqrt(np.diag(hess_inv))
-    rho_mb = hess_inv[0, 1] / (sigma_m * sigma_b)
-    
-    # mahalanobis distance from (0, b)
-    r = res.x - np.array([0, b])
-    m_distance_2 = r.dot(hess_inv).dot(r)
-    print("m-dist: ", np.sqrt(m_distance_2))
+    sigma_m, sigma_b_perp = np.sqrt(np.diag(hess_inv))
+    rho_mb_perp = hess_inv[0, 1] / (sigma_m * sigma_b_perp)
 
-    print(res)
-    print("mx + b_perp,", m, b)
-    print("err, err, rho:", sigma_m, sigma_b, rho_mb)
+    # mahalanobis distance from (0, b)
+    r = res.x - np.array([0, b_perp])
+    m_distance_2 = r.dot(hess_inv).dot(r)
+
+    # reminder: b_perp = b cos(theta) = b / sqrt(1 + m^2)
+    b = b_perp * np.sqrt(1 + m * m)
+
+    if print_on:
+        print("m-dist: ", np.sqrt(m_distance_2))
+        print(res)
+        print("m, b_perp:", m, b_perp)
+        print("err, err, rho:", sigma_m, sigma_b_perp, rho_mb_perp)
+        print("m, b:", m, b)
 
     # plot result if desired
     if ax is not None:
         xlim = ax.get_xlim()
         xs = np.linspace(xlim[0], xlim[1], 100)
-        # reminder: b_perp = b cos(theta) = b / sqrt(1 + m^2)
-        ys = m * xs + b * np.sqrt(1 + m*m)
+        ys = m * xs + b
         ax.plot(xs, ys, color="k")
 
-    return m, b, sigma_m, sigma_b, rho_mb
+    return m, b_perp, sigma_m, sigma_b_perp, rho_mb_perp
+
+
+def bootstrap_fit_errors(data_x, data_y, cov_xy):
+    N = len(data_x)
+    M = 100
+    ms = np.zeros(M)
+    bs = np.zeros(M)
+    for m in range(M):
+        idxs = np.random.choice(range(N), size=N)
+        boot_x = data_x[idxs]
+        boot_y = data_y[idxs]
+        boot_cov = cov_xy[idxs]
+        ms[m], bs[m], a, b, c_ = linear_ortho_maxlh(
+            boot_x, boot_y, boot_cov, print_on=False
+        )
+
+    print("Bootstrap: m = {} ; b = {}".format(np.average(ms), np.average(bs)))
+    print("Bootstrap: sm = {} ; sb = {}".format(np.std(ms), np.std(bs)))
+    print("Bootstrap: corr(m, b) = {}".format(np.corrcoef(ms, bs)[0,1]))

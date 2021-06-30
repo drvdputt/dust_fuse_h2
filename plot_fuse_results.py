@@ -162,7 +162,8 @@ def plot_results2(
     figsize=None,
     alpha=0.5,
 ):
-    fig, ax = plt.subplots(figsize=figsize)
+    # fig, ax = plt.subplots(figsize=figsize)
+    fig, (ax, ax2) = plt.subplots(figsize=(9, 5), ncols=2)
 
     if data_bohlin is not None:
         if (xparam in data_bohlin.colnames) and (yparam in data_bohlin.colnames):
@@ -205,8 +206,18 @@ def plot_results2(
     if pyrange is not None:
         ax.set_ylim(pyrange)
 
-    myfitting.linear_ortho_maxlh(xs, ys, covs, ax)
-    myfitting.bootstrap_fit_errors(xs, ys, covs)
+    m, b = myfitting.linear_ortho_maxlh(xs, ys, covs, ax)
+    cov_mb = myfitting.bootstrap_fit_errors(xs, ys, covs)
+
+    # compare to naive regression
+    line_init = models.Linear1D()
+    fit = fitting.LinearLSQFitter()
+    fitted_model_weights = fit(line_init, xs, ys, weights=1.0 / np.sqrt(covs[:,1,1]))
+    xlim = ax.get_xlim()
+    x_mod = np.linspace(xlim[0], xlim[1])
+    ax.plot(x_mod, fitted_model_weights(x_mod), linestyle=":", color='y')
+
+    myfitting.plot_solution_neighborhood(ax2, m, b, xs, ys, covs)
 
     return fig
 

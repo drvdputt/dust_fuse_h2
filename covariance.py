@@ -67,7 +67,7 @@ def plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     color = pathcollection.get_facecolors()[0]
     alpha = color[3]
     ellipse_kwargs = {"facecolor": color, "edgecolor": color, "alpha": 0.3 * alpha}
-    draw_ellipses(plt.gca(), xs, ys, covs, num_sigma=num_sigma, **ellipse_kwargs)
+    draw_ellipses(ax, xs, ys, covs, num_sigma=num_sigma, **ellipse_kwargs)
 
 
 def get_cov_x_ydivx(x, y, xerr, yerr):

@@ -13,7 +13,7 @@ from astropy.stats import sigma_clip
 from get_data import get_merged_table, get_bohlin78
 
 from covariance import plot_scatter_with_ellipses
-from fitting import linear_ortho_maxlh
+import myfitting
 
 # some easily customizable constants
 BOHLIN_COLOR = "green"
@@ -64,8 +64,7 @@ def set_params(lw=1.5, universal_color="#262626", fontsize=16):
 
 
 def initialize_parser():
-    """For running from command line, initialize argparse with common args
-    """
+    """For running from command line, initialize argparse with common args"""
     ftypes = [
         "png",
         "jpg",
@@ -178,8 +177,8 @@ def plot_results2(
                 yerr=ycol_unc,
                 label="Bohlin (1978)",
                 color=BOHLIN_COLOR,
-                linestyle='none',
-                marker='.',
+                linestyle="none",
+                marker=".",
                 alpha=alpha,
             )
 
@@ -206,7 +205,8 @@ def plot_results2(
     if pyrange is not None:
         ax.set_ylim(pyrange)
 
-    linear_ortho_maxlh(xs, ys, covs, ax)
+    myfitting.linear_ortho_maxlh(xs, ys, covs, ax)
+    myfitting.bootstrap_fit_errors(xs, ys, covs)
 
     return fig
 

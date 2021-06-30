@@ -206,6 +206,8 @@ def plot_results2(
     if pyrange is not None:
         ax.set_ylim(pyrange)
 
+    linear_ortho_maxlh(xs, ys, covs, ax)
+
     return fig
 
 

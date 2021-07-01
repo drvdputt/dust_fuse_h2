@@ -276,13 +276,6 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
     print("Bootstrap: sm = {} ; sb = {}".format(np.std(ms), np.std(bs)))
     print("Bootstrap: corr(m, b) = {}".format(np.corrcoef(ms, bs)[0, 1]))
     cov = np.cov(ms, bs)
-    covm1 = np.linalg.inv(cov)
-
-    # get the actual solution again, and calc mahalanobis distance from (0, b)
-    m, b = linear_ortho_maxlh(data_x, data_y, cov_xy, print_on=False)
-    r = np.array([m, 0])
-    m_distance_2 = r.dot(covm1).dot(r)
-    print("Bootstrap: m-dist from m = 0: ", np.sqrt(m_distance_2))
     return cov
 
 

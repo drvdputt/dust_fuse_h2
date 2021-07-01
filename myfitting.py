@@ -287,7 +287,7 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
 
 
 def plot_solution_neighborhood(
-    ax, m, b, xs, ys, covs, cov_mb=None, area=None, extra_points=None
+    ax, m, b, xs, ys, covs, cov_mb=None, area=None, extra_points=None, what="logL"
 ):
     """
     Color plot of the 2D likelihood function around the given point (m,
@@ -300,6 +300,8 @@ def plot_solution_neighborhood(
     [mmin, mmax, bmin, bmax]
 
     extra_points: points to be plotted on the image, in addition to m, b
+
+    what: choose 'logL', 'L'
 
     """
     if area is None:
@@ -319,17 +321,22 @@ def plot_solution_neighborhood(
     for ((i, mi), (j, bj)) in itertools.product(enumerate(grid_m), enumerate(grid_b)):
         image[i, j] = logL(mi, bj, xy, covs)
 
-    im = ax.imshow(
-        image,
-        extent=[bmin, bmax, mmin, mmax],
-        origin="lower",
-        aspect="auto",
-        cmap="Spectral",
+    imshow_kwargs = dict(
+        extent=[bmin, bmax, mmin, mmax], origin="lower", aspect="auto", cmap="viridis"
     )
+
+    if what == "logL":
+        im = ax.imshow(image, **imshow_kwargs)
+    elif what == "L":
+        im = ax.imshow(np.exp(image), **imshow_kwargs)
+    else:
+        print("Wrong string, no plot made")
+
     ax.figure.colorbar(im, ax=ax)
     ax.set_ylabel("m")
     ax.set_xlabel("b")
     ax.plot(b, m, "kx")
+
     if extra_points is not None:
         for (bi, mi) in extra_points:
             ax.plot(b, m, "k+")

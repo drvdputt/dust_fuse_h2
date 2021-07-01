@@ -163,7 +163,7 @@ def plot_results2(
     alpha=0.5,
 ):
     # fig, ax = plt.subplots(figsize=figsize)
-    fig, (ax, ax2) = plt.subplots(figsize=(9, 5), ncols=2)
+    fig, (ax, ax2, ax3) = plt.subplots(figsize=(12, 5), ncols=3)
 
     if data_bohlin is not None:
         if (xparam in data_bohlin.colnames) and (yparam in data_bohlin.colnames):
@@ -209,17 +209,15 @@ def plot_results2(
     m, b = myfitting.linear_ortho_maxlh(xs, ys, covs, ax)
     cov_mb = myfitting.bootstrap_fit_errors(xs, ys, covs)
     sm, sb = np.sqrt(np.diag(cov_mb))
-    a = 4
+    a = 2
+    area = [m - a * sm, m + a * sm, b - a * sb, b + a * sb]
     myfitting.plot_solution_neighborhood(
-        ax2,
-        m,
-        b,
-        xs,
-        ys,
-        covs,
-        cov_mb=cov_mb,
-        area=[m - a * sm, m + a * sm, b - a * sb, b + a * sb],
+        ax2, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="logL"
     )
+    myfitting.plot_solution_neighborhood(
+        ax3, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="L"
+    )
+    ax3.set_ylabel('')
 
     # m, b, m_brute, b_brute = myfitting.linear_ortho_maxlh(
     #     xs, ys, covs, ax, get_brute=True

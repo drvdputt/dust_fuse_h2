@@ -16,7 +16,7 @@ def dperp(m):
     diag2 = 1 + m2
     root_m12 = 1 / np.sqrt(1 + m2)  # ^-1/2
     root_m32 = root_m12 / diag2  # ^-3/2
-    return np.array([-root_m12 + m2 * root_m32, m * root_m32])
+    return np.array([-root_m12 + m2 * root_m32, -m * root_m32])
 
 
 def deltas(xy, m, b_perp):
@@ -183,12 +183,16 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute
     # )
 
     gtol = np.linalg.norm(jac(initial_guess)) * 1e-6
-    res = optimize.minimize(
-        to_minimize, initial_guess, method="BFGS", options={"disp": False, "gtol": gtol}
-    )
     # res = optimize.minimize(
-    #     to_minimize, initial_guess, method="BFGS", jac=jac, options={"disp": False}
+    #     to_minimize, initial_guess, method="BFGS", options={"disp": False, "gtol": gtol}
     # )
+    res = optimize.minimize(
+        to_minimize,
+        initial_guess,
+        method="BFGS",
+        jac=jac,
+        options={"disp": False, "gtol": gtol},
+    )
 
     m, b_perp = res.x
 

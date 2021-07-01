@@ -162,6 +162,8 @@ def plot_results2(
     figsize=None,
     alpha=0.5,
 ):
+    set_params(lw=1, universal_color="#202026", fontsize=10)
+
     # fig, ax = plt.subplots(figsize=figsize)
     fig, (ax, ax2, ax3) = plt.subplots(figsize=(12, 5), ncols=3)
 
@@ -217,7 +219,7 @@ def plot_results2(
     myfitting.plot_solution_neighborhood(
         ax3, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="L"
     )
-    ax3.set_ylabel('')
+    ax3.set_ylabel("")
 
     # m, b, m_brute, b_brute = myfitting.linear_ortho_maxlh(
     #     xs, ys, covs, ax, get_brute=True

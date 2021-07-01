@@ -2,6 +2,7 @@ import numpy as np
 from scipy import optimize
 import itertools
 from astropy.modeling import models, fitting
+from covariance import cov_ellipse
 
 
 def perp(m):
@@ -146,9 +147,14 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute
     # use naive result as initial guess
     line_init = models.Linear1D()
     fit = fitting.LinearLSQFitter()
-    fitted_model_weights = fit(line_init, data_x, data_y, weights=1.0 / np.sqrt(cov_xy[:, 1, 1]))
+    fitted_model_weights = fit(
+        line_init, data_x, data_y, weights=1.0 / np.sqrt(cov_xy[:, 1, 1])
+    )
 
-    initial_guess = [fitted_model_weights.slope.value, fitted_model_weights.intercept.value]
+    initial_guess = [
+        fitted_model_weights.slope.value,
+        fitted_model_weights.intercept.value,
+    ]
     initial_guess[1] *= 1 / np.sqrt(1 + initial_guess[0] ** 2)
 
     # get an idea of the order of magnitude
@@ -156,7 +162,7 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute
     freltol = 1e-6
     logL_atol = abs(logL_start * freltol)
 
-    if(print_on):
+    if print_on:
         print("initial guess: ", initial_guess)
 
     # err = optimize.check_grad(to_minimize, jac, initial_guess)
@@ -281,7 +287,7 @@ def plot_solution_neighborhood(
 
     """
     if area is None:
-        f = 1
+        f = 16
         mmin = m - f * abs(m)
         mmax = m + f * abs(m)
         bmin = b - f * abs(b)
@@ -302,7 +308,7 @@ def plot_solution_neighborhood(
         extent=[bmin, bmax, mmin, mmax],
         origin="lower",
         aspect="auto",
-        cmap="Blues",
+        cmap="Spectral",
     )
     ax.figure.colorbar(im, ax=ax)
     ax.set_ylabel("m")
@@ -311,3 +317,8 @@ def plot_solution_neighborhood(
     if extra_points is not None:
         for (bi, mi) in extra_points:
             ax.plot(b, m, "k+")
+
+    if cov_mb is not None:
+        ax.add_patch(
+            cov_ellipse(b, m, cov_mb[::-1, ::-1], facecolor="none", edgecolor="k")
+        )

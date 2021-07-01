@@ -207,7 +207,19 @@ def plot_results2(
         ax.set_ylim(pyrange)
 
     m, b = myfitting.linear_ortho_maxlh(xs, ys, covs, ax)
-    myfitting.plot_solution_neighborhood(ax2, m, b, xs, ys, covs)
+    cov_mb = myfitting.bootstrap_fit_errors(xs, ys, covs)
+    sm, sb = np.sqrt(np.diag(cov_mb))
+    a = 4
+    myfitting.plot_solution_neighborhood(
+        ax2,
+        m,
+        b,
+        xs,
+        ys,
+        covs,
+        cov_mb=cov_mb,
+        area=[m - a * sm, m + a * sm, b - a * sb, b + a * sb],
+    )
 
     # m, b, m_brute, b_brute = myfitting.linear_ortho_maxlh(
     #     xs, ys, covs, ax, get_brute=True
@@ -216,8 +228,6 @@ def plot_results2(
     # myfitting.plot_solution_neighborhood(
     #     ax2, m, b, xs, ys, covs, extra_points=[[m_brute, b_brute]]
     # )
-
-    cov_mb = myfitting.bootstrap_fit_errors(xs, ys, covs)
 
     # plot the fitted line
     xlim = ax.get_xlim()

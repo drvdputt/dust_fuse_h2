@@ -207,19 +207,38 @@ def plot_results2(
         ax.set_ylim(pyrange)
 
     m, b = myfitting.linear_ortho_maxlh(xs, ys, covs, ax)
-    cov_mb = myfitting.bootstrap_fit_errors(xs, ys, covs)
-
-    # compare to naive regression
-    line_init = models.Linear1D()
-    fit = fitting.LinearLSQFitter()
-    fitted_model_weights = fit(line_init, xs, ys, weights=1.0 / np.sqrt(covs[:,1,1]))
-    xlim = ax.get_xlim()
-    x_mod = np.linspace(xlim[0], xlim[1])
-    ax.plot(x_mod, fitted_model_weights(x_mod), linestyle=":", color='y')
-
     myfitting.plot_solution_neighborhood(ax2, m, b, xs, ys, covs)
 
+    # m, b, m_brute, b_brute = myfitting.linear_ortho_maxlh(
+    #     xs, ys, covs, ax, get_brute=True
+    # )
+    # # check if maximum LH is actually reached
+    # myfitting.plot_solution_neighborhood(
+    #     ax2, m, b, xs, ys, covs, extra_points=[[m_brute, b_brute]]
+    # )
+
+    cov_mb = myfitting.bootstrap_fit_errors(xs, ys, covs)
+
+    # plot the fitted line
+    xlim = ax.get_xlim()
+    xp = np.linspace(xlim[0], xlim[1], 3)
+    yp = m * xp + b * np.sqrt(1 + m * m)
+    ax.plot(xp, yp, color="k")
+
+    # compare to naive regression
+    plot_naive_regression(ax, xs, ys, covs)
+
     return fig
+
+
+def plot_naive_regression(ax, xs, ys, covs):
+    line_init = models.Linear1D()
+    fit = fitting.LinearLSQFitter()
+    fitted_model_weights = fit(line_init, xs, ys, weights=1.0 / np.sqrt(covs[:, 1, 1]))
+    xlim = ax.get_xlim()
+    x_mod = np.linspace(xlim[0], xlim[1])
+    ax.plot(x_mod, fitted_model_weights(x_mod), linestyle=":", color="y")
+    return fitted_model_weights
 
 
 def get_unc(param, data):

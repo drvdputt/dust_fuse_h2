@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import optimize
-from scipy import stats
 import itertools
+from astropy.modeling import models, fitting
 
 
 def perp(m):
@@ -101,7 +101,7 @@ def hess_logL(m, b, xy, covs):
     return np.array([[d2_d1d2(0, 0), d2_d1d2(0, 1)], [d2_d1d2(0, 1), d2_d1d2(1, 1)]])
 
 
-def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True):
+def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute=False):
     """Do a linear fit based on orthogonal distance, to data where each
     point can have a different covariance between x and y. Uses the
     likelihood function from Hogg et al. (2010). The likelihood is
@@ -143,20 +143,49 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True):
         m, b_perp = v
         return -grad_logL(m, b_perp, xy, cov_xy)
 
-    reg = stats.linregress(data_x, data_y)
-    initial_guess = [reg.slope, reg.intercept]
+    # use naive result as initial guess
+    line_init = models.Linear1D()
+    fit = fitting.LinearLSQFitter()
+    fitted_model_weights = fit(line_init, data_x, data_y, weights=1.0 / np.sqrt(cov_xy[:, 1, 1]))
+
+    initial_guess = [fitted_model_weights.slope.value, fitted_model_weights.intercept.value]
     initial_guess[1] *= 1 / np.sqrt(1 + initial_guess[0] ** 2)
+
+    # get an idea of the order of magnitude
+    logL_start = logL(initial_guess[0], initial_guess[1], xy, cov_xy)
+    freltol = 1e-6
+    logL_atol = abs(logL_start * freltol)
+
+    if(print_on):
+        print("initial guess: ", initial_guess)
+
+    # err = optimize.check_grad(to_minimize, jac, initial_guess)
+    # print("check grad", err)
 
     # res = optimize.minimize(to_minimize, initial_guess, method="Powell")
     # res = optimize.minimize(to_minimize, initial_guess, method="Newton-CG", jac=jac)
     # res = optimize.minimize(to_minimize, initial_guess, method="SLSQP", jac=jac, options={'ftol':1e-9})
-    res = optimize.minimize(to_minimize, initial_guess, method="Nelder-Mead")
+    res = optimize.minimize(
+        to_minimize, initial_guess, method="Nelder-Mead", options={"fatol": logL_atol}
+    )
+    # res = optimize.minimize(
+    #     to_minimize, initial_guess, method="BFGS", options={"disp": False}
+    # )
 
     m, b_perp = res.x
 
+    # brute force solution
+    if get_brute:
+        print("Brute forcing...")
+        mmin, bmin = np.abs(initial_guess) * -5
+        mmax, bmax = np.abs(initial_guess) * 5
+        x0 = optimize.brute(to_minimize, ranges=((mmin, mmax), (bmin, bmax)), Ns=1000)
+        m_brute, b_brute = x0
+        print("Brute solution: ", m_brute, b_brute)
+        # m, b_perp = x0
+
     # manual check for convergence
     logL0 = logL(m, b_perp, xy, cov_xy)
-
     logL_up = logL(m + 0.1 * abs(m), b_perp, xy, cov_xy)
     logL_down = logL(m - 0.1 * abs(m), b_perp, xy, cov_xy)
     logL_right = logL(m, b_perp + 0.1 * abs(b_perp), xy, cov_xy)
@@ -191,14 +220,11 @@ down {}
         print("m, b_perp:", m, b_perp)
         # print("err, err, rho:", sigma_m, sigma_b_perp, rho_mb_perp)
         print("m, b:", m, b)
-    # plot result if desired
-    if ax is not None:
-        xlim = ax.get_xlim()
-        xs = np.linspace(xlim[0], xlim[1], 100)
-        ys = m * xs + b
-        ax.plot(xs, ys, color="k")
 
-    return m, b_perp
+    if get_brute:
+        return m, b_perp, m_brute, b_brute
+    else:
+        return m, b_perp
 
 
 def bootstrap_fit_errors(data_x, data_y, cov_xy):
@@ -213,7 +239,6 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
     cov: estimate of covariance matrix of m, b
 
     """
-
     N = len(data_x)
     M = 100
     ms = np.zeros(M)
@@ -239,7 +264,9 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
     return cov
 
 
-def plot_solution_neighborhood(ax, m, b, xs, ys, covs, cov_mb=None, area=None):
+def plot_solution_neighborhood(
+    ax, m, b, xs, ys, covs, cov_mb=None, area=None, extra_points=None
+):
     """
     Color plot of the 2D likelihood function around the given point (m,
     b)
@@ -250,15 +277,15 @@ def plot_solution_neighborhood(ax, m, b, xs, ys, covs, cov_mb=None, area=None):
     area: the area over which the function should be plotted, defined as
     [mmin, mmax, bmin, bmax]
 
+    extra_points: points to be plotted on the image, in addition to m, b
+
     """
     if area is None:
-        f = 1.1
-        mr = [m / f, m * f]
-        br = [b / f, b * f]
-        mmin = min(mr)
-        mmax = max(mr)
-        bmin = min(br)
-        bmax = max(br)
+        f = 1
+        mmin = m - f * abs(m)
+        mmax = m + f * abs(m)
+        bmin = b - f * abs(b)
+        bmax = b + f * abs(b)
     else:
         mmin, mmax, bmin, bmax = area
 
@@ -271,8 +298,16 @@ def plot_solution_neighborhood(ax, m, b, xs, ys, covs, cov_mb=None, area=None):
         image[i, j] = logL(mi, bj, xy, covs)
 
     im = ax.imshow(
-        image, extent=[bmin, bmax, mmin, mmax], origin="lower", aspect="auto"
+        image,
+        extent=[bmin, bmax, mmin, mmax],
+        origin="lower",
+        aspect="auto",
+        cmap="Blues",
     )
+    ax.figure.colorbar(im, ax=ax)
     ax.set_ylabel("m")
     ax.set_xlabel("b")
     ax.plot(b, m, "kx")
+    if extra_points is not None:
+        for (bi, mi) in extra_points:
+            ax.plot(b, m, "k+")

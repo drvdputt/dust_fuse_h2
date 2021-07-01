@@ -16,7 +16,7 @@ def dperp(m):
     diag2 = 1 + m2
     root_m12 = 1 / np.sqrt(1 + m2)  # ^-1/2
     root_m32 = root_m12 / diag2  # ^-3/2
-    return np.array([-root_m12 + m * m * root_m32, m * root_m32])
+    return np.array([-root_m12 + m2 * root_m32, m * root_m32])
 
 
 def deltas(xy, m, b_perp):
@@ -29,7 +29,7 @@ def grad_deltas(xy, m, b_perp):
     """Gradient of Delta_i with respect to m, b_perp, indexed on i, p"""
     # vT . Zj
     dD_dm = np.einsum("i,ji->j", dperp(m), xy)
-    dD_dbperp = np.ones(len(xy))
+    dD_dbperp = -np.ones(len(xy))
 
     return np.column_stack([dD_dm, dD_dbperp])
 

@@ -54,7 +54,8 @@ def logL(m, b, xy, covs):
     Log likelihood function from Hogg et al. (2010), using the
     perpendicular distance and covariance.
     """
-    return -0.5 * np.square(deltas(xy, m, b) / sigma2s(covs, m)).sum()
+    square_devs = np.square(deltas(xy, m, b)) / sigma2s(covs, m)
+    return -0.5 * square_devs.sum()
 
 
 def grad_logL(m, b, xy, covs):

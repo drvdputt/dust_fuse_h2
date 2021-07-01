@@ -135,47 +135,59 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute
 
     """
     xy = np.column_stack((data_x, data_y))
+    # choose a scale factor to avoid the problems that come with the
+    # huge dynamic range difference between certain x and y data.
+    factor_x = 1 / np.std(data_x)
+    factor_y = 1 / np.std(data_y)
+    xy, covs = rescale_data(xy, cov_xy, factor_x, factor_y)
 
     def to_minimize(v):
         m, b_perp = v
-        return -logL(m, b_perp, xy, cov_xy)
+        return -logL(m, b_perp, xy, covs)
 
     def jac(v):
         m, b_perp = v
-        return -grad_logL(m, b_perp, xy, cov_xy)
+        return -grad_logL(m, b_perp, xy, covs)
 
     # use naive result as initial guess
     line_init = models.Linear1D()
     fit = fitting.LinearLSQFitter()
     fitted_model_weights = fit(
-        line_init, data_x, data_y, weights=1.0 / np.sqrt(cov_xy[:, 1, 1])
+        line_init, xy[:, 0], xy[:, 1], weights=1.0 / np.sqrt(covs[:, 1, 1])
     )
 
-    initial_guess = [
-        fitted_model_weights.slope.value,
-        fitted_model_weights.intercept.value,
-    ]
+    initial_guess = np.array(
+        [
+            fitted_model_weights.slope.value,
+            fitted_model_weights.intercept.value,
+        ]
+    )
     initial_guess[1] *= 1 / np.sqrt(1 + initial_guess[0] ** 2)
 
     # get an idea of the order of magnitude
-    logL_start = logL(initial_guess[0], initial_guess[1], xy, cov_xy)
+    logL_start = logL(initial_guess[0], initial_guess[1], xy, covs)
     freltol = 1e-6
     logL_atol = abs(logL_start * freltol)
 
     if print_on:
+        # do some checks before starting
         print("initial guess: ", initial_guess)
-
-    # err = optimize.check_grad(to_minimize, jac, initial_guess)
-    # print("check grad", err)
+        eps = np.abs(1.0e-6 * initial_guess)
+        grad_approx = optimize.approx_fprime(initial_guess, to_minimize, eps)
+        grad_exact = jac(initial_guess)
+        print("grad approx", grad_approx, "grad exact", grad_exact)
 
     # res = optimize.minimize(to_minimize, initial_guess, method="Powell")
-    # res = optimize.minimize(to_minimize, initial_guess, method="Newton-CG", jac=jac)
-    # res = optimize.minimize(to_minimize, initial_guess, method="SLSQP", jac=jac, options={'ftol':1e-9})
+    # res = optimize.minimize(
+    #     to_minimize, initial_guess, method="Nelder-Mead", options={"fatol": logL_atol}
+    # )
+
+    gtol = np.linalg.norm(jac(initial_guess)) * 1e-6
     res = optimize.minimize(
-        to_minimize, initial_guess, method="Nelder-Mead", options={"fatol": logL_atol}
+        to_minimize, initial_guess, method="BFGS", options={"disp": False, "gtol": gtol}
     )
     # res = optimize.minimize(
-    #     to_minimize, initial_guess, method="BFGS", options={"disp": False}
+    #     to_minimize, initial_guess, method="BFGS", jac=jac, options={"disp": False}
     # )
 
     m, b_perp = res.x
@@ -191,11 +203,11 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute
         # m, b_perp = x0
 
     # manual check for convergence
-    logL0 = logL(m, b_perp, xy, cov_xy)
-    logL_up = logL(m + 0.1 * abs(m), b_perp, xy, cov_xy)
-    logL_down = logL(m - 0.1 * abs(m), b_perp, xy, cov_xy)
-    logL_right = logL(m, b_perp + 0.1 * abs(b_perp), xy, cov_xy)
-    logL_left = logL(m, b_perp - 0.1 * abs(b_perp), xy, cov_xy)
+    logL0 = logL(m, b_perp, xy, covs)
+    logL_up = logL(m + 0.1 * abs(m), b_perp, xy, covs)
+    logL_down = logL(m - 0.1 * abs(m), b_perp, xy, covs)
+    logL_right = logL(m, b_perp + 0.1 * abs(b_perp), xy, covs)
+    logL_left = logL(m, b_perp - 0.1 * abs(b_perp), xy, covs)
 
     if print_on:
         string = """ local logL:
@@ -212,7 +224,7 @@ down {}
     # if hasattr(res, "hess_inv"):
     #     hess_inv = res.hess_inv
     # else:
-    #     hess = -hess_logL(m, b_perp, xy, cov_xy)
+    #     hess = -hess_logL(m, b_perp, xy, covs)
     #     hess_inv = np.linalg.inv(hess)
 
     # sigma_m, sigma_b_perp = np.sqrt(np.diag(hess_inv))
@@ -227,10 +239,14 @@ down {}
         # print("err, err, rho:", sigma_m, sigma_b_perp, rho_mb_perp)
         print("m, b:", m, b)
 
+    # undo the scale factors to get the m and b for the real data
+    m_real, b_real = unscale_mb(m, b, factor_x, factor_y)
+    b_perp_real = b_real / np.sqrt(1 + m_real * m_real)
+
     if get_brute:
-        return m, b_perp, m_brute, b_brute
+        return m_real, b_perp_real, m_brute, b_brute
     else:
-        return m, b_perp
+        return m_real, b_perp_real
 
 
 def bootstrap_fit_errors(data_x, data_y, cov_xy):
@@ -322,3 +338,18 @@ def plot_solution_neighborhood(
         ax.add_patch(
             cov_ellipse(b, m, cov_mb[::-1, ::-1], facecolor="none", edgecolor="k")
         )
+
+
+def rescale_data(xy, covs, factor_x, factor_y):
+    S = np.array([[factor_x, 0], [0, factor_y]])
+    xyr = np.einsum("ij,dj", S, xy)
+    covr = np.einsum("ij,djk,kl", S.T, covs, S)
+    return xyr, covr
+
+
+def unscale_mb(m, b, factor_x, factor_y):
+    # x * factor_x * m = y * factor_y --> y / x = ...
+    m_real = m * factor_x / factor_y
+    # b = y * factor_y --> y = ...
+    b_real = b / factor_y
+    return m_real, b_real

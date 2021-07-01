@@ -1,0 +1,144 @@
+* HI ref for each star
+  The goal is to make sure that we know for each star how the HI was determined. This is a
+  tedious, but necessary job. Once we have this information, we can make a list of stars that
+  need better HI, though Lya fitting.
+
+** Reference info
+  Starting point is these notes that I made. In little table at the end, "no" means good quality
+  data (spectral fitting), "yes" means bad quality (inferred from exctinction), and "maybe"
+  means mixed data, where I should check for each star individually.
+
+1. Self
+2. Cartledge+2006: STIS, Using a continuum-reconstruction algorithm ( Bohlin 1975; Diplas &
+   Savage 1994), N( H i) was derived for each sight line not subject to serious stellar Lyα
+   contamination. If this didn't work, it was inferred using krypton or oxygen
+3. Diplas & Savage 1994: IUE, Lyman alpha continuum reconstruction
+4. Fitzpatrick & Massa 1990: Mostly IUE ly alpha, some are from Bohlin, Shull & van Steenberg, a
+   couple based on E(B-V)
+5. Taresch+1997: Not used, single star.
+6. André+2003: STIS and FUSE, lya continuum reconstruction
+7. Arnal & Cappa 1996: MPI and IAR radio, 21 cm, single star
+8. Rachford+2001: Not used, FUSE, single star
+9. Buss+1994: Used for 1 star, Hopkins, paper has 3 stars, voigt profiles
+10. Rachford+2002: used for 1 star, most from IUE literature, two new IUE profile fits, six EBV
+11. Jensen+2005: Not used
+12. Missing, maybe 13 was a typo
+13. Grillo+1992: Einstein Observatory, X-rays, many stars, N(H) = 2.221e21 Av
+14. Jensen+2007: Used for 1 star, FUSE. Mixed Lya fitting, EBV inference, and 21 cm. Will need
+    to check specific star.
+
+| number | need to do lya fitting?                            |
+|      1 | yes                                                |
+|      2 | no (but double check for krypton/oxygen inference) |
+|      3 | no                                                 |
+|      4 | maybe                                              |
+|      5 | ?                                                  |
+|      6 | no                                                 |
+|      7 | if we want better than 21 cm                       |
+|      8 | no                                                 |
+|      9 | probably not                                       |
+|     10 | maybe                                              |
+|     11 | ?                                                  |
+|     12 | ?                                                  |
+|     13 | yes                                                |
+|     14 | maybe                                              |
+  
+** Main table
+
+*** TODO: check Jensen 2019 for updates
+   
+   | ID         | ref nr | comment                     | needs fit |
+   |------------+--------+-----------------------------+-----------|
+   | BD+56d524  |      1 | self                        | yes       |
+   | HD023060   |      1 | self                        | yes       |
+   | HD046202   |      1 | self                        | yes       |
+   | HD047129   |      1 | self                        | yes       |
+   | HD062542   |      1 | self                        | yes       |
+   | HD093827   |      1 | self                        | yes       |
+   | HD096675   |      1 | self                        | yes       |
+   | HD099872   |     1a | self                        | yes       |
+   | HD152248   |      1 | self                        | yes       |
+   | HD179406   |      1 | self                        | yes       |
+   | HD190603   |      1 | self                        | yes       |
+   | HD197770   |      1 | self                        | yes       |
+   | HD209339   |      1 | self                        | yes       |
+   | HD216898   |      1 | self                        | yes       |
+   | BD+52d3210 |      1 | self                        | yes       |
+   | HD037332   |      1 | self                        | yes       |
+   | HD037525   |      1 | self                        | yes       |
+   | HD093028   |      1 | self                        | yes       |
+   | HD094493   |    1,3 | self                        | yes       |
+   | HD097471   |      1 | self                        | yes       |
+   | HD235874   |      1 | self                        | yes       |
+   | BD+53d2820 |      2 | check Cartlege06            | no        |
+   | HD001383   |      2 | but probably safe           | no        |
+   | HD013268   |      2 |                             | no        |
+   | HD014434   |      2 |                             | no        |
+   | HD027778   |      2 |                             | no        |
+   | HD037903   |      2 |                             | no        |
+   | HD122879   |      2 |                             | no        |
+   | HD147888   |      2 |                             | no        |
+   | HD157857   |      2 |                             | no        |
+   | HD185418   |      2 |                             | no        |
+   | HD192639   |      2 |                             | no        |
+   | HD198781   |      2 |                             | no        |
+   | HD206773   |      2 |                             | no        |
+   | HD207198   |      2 |                             | no        |
+   | HD075309   |      2 |                             | no        |
+   | HD091824   |      2 |                             | no        |
+   | HD091983   |      2 |                             | no        |
+   | HD116852   |      2 |                             | no        |
+   | HD210809   |      2 |                             | no        |
+   | HD015558   |      3 | DS94                        | no        |
+   | HD017505   |      3 |                             | no        |
+   | HD045314   |      3 |                             | no        |
+   | HD046056   |      3 |                             | no        |
+   | HD046150   |      3 |                             | no        |
+   | HD047240   |      3 |                             | no        |
+   | HD047417   |      3 |                             | no        |
+   | HD091651   |      3 |                             | no        |
+   | HD093250   |      3 |                             | no        |
+   | HD096715   |      3 |                             | no        |
+   | HD099890   |      3 |                             | no        |
+   | HD100213   |      3 |                             | no        |
+   | HD101190   |      3 |                             | no        |
+   | HD101205   |      3 |                             | no        |
+   | HD103779   |      3 |                             | no        |
+   | HD124979   |      3 |                             | no        |
+   | HD148422   |      3 |                             | no        |
+   | HD149404   |      3 |                             | no        |
+   | HD151805   |      3 |                             | no        |
+   | HD152233   |      3 |                             | no        |
+   | HD152234   |      3 |                             | no        |
+   | HD152249   |      3 |                             | no        |
+   | HD152723   |      3 |                             | no        |
+   | HD160993   |      3 |                             | no        |
+   | HD163522   |      3 |                             | no        |
+   | HD164816   |      3 |                             | no        |
+   | HD164906   |      3 |                             | no        |
+   | HD165052   |      3 |                             | no        |
+   | HD167402   |      3 |                             | no        |
+   | HD167771   |      3 |                             | no        |
+   | HD168076   |      3 |                             | no        |
+   | HD168941   |      3 |                             | no        |
+   | HD178487   |      3 |                             | no        |
+   | HD179407   |      3 |                             | no        |
+   | HD188001   |      3 |                             | no        |
+   | HD199579   |      3 |                             | no        |
+   | HD332407   |      3 |                             | no        |
+   | BD+32d270  |      3 |                             | no        |
+   | HD100276   |      3 |                             | no        |
+   | HD104705   |      3 |                             | no        |
+   | HD114444   |      3 |                             | no        |
+   | HD172140   |      3 |                             | no        |
+   | HD014250   |      4 |                             | check     |
+   | HD038087   |      4 |                             | check     |
+   | HD073882   |      4 |                             | check     |
+   | HD203938   |      4 |                             | check     |
+   | HD239729   |      4 |                             | check     |
+   | HD093222   |      6 |                             | no        |
+   | HD051013   |      7 | AC1996 21 cm                | yes       |
+   | HD200775   |      9 | HUVT voigt profiles         | no        |
+   | HD206267   |     10 | Rachford 2002               | check     |
+   | HD326329   |     12 | Should probably be 13 or 14 | check     |
+   | BD+35d4258 |     14 |                             | check     |

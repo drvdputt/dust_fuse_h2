@@ -186,7 +186,7 @@ def get_merged_table(comp=False):
     Parameters
     ----------
     comp : boolean, optional
-       get the comparision data
+       get the comparison data
     """
 
     # get the three tables to merge

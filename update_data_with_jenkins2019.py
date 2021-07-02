@@ -23,18 +23,27 @@ for ji, s in enumerate(jenkins_names):
 
         jrow = jenkins_data[ji]
         new_hi = jrow["logNHI"]
+
+        # their uncertainties are an upper and lower bound
         new_hi_unc_lower = jrow["e_logNHI"]
         new_hi_unc_upper = jrow["E_logNHI"]
         new_hi_unc = max(new_hi_unc_lower, new_hi_unc_upper)
 
+        # They say that their estimted uncertainties represent 1.5sigma
+        # somehow. So divide by 1.5 to get sigma. (Should probably ask
+        # Karl for advice).
+        new_hi_unc /= 1.5
+
         old_index = np.where(old_data["name"].data == s)[0][0]
         old_data[old_index]["lognhi"] = new_hi
         old_data[old_index]["lognhi_unc"] = new_hi_unc
-
 
 old_data.write(
     "data/fuse_h1_h2_update.dat",
     format="ascii.commented_header",
     header_start=-1,
     overwrite=True,
+    formats={'lognhi_unc': '{:.2f}'}
 )
+# the formats option is used to round to 0.01 for the uncertainy
+# (dividing by 1.5 sigma results in 0.066666666 etc.)

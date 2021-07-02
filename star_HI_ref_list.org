@@ -9,10 +9,10 @@
   means mixed data, where I should check for each star individually.
 
 1. Self
-2. Cartledge+2006: STIS, Using a continuum-reconstruction algorithm, N( H i) was derived for
-   each sight line not subject to serious stellar Lyα contamination. If this didn't work, it was
-   inferred using krypton or oxygen: HD 36841, HD 43818, HD , HD 71634, HD 111934, HD 148594,
-   and HD 175360. But those are not in our sample.
+2. Cartledge+2006: STIS, Using a continuum-reconstruction algorithm, N( H i)
+   was derived for each sight line not subject to serious stellar Lyα contamination. If this
+   didn't work, it was inferred using krypton or oxygen: HD 36841, HD 43818, HD , HD 71634, HD
+   111934, HD 148594, and HD 175360. But those are not in our sample.
 3. Diplas & Savage 1994: IUE, Lyman alpha continuum reconstruction
 4. Fitzpatrick & Massa 1990: Mostly IUE ly alpha, some are from Bohlin, Shull & van Steenberg, a
    couple based on E(B-V)
@@ -46,104 +46,103 @@
   
 ** Main table
 
-*** TODO: check Jensen 2019 for updates
    
-   | ID         | ref nr | comment                                      | needs fit |
-   |------------+--------+----------------------------------------------+-----------|
-   | BD+56d524  |      1 | self                                         | yes       |
-   | HD023060   |      1 | self                                         | yes       |
-   | HD046202   |      1 | self                                         | yes       |
-   | HD047129   |      1 | self                                         | yes       |
-   | HD062542   |      1 | self                                         | yes       |
-   | HD093827   |      1 | self                                         | yes       |
-   | HD096675   |      1 | self                                         | yes       |
-   | HD099872   |     1a | self                                         | yes       |
-   | HD152248   |      1 | self                                         | yes       |
-   | HD179406   |      1 | self                                         | yes       |
-   | HD190603   |      1 | self                                         | yes       |
-   | HD197770   |      1 | self                                         | yes       |
-   | HD209339   |      1 | self                                         | yes       |
-   | HD216898   |      1 | self                                         | yes       |
-   | BD+52d3210 |      1 | self                                         | yes       |
-   | HD037332   |      1 | self                                         | yes       |
-   | HD037525   |      1 | self                                         | yes       |
-   | HD093028   |      1 | self                                         | yes       |
-   | HD094493   |    1,3 | self                                         | yes       |
-   | HD097471   |      1 | self                                         | yes       |
-   | HD235874   |      1 | self                                         | yes       |
-   | BD+53d2820 |      2 |                                              | no        |
-   | HD001383   |      2 |                                              | no        |
-   | HD013268   |      2 |                                              | no        |
-   | HD014434   |      2 |                                              | no        |
-   | HD027778   |      2 |                                              | no        |
-   | HD037903   |      2 |                                              | no        |
-   | HD122879   |      2 |                                              | no        |
-   | HD147888   |      2 |                                              | no        |
-   | HD157857   |      2 |                                              | no        |
-   | HD185418   |      2 |                                              | no        |
-   | HD192639   |      2 |                                              | no        |
-   | HD198781   |      2 |                                              | no        |
-   | HD206773   |      2 |                                              | no        |
-   | HD207198   |      2 |                                              | no        |
-   | HD075309   |      2 |                                              | no        |
-   | HD091824   |      2 |                                              | no        |
-   | HD091983   |      2 |                                              | no        |
-   | HD116852   |      2 |                                              | no        |
-   | HD210809   |      2 |                                              | no        |
-   | HD015558   |      3 | DS94                                         | no        |
-   | HD017505   |      3 |                                              | no        |
-   | HD045314   |      3 |                                              | no        |
-   | HD046056   |      3 |                                              | no        |
-   | HD046150   |      3 |                                              | no        |
-   | HD047240   |      3 |                                              | no        |
-   | HD047417   |      3 |                                              | no        |
-   | HD091651   |      3 |                                              | no        |
-   | HD093250   |      3 |                                              | no        |
-   | HD096715   |      3 |                                              | no        |
-   | HD099890   |      3 |                                              | no        |
-   | HD100213   |      3 |                                              | no        |
-   | HD101190   |      3 |                                              | no        |
-   | HD101205   |      3 |                                              | no        |
-   | HD103779   |      3 |                                              | no        |
-   | HD124979   |      3 |                                              | no        |
-   | HD148422   |      3 |                                              | no        |
-   | HD149404   |      3 |                                              | no        |
-   | HD151805   |      3 |                                              | no        |
-   | HD152233   |      3 |                                              | no        |
-   | HD152234   |      3 |                                              | no        |
-   | HD152249   |      3 |                                              | no        |
-   | HD152723   |      3 |                                              | no        |
-   | HD160993   |      3 |                                              | no        |
-   | HD163522   |      3 |                                              | no        |
-   | HD164816   |      3 |                                              | no        |
-   | HD164906   |      3 |                                              | no        |
-   | HD165052   |      3 |                                              | no        |
-   | HD167402   |      3 |                                              | no        |
-   | HD167771   |      3 |                                              | no        |
-   | HD168076   |      3 |                                              | no        |
-   | HD168941   |      3 |                                              | no        |
-   | HD178487   |      3 |                                              | no        |
-   | HD179407   |      3 |                                              | no        |
-   | HD188001   |      3 |                                              | no        |
-   | HD199579   |      3 |                                              | no        |
-   | HD332407   |      3 |                                              | no        |
-   | BD+32d270  |      3 |                                              | no        |
-   | HD100276   |      3 |                                              | no        |
-   | HD104705   |      3 |                                              | no        |
-   | HD114444   |      3 |                                              | no        |
-   | HD172140   |      3 |                                              | no        |
-   | HD014250   |      4 | FM90  IUE                                    | no        |
-   | HD038087   |      4 | IUE                                          | no        |
-   | HD073882   |      4 | IUE                                          | no        |
-   | HD203938   |      4 | IUE                                          | no        |
-   | HD239729   |      4 | IUE                                          | no        |
-   | HD093222   |      6 |                                              | no        |
-   | HD051013   |      7 | AC1996 21 cm                                 | yes       |
-   | HD200775   |      9 | HUVT voigt profiles                          | no        |
-   | HD206267   |     10 | Rachford 2002 lya                            | no        |
-   | HD326329   |     12 | Should probably be 13 or 14                  | ???       |
-   | BD+35d4258 |     14 | Jensen & Snow 2007 lya, also in Jenkins 2019 | no        |
-   |            |        |                                              |           |
+   | ID         | ref nr | comment                                      | need? | J2019 |
+   |------------+--------+----------------------------------------------+-------+-------|
+   | BD+56d524  |      1 | self                                         | yes   |       |
+   | HD023060   |      1 | self                                         | yes   |       |
+   | HD046202   |      1 | self                                         | yes   |       |
+   | HD047129   |      1 | self                                         | yes   |       |
+   | HD062542   |      1 | self                                         | yes   |       |
+   | HD093827   |      1 | self                                         | yes   |       |
+   | HD096675   |      1 | self                                         | yes   |       |
+   | HD099872   |     1a | self                                         | yes   |       |
+   | HD152248   |      1 | self                                         | yes   |       |
+   | HD179406   |      1 | self                                         | yes   |       |
+   | HD190603   |      1 | self                                         | yes   |       |
+   | HD197770   |      1 | self                                         | yes   |       |
+   | HD209339   |      1 | self                                         | yes   |       |
+   | HD216898   |      1 | self                                         | yes   |       |
+   | BD+52d3210 |      1 | self                                         | yes   |       |
+   | HD037332   |      1 | self                                         | yes   |       |
+   | HD037525   |      1 | self                                         | yes   |       |
+   | HD093028   |      1 | self                                         | yes   |       |
+   | HD094493   |    1,3 | self                                         | yes   | y     |
+   | HD097471   |      1 | self                                         | yes   |       |
+   | HD235874   |      1 | self                                         | yes   |       |
+   | BD+53d2820 |      2 |                                              | no    | y     |
+   | HD001383   |      2 |                                              | no    | y     |
+   | HD013268   |      2 |                                              | no    | y     |
+   | HD014434   |      2 |                                              | no    |       |
+   | HD027778   |      2 |                                              | no    |       |
+   | HD037903   |      2 |                                              | no    |       |
+   | HD122879   |      2 |                                              | no    | y     |
+   | HD147888   |      2 |                                              | no    |       |
+   | HD157857   |      2 |                                              | no    |       |
+   | HD185418   |      2 |                                              | no    |       |
+   | HD192639   |      2 |                                              | no    |       |
+   | HD198781   |      2 |                                              | no    |       |
+   | HD206773   |      2 |                                              | no    |       |
+   | HD207198   |      2 |                                              | no    |       |
+   | HD075309   |      2 |                                              | no    | y     |
+   | HD091824   |      2 |                                              | no    | y     |
+   | HD091983   |      2 |                                              | no    | y     |
+   | HD116852   |      2 |                                              | no    | y     |
+   | HD210809   |      2 |                                              | no    |       |
+   | HD015558   |      3 | DS94                                         | no    |       |
+   | HD017505   |      3 |                                              | no    |       |
+   | HD045314   |      3 |                                              | no    |       |
+   | HD046056   |      3 |                                              | no    |       |
+   | HD046150   |      3 |                                              | no    |       |
+   | HD047240   |      3 |                                              | no    |       |
+   | HD047417   |      3 |                                              | no    |       |
+   | HD091651   |      3 |                                              | no    |       |
+   | HD093250   |      3 |                                              | no    |       |
+   | HD096715   |      3 |                                              | no    |       |
+   | HD099890   |      3 |                                              | no    | y     |
+   | HD100213   |      3 |                                              | no    |       |
+   | HD101190   |      3 |                                              | no    | y     |
+   | HD101205   |      3 |                                              | no    |       |
+   | HD103779   |      3 |                                              | no    | y     |
+   | HD124979   |      3 |                                              | no    | y     |
+   | HD148422   |      3 |                                              | no    |       |
+   | HD149404   |      3 |                                              | no    |       |
+   | HD151805   |      3 |                                              | no    |       |
+   | HD152233   |      3 |                                              | no    |       |
+   | HD152234   |      3 |                                              | no    |       |
+   | HD152249   |      3 |                                              | no    |       |
+   | HD152723   |      3 |                                              | no    |       |
+   | HD160993   |      3 |                                              | no    |       |
+   | HD163522   |      3 |                                              | no    |       |
+   | HD164816   |      3 |                                              | no    |       |
+   | HD164906   |      3 |                                              | no    |       |
+   | HD165052   |      3 |                                              | no    |       |
+   | HD167402   |      3 |                                              | no    |       |
+   | HD167771   |      3 |                                              | no    |       |
+   | HD168076   |      3 |                                              | no    |       |
+   | HD168941   |      3 |                                              | no    |       |
+   | HD178487   |      3 |                                              | no    |       |
+   | HD179407   |      3 |                                              | no    |       |
+   | HD188001   |      3 |                                              | no    |       |
+   | HD199579   |      3 |                                              | no    |       |
+   | HD332407   |      3 |                                              | no    |       |
+   | BD+32d270  |      3 |                                              | no    |       |
+   | HD100276   |      3 |                                              | no    |       |
+   | HD104705   |      3 |                                              | no    | y     |
+   | HD114444   |      3 |                                              | no    |       |
+   | HD172140   |      3 |                                              | no    |       |
+   | HD014250   |      4 | FM90  IUE                                    | no    |       |
+   | HD038087   |      4 | IUE                                          | no    |       |
+   | HD073882   |      4 | IUE                                          | no    |       |
+   | HD203938   |      4 | IUE                                          | no    |       |
+   | HD239729   |      4 | IUE                                          | no    |       |
+   | HD093222   |      6 |                                              | no    | y     |
+   | HD051013   |      7 | AC1996 21 cm                                 | yes   |       |
+   | HD200775   |      9 | HUVT voigt profiles                          | no    |       |
+   | HD206267   |     10 | Rachford 2002 lya                            | no    |       |
+   | HD326329   |     12 | Should probably be 13 or 14                  | ???   |       |
+   | BD+35d4258 |     14 | JS2007 lya, J2019                            | no    | y     |
+   |            |        |                                              |       |       |
 
 ** Jenkins 2019
    Using iPython, i put the stars in jenkins 2019 in the same name format
@@ -200,21 +199,25 @@
    HD124314
    HD124979
 
-   ... and also read in our own stars. Using the following command, I found the following matches
+   ... and also read in our own stars. Using the following command, I found the following
+   matches. (m stands for 'marked in the main table above')
 
    In [54]: set(our) & set(jenkins)
    Out[54]: 
-   {'HD001383\n',
-   'HD013268\n',
-   'HD075309\n',
-   'HD091824\n',
-   'HD091983\n',
-   'HD093222\n',
-   'HD094493\n',
-   'HD099890\n',
-   'HD101190\n',
-   'HD103779\n',
-   'HD104705\n',
-   'HD116852\n',
-   'HD122879\n',
-   'HD124979\n'}
+   {'HD001383\n', m
+   'HD013268\n', m
+   'HD075309\n', m
+   'HD091824\n', m
+   'HD091983\n', m
+   'HD093222\n', m
+   'HD094493\n', m
+   'HD099890\n', m
+   'HD101190\n', m
+   'HD103779\n', m
+   'HD104705\n', m
+   'HD116852\n', m
+   'HD122879\n', m
+   'HD124979\n'} m
+
+   !!! aside from these HD stars, the two BD stars at the top of Jenkins' list are also in our
+       sample !!!

@@ -17,7 +17,7 @@ def get_fuse_h1_h2():
     """
 
     data = Table.read(
-        "data/fuse_h1_h2.dat", format="ascii.commented_header", header_start=-1
+        "data/fuse_h1_h2_update.dat", format="ascii.commented_header", header_start=-1
     )
 
     # rename column to have the same name as other tables

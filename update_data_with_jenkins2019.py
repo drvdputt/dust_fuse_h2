@@ -37,13 +37,16 @@ for ji, s in enumerate(jenkins_names):
         old_index = np.where(old_data["name"].data == s)[0][0]
         old_data[old_index]["lognhi"] = new_hi
         old_data[old_index]["lognhi_unc"] = new_hi_unc
+        old_data[old_index]["hiref"] = 15
+        # update the data and change the reference number to 15 (meaning
+        # Jenkins et al. 2019, should also put this in paper)_
 
 old_data.write(
     "data/fuse_h1_h2_update.dat",
     format="ascii.commented_header",
     header_start=-1,
     overwrite=True,
-    formats={'lognhi_unc': '{:.2f}'}
+    formats={"lognhi_unc": "{:.2f}"},
 )
 # the formats option is used to round to 0.01 for the uncertainy
 # (dividing by 1.5 sigma results in 0.066666666 etc.)

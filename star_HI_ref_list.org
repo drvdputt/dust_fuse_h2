@@ -52,21 +52,21 @@
    | HD023060   |      1 | self                        | yes |     | IUE L       |
    | HD046202   |      1 | self                        | yes |     | IUE H       |
    | HD047129   |      1 | self                        | yes |     | IUE H       |
-   | HD062542   |      1 | self                        | yes |     | IUE H       |
+   | HD062542   |      1 | self                        | yes |     | IUE H, STIS |
    | HD093827   |      1 | self                        | yes |     | IUE H       |
    | HD096675   |      1 | self                        | yes |     | IUE H       |
    | HD099872   |     1a | self                        | yes |     | IUE L, STIS |
    | HD152248   |      1 | self                        | yes |     | IUE H       |
    | HD179406   |      1 | self                        | yes |     | IUE H       |
-   | HD190603   |      1 | self                        | yes |     | IUE H       |
-   | HD197770   |      1 | self                        | yes |     | IUE H       |
+   | HD190603   |      1 | self                        | yes |     | IUE H, STIS |
+   | HD197770   |      1 | self                        | yes |     | IUE H, STIS |
    | HD209339   |      1 | self                        | yes |     | IUE L, STIS |
    | HD216898   |      1 | self                        | yes |     | IUE H       |
    | BD+52d3210 |      1 | self                        | yes |     | IUE L       |
    | HD037332   |      1 | self                        | yes |     | IUE H       |
    | HD037525   |      1 | self                        | yes |     | IUE H       |
    | HD093028   |      1 | self                        | yes |     | IUE H       |
-   | HD094493   |    1,3 | self                        | yes | y   | IUE H       |
+   | HD094493   |    1,3 | self                        | yes | y   | IUE H, STIS |
    | HD097471   |      1 | self                        | yes |     | IUE L       |
    | HD235874   |      1 | self                        | yes |     | IUE L       |
    | BD+53d2820 |      2 |                             | no  | y   |             |
@@ -98,7 +98,7 @@
    | HD091651   |      3 |                             | no  |     |             |
    | HD093250   |      3 |                             | no  |     |             |
    | HD096715   |      3 |                             | no  |     |             |
-   | HD099890   |      3 |                             | no  | y   |    |
+   | HD099890   |      3 |                             | no  | y   |             |
    | HD100213   |      3 |                             | no  |     |             |
    | HD101190   |      3 |                             | no  | y   |             |
    | HD101205   |      3 |                             | no  |     |             |

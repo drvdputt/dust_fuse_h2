@@ -37,11 +37,6 @@ def process_mast_results(target, results):
             manifest = mast.Observations.download_products(
                 products, productType="SCIENCE", download_dir=str(target_dir)
             )
-            # u = row["dataURL"]
-            # print("Downloading ", target, u)
-            # dl_file = Path(download_file(u, cache=True))
-            # target_file = target_dir / Path(u).name
-            # shutil.copy(dl_file, target_file)
 
 
 main()

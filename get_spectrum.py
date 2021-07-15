@@ -1,3 +1,16 @@
+"""Tools for getting spectra for lya fitting.
+
+Includes choosing a data file for each star, reading the files, and
+processing the spectral data (from either IUE, STIS, ...) into a format
+that can be used directly for the fitting.
+
+The variable target_use_which_spectrum indicates which data to use for
+each star. It can be customized by editing this file. Running this
+module directly will print out the default value for this dictionary.
+
+"""
+from astropy.table import Table
+import numpy as np
 from pathlib import Path
 
 # can be manually tweaked
@@ -27,20 +40,94 @@ target_use_which_spectrum = {
     "BD+56d524": "data/BD+56d524/swp20330mxlo_vo.fits",
 }
 
-def get_spectrum(target):
-    """
-    Get spectrum for the given target. Tweak the variable
-    get_spectrum.target_use_which_spectrum to choose the right data.
-    Depending on whether a IUE or STIS spectrum was chosen, different
-    steps will be taken. The end result is the spectral data in a common
-    format
+
+def get_processed_spectrum():
+    """Get spectrum data ready for fitting Lya for the given target.
+
+    Tweak the variable get_spectrum.target_use_which_spectrum to choose
+    the right data. Depending on whether a IUE or STIS spectrum was
+    chosen, different steps will be taken. The end result is the
+    spectral data in a common format, processed with different steps
+    depending on the source of the data.
 
     Returns
     -------
     wav, flux: ndarray of wavelengths (angstrom) and fluxes (erg s-1 cm-2 angstrom-1)
 
     """
-    pass
+    # test for one specific target for now
+    target = "HD094493"
+
+    # choose data
+    filename = target_use_which_spectrum[target]
+
+    if "x1d" in filename:
+        wavs, flux, errs = merged_stis_data(filename)
+    # elif "mxhi" in filename:
+    #     wav, flux, err = merge_iue_h_data(filename)
+    else:
+        print("File {} not supported yet".format(filename))
+        raise
+
+    binnedwavs, binnedflux = bin_spectrum_around_lya(wavs, flux, errs)
+    return binnedwavs, binnedflux
+
+
+def merged_stis_data(filename):
+    """Get wavelengths, fluxes and errors from all STIS spectral orders.
+
+    Returns
+    -------
+
+    wavs: numpy array, all wavelengths, sorted
+
+    flux: all fluxes at these wavelengths
+
+    errs: all errors at these wavelengths
+
+    """
+    t = Table.read(filename)
+    allwavs = np.concatenate(t["WAVELENGTH"])
+    allflux = np.concatenate(t["FLUX"])
+    allerrs = np.concatenate(t["ERROR"])
+    idxs = np.argsort(allwavs)
+    return allwavs[idxs], allflux[idxs], allerrs[idxs]
+
+
+def bin_spectrum_around_lya(wavs, flux, errs):
+    """Rebin spectrum to for lya fitting.
+
+    A rebinning of the spectrum to make it more useful for lya fitting.
+    Every new point is the weighted average of all data within the range
+    of a bin. The weights are 1 / errs**2. The bins are chosen as 1000
+    equally spaced intervals, from 1150 to 1280 angstrom. **subject to
+    change**
+
+    Returns
+    -------
+    newwavs: average wavelength in each bin
+    newflux: average flux in each bin
+
+    """
+    # the bin details are hardcoded here
+    numbins = 1000
+    wavmin = 1150
+    wavmax = 1280
+    wavbins = np.linspace(wavmin, wavmax, numbins, endpoint=True)
+
+    # np.digitize returns list of indices. b = 1 means that the data point
+    # is between wav[0] (first) and wav[1]. b = n-1 means between wav[n-2]
+    # and wav[n-1] (last). b = 0 or n mean out of range.
+    bs = np.digitize(wavs, wavbins)
+    newwavs = np.zeros(len(wavbins) - 1)
+    newflux = np.zeros(len(wavbins) - 1)
+    for i in range(0, len(wavbins) - 1):
+        in_bin = bs == i + 1  # b runs from 1 to n-1
+        weights = 1 / np.square(errs[in_bin])
+        newwavs[i] = np.average(wavs[in_bin], weights=weights)
+        newflux[i] = np.average(flux[in_bin], weights=weights)
+
+    return newwavs, newflux
 
 
 # Some code to generate the above dict from scratch. Manual tweaking can

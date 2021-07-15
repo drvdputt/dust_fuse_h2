@@ -41,7 +41,7 @@ target_use_which_spectrum = {
 }
 
 
-def get_processed_spectrum():
+def processed():
     """Get spectrum data ready for fitting Lya for the given target.
 
     Tweak the variable get_spectrum.target_use_which_spectrum to choose
@@ -72,7 +72,6 @@ def get_processed_spectrum():
     binnedwavs, binnedflux = bin_spectrum_around_lya(wavs, flux, errs)
     return binnedwavs, binnedflux
 
-
 def merged_stis_data(filename):
     """Get wavelengths, fluxes and errors from all STIS spectral orders.
 
@@ -95,13 +94,16 @@ def merged_stis_data(filename):
 
 
 def bin_spectrum_around_lya(wavs, flux, errs):
-    """Rebin spectrum to for lya fitting.
+    """Rebin spectrum to for lya fitting, and reject certain points.
 
     A rebinning of the spectrum to make it more useful for lya fitting.
     Every new point is the weighted average of all data within the range
     of a bin. The weights are 1 / errs**2. The bins are chosen as 1000
     equally spaced intervals, from 1150 to 1280 angstrom. **subject to
     change**
+
+    Additionally, only the points that satisfy some basic data rejection
+    criteria are used. E.g flux > 0.
 
     Returns
     -------
@@ -123,9 +125,10 @@ def bin_spectrum_around_lya(wavs, flux, errs):
     newflux = np.zeros(len(wavbins) - 1)
     for i in range(0, len(wavbins) - 1):
         in_bin = bs == i + 1  # b runs from 1 to n-1
-        weights = 1 / np.square(errs[in_bin])
-        newwavs[i] = np.average(wavs[in_bin], weights=weights)
-        newflux[i] = np.average(flux[in_bin], weights=weights)
+        use = np.logical_and(in_bin, flux > 0)
+        weights = 1 / np.square(errs[use])
+        newwavs[i] = np.average(wavs[use], weights=weights)
+        newflux[i] = np.average(flux[use], weights=weights)
 
     return newwavs, newflux
 

@@ -41,7 +41,7 @@ target_use_which_spectrum = {
 }
 
 
-def processed():
+def processed(target):
     """Get spectrum data ready for fitting Lya for the given target.
 
     Tweak the variable get_spectrum.target_use_which_spectrum to choose
@@ -55,9 +55,6 @@ def processed():
     wav, flux: ndarray of wavelengths (angstrom) and fluxes (erg s-1 cm-2 angstrom-1)
 
     """
-    # test for one specific target for now
-    target = "HD094493"
-
     # choose data
     filename = target_use_which_spectrum[target]
 

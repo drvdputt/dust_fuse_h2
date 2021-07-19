@@ -75,7 +75,7 @@ def cross(l):
 
 
 def extinction_factor(NHI, l):
-    return np.exp(-NHI * cross(wavs))
+    return np.exp(-NHI * cross(l))
 
 
 def chi2(NHI, fc, sigma_c, wavs, flux):
@@ -85,6 +85,19 @@ def chi2(NHI, fc, sigma_c, wavs, flux):
     chi2 = np.square((deltas / sigmas)).sum() / (len(deltas) - 1)
     # print("chi2 = ", chi2)
     return chi2
+
+
+def plot_profile(ax, fc, NHI):
+    """Plot an extra profile of user-specified NHI.
+
+    Ax needs to have been prepared properly (xlims already in their
+    final form), and fc is the continuum fit.
+
+    """
+    extra_color = "g"
+    x = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 500)
+    y = fc(wavs) * extinction_factor(NHI, wavs)
+    ax.plot(x, y, color=extra_color, label="user")
 
 
 def plot_fit(ax, wavs, flux, fc, NHI):
@@ -166,23 +179,39 @@ def lya_fit(target, ax=None):
     if ax is not None:
         plot_fit(ax, wavs, flux, fc, NHI)
 
-    return NHI
+    return NHI, fc
 
 
 def main():
-    #    default_target = "HD094493"
-    default_target = "HD037525"
+    # STIS example
+    # default_target = "HD094493"
+    # IUE H example
+    # default_target = "HD037525"
+    # IUE L example
+    default_target = "HD097471"
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", type=str, default=default_target)
+    ap.add_argument(
+        "--compare",
+        type=float,
+        default=None,
+        help="Plot extra profile using this NHI value",
+    )
     args = ap.parse_args()
 
     if args.target == "all":
         for target in get_spectrum.target_use_which_spectrum:
-            NHI = lya_fit(target)
+            fig, ax = plt.subplots()
+            NHI, fc = lya_fit(target, ax=ax)
+            ax.set_title(target, loc="right")
+            fig.savefig(f"./lya-plots/{target}.pdf")
             print(target, NHI)
     else:
-        lya_fit(args.target, ax=plt.gca())
+        NHI, fc = lya_fit(args.target, ax=plt.gca())
         plt.title(args.target, loc="right")
+        if args.compare is not None:
+            plot_profile(ax, fc, args.compare)
+
         plt.show()
 
 

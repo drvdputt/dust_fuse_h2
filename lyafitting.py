@@ -43,17 +43,19 @@ def safe_for_cont(wavs):
 
 
 def safe_for_lya(wavs, flux):
-    lya_exclude_wav_ranges = [[1171, 1177]]
+    # at these wavelengths, 1e22 * cross is about 100
+    # exp(100) ~ e43 is still relatively safe
+    lya_exclude_wav_ranges = [[1212.67, 1218.67]]
     safe_range = np.logical_not(wavs_in_ranges(wavs, lya_exclude_wav_ranges))
 
     # for lya, avoid wavelengths where the cross section is large (maybe
     # better to choose this range explicitly in wavelength numbers)
-    cross_eval = cross(wavs)
-    safe_cross = cross_eval < 0.1 * np.amax(cross_eval)
+    # cross_eval = cross(wavs)
+    # safe_cross = cross_eval < 0.05 * np.amax(cross_eval)
 
     # avoid datapoints where the extinction is too strong (flux too low)
-    safe_flux = flux > np.amax(flux) / 6
-    return np.logical_and.reduce((safe_cross, safe_flux, safe_range))
+    safe_flux = flux > np.average(flux) / 10
+    return np.logical_and.reduce((safe_flux, safe_range))
 
 
 def estimate_continuum(wavs, flux):

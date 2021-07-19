@@ -4,6 +4,10 @@ from scipy.stats import linregress
 from scipy.optimize import minimize, bracket, brute
 import numpy as np
 import argparse
+import warnings
+import astropy
+
+warnings.filterwarnings("ignore", category=astropy.units.UnitsWarning)
 
 LYA = 1215.67
 

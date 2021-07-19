@@ -167,8 +167,15 @@ def bin_spectrum_around_lya(wavs, flux, errs):
         in_bin = bs == i + 1  # b runs from 1 to n-1
         use = np.logical_and(in_bin, flux > 0)
         weights = 1 / np.square(errs[use])
-        newwavs[i] = np.average(wavs[use], weights=weights)
-        newflux[i] = np.average(flux[use], weights=weights)
+
+        # if a bin is empty or something else is wrong, the nans will be
+        # filtered out later
+        if not use.any() or weights.sum() == 0:
+            newwavs[i] = 0
+            newflux[i] = np.nan
+        else:
+            newwavs[i] = np.average(wavs[use], weights=weights)
+            newflux[i] = np.average(flux[use], weights=weights)
 
     return newwavs, newflux
 

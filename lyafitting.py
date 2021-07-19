@@ -74,6 +74,10 @@ def cross(l):
     return 4.26e-20 / (6.04e-10 + np.square(l - l0))
 
 
+def extinction_factor(NHI, l):
+    return np.exp(-NHI * cross(wavs))
+
+
 def chi2(NHI, fc, sigma_c, wavs, flux):
     extinctions = np.exp(NHI * cross(wavs))
     deltas = fc(wavs) - flux * extinctions
@@ -92,8 +96,7 @@ def plot_fit(ax, wavs, flux, fc, NHI):
     ax.plot(wavs, fcs, label="continuum fit", color=cont_color)
 
     # lya fit
-    factor = np.exp(-NHI * cross(wavs))
-    fms = fc(wavs) * factor
+    fms = fc(wavs) * extinction_factor(NHI, wavs)
     ax.plot(wavs, fms, label="profile fit", color=lya_color)
 
     # data / used for cont / used for lya

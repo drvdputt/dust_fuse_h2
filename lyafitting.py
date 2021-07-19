@@ -193,6 +193,26 @@ def lya_fit(target, ax=None):
     return NHI, fc
 
 
+def run_all():
+    for target in get_spectrum.target_use_which_spectrum:
+        fig, ax = plt.subplots()
+        NHI, fc = lya_fit(target, ax=ax)
+        ax.set_title(target + "\nlogNHI = {:2f}".format(np.log10(NHI)))
+        fig.savefig(f"./lya-plots/{target}.pdf")
+        print(target, NHI)
+
+
+def run_one(target, compare=None):
+    ax = plt.gca()
+    NHI, fc = lya_fit(target, ax=ax)
+    plt.title(target, loc="right")
+    if compare is not None:
+        NHIc = np.power(10.0, compare)
+        plot_profile(ax, fc, NHIc)
+
+    plt.show()
+
+
 def main():
     # STIS example
     # default_target = "HD094493"
@@ -206,24 +226,14 @@ def main():
         "--compare",
         type=float,
         default=None,
-        help="Plot extra profile using this NHI value",
+        help="Plot extra profile using this logNHI value",
     )
     args = ap.parse_args()
 
     if args.target == "all":
-        for target in get_spectrum.target_use_which_spectrum:
-            fig, ax = plt.subplots()
-            NHI, fc = lya_fit(target, ax=ax)
-            ax.set_title(target, loc="right")
-            fig.savefig(f"./lya-plots/{target}.pdf")
-            print(target, NHI)
+        run_all()
     else:
-        NHI, fc = lya_fit(args.target, ax=plt.gca())
-        plt.title(args.target, loc="right")
-        if args.compare is not None:
-            plot_profile(ax, fc, args.compare)
-
-        plt.show()
+        run_one(args.target, args.compare)
 
 
 main()

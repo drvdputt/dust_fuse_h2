@@ -104,7 +104,7 @@ def plot_profile(ax, fc, NHI):
     """
     extra_color = "g"
     x = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 500)
-    y = fc(wavs) * extinction_factor(NHI, wavs)
+    y = fc(x) * extinction_factor(NHI, x)
     ax.plot(x, y, color=extra_color, label="user")
 
 

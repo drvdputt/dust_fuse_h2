@@ -105,7 +105,7 @@ def plot_fit(ax, wavs, flux, fc, NHI):
         label="used for continuum",
         color=cont_color,
         linestyle="none",
-        marker=".",
+        marker="x",
         alpha=0.5,
     )
     ax.plot(
@@ -165,7 +165,8 @@ def lya_fit(target, ax=None):
 
 def main():
     # test for one specific target for now
-    target = "HD094493"
+    # target = "HD094493"
+    target = "HD037525"
     lya_fit(target, ax=plt.gca())
     plt.title(target, loc="right")
     plt.show()

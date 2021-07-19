@@ -12,6 +12,7 @@ module directly will print out the default value for this dictionary.
 from astropy.table import Table
 import numpy as np
 from pathlib import Path
+from warnings import warn
 
 # can be manually tweaked
 target_use_which_spectrum = {
@@ -57,16 +58,25 @@ def processed(target):
     """
     # choose data
     filename = target_use_which_spectrum[target]
+    print("Getting data from ", filename)
 
     if "x1d" in filename:
         wavs, flux, errs = merged_stis_data(filename)
+        rebin = True
     elif "mxhi" in filename:
         wavs, flux, errs = merged_iue_h_data(filename)
+        rebin = True
+    elif "mxlo" in filename:
+        wavs, flux, errs = iue_l_data(filename)
+        rebin = False
     else:
-        print("File {} not supported yet".format(filename))
-        raise
+        warn("File {} not supported yet, exiting".format(filename))
+        exit()
 
-    binnedwavs, binnedflux = bin_spectrum_around_lya(wavs, flux, errs)
+    if rebin:
+        binnedwavs, binnedflux = bin_spectrum_around_lya(wavs, flux, errs)
+    else:
+        binnedwavs, binnedflux = wavs, flux
 
     # remove nans (these are very annoying when they propagate, e.g.
     # max([array with nan]) = nan).
@@ -113,6 +123,14 @@ def merged_iue_h_data(filename):
     allerrs = np.concatenate([t[i]["NOISE"][pixrange(i)] for i in range(len(t))])
     idxs = np.argsort(allwavs)
     return allwavs[idxs], allflux[idxs], allerrs[idxs]
+
+
+def iue_l_data(filename):
+    t = Table.read(filename)
+    wavs = t["WAVE"]
+    flux = t["FLUX"]
+    sigma = t["SIGMA"]
+    return wavs, flux, sigma
 
 
 def bin_spectrum_around_lya(wavs, flux, errs):

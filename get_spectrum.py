@@ -76,7 +76,10 @@ def processed(target):
     if rebin:
         binnedwavs, binnedflux = bin_spectrum_around_lya(wavs, flux, errs)
     else:
-        binnedwavs, binnedflux = wavs, flux
+        wavmin = 1150
+        wavmax = 1300
+        use = np.logical_and(wavmin < wavs, wavs < wavmax)
+        binnedwavs, binnedflux = wavs[use], flux[use]
 
     # remove nans (these are very annoying when they propagate, e.g.
     # max([array with nan]) = nan).

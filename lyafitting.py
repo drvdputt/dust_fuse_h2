@@ -114,16 +114,16 @@ def plot_fit(ax, wavs, flux, fc, NHI):
 
     # continuum fit
     fcs = fc(wavs)
-    ax.plot(wavs, fcs, label="continuum fit", color=cont_color)
+    ax.plot(wavs, fcs, label="continuum fit", color=cont_color, zorder=30)
 
     # lya fit
     fms = fc(wavs) * extinction_factor(NHI, wavs)
-    ax.plot(wavs, fms, label="profile fit", color=lya_color)
+    ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
     # data / used for cont / used for lya
     used_for_cont = safe_for_cont(wavs)
     used_for_lya = safe_for_lya(wavs, flux)
-    ax.plot(wavs, flux, label="data", color="k")
+    ax.plot(wavs, flux, label="data", color="k", zorder=10)
     ax.plot(
         wavs[used_for_cont],
         flux[used_for_cont],
@@ -132,6 +132,7 @@ def plot_fit(ax, wavs, flux, fc, NHI):
         linestyle="none",
         marker="x",
         alpha=0.5,
+        zorder=50,
     )
     ax.plot(
         wavs[used_for_lya],
@@ -141,15 +142,17 @@ def plot_fit(ax, wavs, flux, fc, NHI):
         linestyle="none",
         marker=".",
         alpha=0.5,
+        zorder=45,
     )
 
     # fcrec = flux / factor
     # ax.plot(wavs, fcrec, label="reconstructed")
 
-    ax.text(
-        LYA, ax.get_ylim()[1] * 0.8, "logNHI = {:2f}".format(np.log10(NHI)), ha="center"
-    )
+    # ax.text(
+    #     LYA, ax.get_ylim()[1] * 0.8, , ha="center"
+    # )
     prepare_axes(ax)
+    # ax.set_ylim(None, np.amax(fcs) * 1.05)
 
 
 def lya_fit(target, ax=None):

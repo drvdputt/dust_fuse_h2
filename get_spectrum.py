@@ -60,8 +60,8 @@ def processed(target):
 
     if "x1d" in filename:
         wavs, flux, errs = merged_stis_data(filename)
-    # elif "mxhi" in filename:
-    #     wav, flux, err = merge_iue_h_data(filename)
+    elif "mxhi" in filename:
+        wavs, flux, errs = merged_iue_h_data(filename)
     else:
         print("File {} not supported yet".format(filename))
         raise
@@ -93,6 +93,24 @@ def merged_stis_data(filename):
     allwavs = np.concatenate(t["WAVELENGTH"])
     allflux = np.concatenate(t["FLUX"])
     allerrs = np.concatenate(t["ERROR"])
+    idxs = np.argsort(allwavs)
+    return allwavs[idxs], allflux[idxs], allerrs[idxs]
+
+
+def merged_iue_h_data(filename):
+    """Get wavelengths, fluxes and errors from IUE high res data."""
+    t = Table.read(filename)
+
+    def iue_wavs(i):
+        return t[i]["WAVELENGTH"] + t[i]["DELTAW"] * np.arange(t[i]["NPOINTS"])
+
+    def pixrange(i):
+        return slice(t[i]["STARTPIX"], t[i]["STARTPIX"] + t[i]["NPOINTS"])
+
+    allwavs = np.concatenate([iue_wavs(i) for i in range(len(t))])
+    allflux = np.concatenate([t[i]["ABS_CAL"][pixrange(i)] for i in range(len(t))])
+    # warning: the noise data is uncalibrated! Let's see what happens.
+    allerrs = np.concatenate([t[i]["NOISE"][pixrange(i)] for i in range(len(t))])
     idxs = np.argsort(allwavs)
     return allwavs[idxs], allflux[idxs], allerrs[idxs]
 

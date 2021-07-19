@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import linregress
 from scipy.optimize import minimize, bracket, brute
 import numpy as np
+import argparse
 
 LYA = 1215.67
 
@@ -162,14 +163,24 @@ def lya_fit(target, ax=None):
     if ax is not None:
         plot_fit(ax, wavs, flux, fc, NHI)
 
+    return NHI
+
 
 def main():
-    # test for one specific target for now
-    # target = "HD094493"
-    target = "HD037525"
-    lya_fit(target, ax=plt.gca())
-    plt.title(target, loc="right")
-    plt.show()
+    #    default_target = "HD094493"
+    default_target = "HD037525"
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--target", type=str, default=default_target)
+    args = ap.parse_args()
+
+    if args.target == "all":
+        for target in get_spectrum.target_use_which_spectrum:
+            NHI = lya_fit(target)
+            print(target, NHI)
+    else:
+        lya_fit(args.target, ax=plt.gca())
+        plt.title(args.target, loc="right")
+        plt.show()
 
 
 main()

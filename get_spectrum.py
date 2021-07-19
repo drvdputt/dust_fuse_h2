@@ -67,7 +67,14 @@ def processed(target):
         raise
 
     binnedwavs, binnedflux = bin_spectrum_around_lya(wavs, flux, errs)
-    return binnedwavs, binnedflux
+
+    # remove nans (these are very annoying when they propagate, e.g.
+    # max([array with nan]) = nan).
+    safe = np.isfinite(binnedflux)
+    safewavs = binnedwavs[safe]
+    safeflux = binnedflux[safe]
+    return safewavs, safeflux
+
 
 def merged_stis_data(filename):
     """Get wavelengths, fluxes and errors from all STIS spectral orders.

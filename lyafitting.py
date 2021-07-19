@@ -124,6 +124,7 @@ def plot_fit(ax, wavs, flux, fc, NHI):
     used_for_cont = safe_for_cont(wavs)
     used_for_lya = safe_for_lya(wavs, flux)
     ax.plot(wavs, flux, label="data", color="k", zorder=10)
+    # change this to an axvspan plot
     ax.plot(
         wavs[used_for_cont],
         flux[used_for_cont],
@@ -134,13 +135,14 @@ def plot_fit(ax, wavs, flux, fc, NHI):
         alpha=0.5,
         zorder=50,
     )
+    # use red x for rejected points
     ax.plot(
-        wavs[used_for_lya],
-        flux[used_for_lya],
-        label="used for lya",
-        color=lya_color,
+        wavs[np.logical_not(used_for_lya)],
+        flux[np.logical_not(used_for_lya)],
+        label="rejected",
+        color='r',
         linestyle="none",
-        marker=".",
+        marker="x",
         alpha=0.5,
         zorder=45,
     )

@@ -85,10 +85,12 @@ def extinction_factor(NHI, l):
 
 
 def chi2(NHI, fc, sigma_c, wavs, flux):
+    # overflows easily. Ignore fit points where overflow occurs
     extinctions = np.exp(NHI * cross(wavs))
     deltas = fc(wavs) - flux * extinctions
     sigmas = sigma_c * extinctions
-    chi2 = np.square((deltas / sigmas)).sum() / (len(deltas) - 1)
+    square_devs = np.square((deltas / sigmas)).sum() / (len(deltas) - 1)
+    chi2 = square_devs[np.isfinite(square_devs)].sum()
     # print("chi2 = ", chi2)
     return chi2
 

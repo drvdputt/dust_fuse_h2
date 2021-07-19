@@ -4,6 +4,8 @@ from scipy.stats import linregress
 from scipy.optimize import minimize, bracket, brute
 import numpy as np
 
+LYA = 1215.67
+
 
 def prepare_axes(ax):
     ax.set_xlabel("wavelength")
@@ -13,11 +15,12 @@ def prepare_axes(ax):
 def wavs_in_ranges(wavs, ranges):
     """Determine if wavelength is in one of the ranges given.
 
+    wavs: wavelengths to check
+
     ranges: list of (lower limit, upper limit) pairs
 
     Returns
     -------
-    wavs: wavelengths to check
     in_range: np.array containing True if the wavelength at the same
     index was in one of the ranges
 
@@ -28,12 +31,29 @@ def wavs_in_ranges(wavs, ranges):
     return in_range
 
 
+def safe_for_cont(wavs):
+    # use only these points for continuum estimation
+    cont_wav_ranges = [[1262, 1275], [1165, 1170], [1179, 1181], [1185, 1188]]
+    return wavs_in_ranges(wavs, cont_wav_ranges)
+
+
+def safe_for_lya(wavs, flux):
+    lya_exclude_wav_ranges = [[1171, 1177]]
+    safe_range = np.logical_not(wavs_in_ranges(wavs, lya_exclude_wav_ranges))
+
+    # for lya, avoid wavelengths where the cross section is large (maybe
+    # better to choose this range explicitly in wavelength numbers)
+    cross_eval = cross(wavs)
+    safe_cross = cross_eval < 0.1 * np.amax(cross_eval)
+
+    # avoid datapoints where the extinction is too strong (flux too low)
+    safe_flux = flux > np.amax(flux) / 6
+    return np.logical_and.reduce((safe_cross, safe_flux, safe_range))
+
+
 def estimate_continuum(wavs, flux):
     """Estimate the continuum using a linear fit"""
-
-    # use only these points for continuum estimation
-    wav_ranges = [[1262, 1275], [1165, 1170], [1179, 1181], [1185, 1188]]
-    use = wavs_in_ranges(wavs, wav_ranges)
+    use = safe_for_cont(wavs)
 
     # simple linear regression
     x = wavs[use]
@@ -63,15 +83,48 @@ def chi2(NHI, fc, sigma_c, wavs, flux):
 
 
 def plot_fit(ax, wavs, flux, fc, NHI):
+    cont_color = "m"
+    lya_color = "xkcd:sky blue"
+
+    # continuum fit
     fcs = fc(wavs)
-    fms = fc(wavs) * np.exp(-NHI * cross(wavs))
+    ax.plot(wavs, fcs, label="continuum fit", color=cont_color)
+
+    # lya fit
+    factor = np.exp(-NHI * cross(wavs))
+    fms = fc(wavs) * factor
+    ax.plot(wavs, fms, label="profile fit", color=lya_color)
+
+    # data / used for cont / used for lya
+    used_for_cont = safe_for_cont(wavs)
+    used_for_lya = safe_for_lya(wavs, flux)
     ax.plot(wavs, flux, label="data", color="k")
-    ax.plot(wavs, fcs, label="continuum fit")
-    ax.plot(wavs, fms, label="profile fit")
+    ax.plot(
+        wavs[used_for_cont],
+        flux[used_for_cont],
+        label="used for continuum",
+        color=cont_color,
+        linestyle="none",
+        marker=".",
+        alpha=0.5,
+    )
+    ax.plot(
+        wavs[used_for_lya],
+        flux[used_for_lya],
+        label="used for lya",
+        color=lya_color,
+        linestyle="none",
+        marker=".",
+        alpha=0.5,
+    )
+
+    # fcrec = flux / factor
+    # ax.plot(wavs, fcrec, label="reconstructed")
+
+    ax.text(
+        LYA, ax.get_ylim()[1] * 0.8, "logNHI = {:2f}".format(np.log10(NHI)), ha="center"
+    )
     prepare_axes(ax)
-
-
-# -----------------------------------------------------------------------
 
 
 def lya_fit(target, ax=None):
@@ -86,34 +139,18 @@ def lya_fit(target, ax=None):
 
     wavs, flux = get_spectrum.processed(target)
 
-    # avoid nans (move to get_spectrum later. First I need to know if
-    # this will work for all data.)
-    safe = np.isfinite(flux)
-    safewavs = wavs[safe]
-    safeflux = flux[safe]
-
     # continuum
-    slope, intercept, sigma_c = estimate_continuum(safewavs, safeflux)
+    slope, intercept, sigma_c = estimate_continuum(wavs, flux)
 
     def fc(x):
         return slope * x + intercept
 
-    # for lya, avoid wavelengths where the cross section is large (maybe
-    # better to choose this range explicitly in wavelength numbers)
-    cross_eval = cross(safewavs)
-    safe_cross = cross_eval < 0.1 * np.amax(cross_eval)
-    safewavs = safewavs[safe_cross]
-    safeflux = safeflux[safe_cross]
-    if safe.sum() == 0:
-        print("no safe data points!")
-        raise
-
-    # avoid datapoints where the extinction is too strong (flux too low)
-    use = safeflux > np.amax(safeflux) / 6
+    use = safe_for_lya(wavs, flux)
 
     # the fitting itself
+
     NHI_init = 1e20
-    fargs = (fc, sigma_c, safewavs[use], safeflux[use])
+    fargs = (fc, sigma_c, wavs[use], flux[use])
     # result = minimize(chi2, NHI_init, args=fargs)
     # NHI = result.x[0]
     # result = bracket(chi2, 1e19, 1e22, args=fargs)
@@ -130,6 +167,7 @@ def main():
     # test for one specific target for now
     target = "HD094493"
     lya_fit(target, ax=plt.gca())
+    plt.title(target, loc="right")
     plt.show()
 
 

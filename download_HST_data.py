@@ -27,6 +27,24 @@ def main():
 def process_mast_results(target, results):
     print(target)
     count = {}
+
+    # save results to disk for later debugging
+    target_dir = Path.cwd() / "data" / target
+    target_dir.mkdir(exist_ok=True)
+    results.write(
+        target_dir / "mast_search_results.txt",
+        format="ascii.fixed_width",
+        include_names=[
+            "obs_collection",
+            "obs_id",
+            "target_name",
+            "t_exptime",
+            "filters",
+            "proposal_id",
+            "obsid",
+        ],
+    )
+
     for row in results:
         o = row["obs_collection"]
         i = row["instrument_name"]
@@ -34,8 +52,6 @@ def process_mast_results(target, results):
         print("\t", o, i, f)
 
         if "STIS" in i and (f == "E140H" or f == "E140M"):
-            target_dir = Path.cwd() / "data" / target
-            target_dir.mkdir(exist_ok=True)
             products = mast.Observations.get_product_list(row)
             manifest = mast.Observations.download_products(
                 products, productType="SCIENCE", download_dir=str(target_dir)

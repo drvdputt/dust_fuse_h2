@@ -86,7 +86,7 @@ def processed(target):
     safe = np.isfinite(binnedflux)
     safewavs = binnedwavs[safe]
     safeflux = binnedflux[safe]
-    return safewavs, safeflux
+    return safewavs, safeflux, filename
 
 
 def merged_stis_data(filename):

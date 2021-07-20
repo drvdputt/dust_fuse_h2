@@ -1,7 +1,7 @@
 import get_spectrum
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
-from scipy.optimize import minimize, bracket, brute
+from scipy.optimize import brute
 import numpy as np
 import argparse
 import warnings
@@ -80,22 +80,22 @@ def cross(l):
     return 4.26e-20 / (6.04e-10 + np.square(l - l0))
 
 
-def extinction_factor(NHI, l):
-    return np.exp(-NHI * cross(l))
+def extinction_factor(logNHI, l):
+    return np.exp(-np.power(10., logNHI) * cross(l))
 
 
-def chi2(NHI, fc, sigma_c, wavs, flux):
+def chi2(logNHI, fc, sigma_c, wavs, flux):
     # overflows easily. Ignore fit points where overflow occurs
-    extinctions = np.exp(NHI * cross(wavs))
-    deltas = fc(wavs) - flux * extinctions
-    sigmas = sigma_c * extinctions
+    extinction = 1/extinction_factor(logNHI, wavs)
+    deltas = fc(wavs) - flux * extinction
+    sigmas = sigma_c * extinction
     square_devs = np.square((deltas / sigmas)).sum() / (len(deltas) - 1)
     chi2 = square_devs[np.isfinite(square_devs)].sum()
     # print("chi2 = ", chi2)
     return chi2
 
 
-def plot_profile(ax, fc, NHI):
+def plot_profile(ax, fc, logNHI):
     """Plot an extra profile of user-specified NHI.
 
     Ax needs to have been prepared properly (xlims already in their
@@ -104,11 +104,11 @@ def plot_profile(ax, fc, NHI):
     """
     extra_color = "g"
     x = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 500)
-    y = fc(x) * extinction_factor(NHI, x)
+    y = fc(x) * extinction_factor(logNHI, x)
     ax.plot(x, y, color=extra_color, label="user")
 
 
-def plot_fit(ax, wavs, flux, fc, NHI):
+def plot_fit(ax, wavs, flux, fc, logNHI):
     cont_color = "m"
     lya_color = "xkcd:sky blue"
 
@@ -117,7 +117,7 @@ def plot_fit(ax, wavs, flux, fc, NHI):
     ax.plot(wavs, fcs, label="continuum fit", color=cont_color, zorder=30)
 
     # lya fit
-    fms = fc(wavs) * extinction_factor(NHI, wavs)
+    fms = fc(wavs) * extinction_factor(logNHI, wavs)
     ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
     # data / used for cont / used for lya
@@ -140,7 +140,7 @@ def plot_fit(ax, wavs, flux, fc, NHI):
         wavs[np.logical_not(used_for_lya)],
         flux[np.logical_not(used_for_lya)],
         label="rejected",
-        color='r',
+        color="r",
         linestyle="none",
         marker="x",
         alpha=0.5,
@@ -158,7 +158,7 @@ def plot_fit(ax, wavs, flux, fc, NHI):
 
 
 def lya_fit(target, ax=None):
-    """Fit NHI using lya.
+    """Fit logNHI using lya.
 
     target: string referring to any of the targets (see directories in
     ./data/)
@@ -167,7 +167,7 @@ def lya_fit(target, ax=None):
 
     """
 
-    wavs, flux = get_spectrum.processed(target)
+    wavs, flux, filename = get_spectrum.processed(target)
 
     # continuum
     slope, intercept, sigma_c = estimate_continuum(wavs, flux)
@@ -178,39 +178,45 @@ def lya_fit(target, ax=None):
     use = safe_for_lya(wavs, flux)
 
     # the fitting itself
-
-    NHI_init = 1e20
     fargs = (fc, sigma_c, wavs[use], flux[use])
-    # result = minimize(chi2, NHI_init, args=fargs)
-    # NHI = result.x[0]
-    # result = bracket(chi2, 1e19, 1e22, args=fargs)
-    # print(result)
-    result = brute(chi2, [(1e19, 1e22)], args=fargs, Ns=1000)
+    result = brute(chi2, [(19.0, 22.0)], args=fargs, Ns=1000)
     print(result)
-    NHI = result[0]
+    logNHI = result[0]
 
     if ax is not None:
-        plot_fit(ax, wavs, flux, fc, NHI)
+        plot_fit(ax, wavs, flux, fc, logNHI)
 
-    return NHI, fc
+    return logNHI, fc, filename
 
 
 def run_all():
+    targets = []
+    data = []
+    logNHIs = []
+
     for target in get_spectrum.target_use_which_spectrum:
         fig, ax = plt.subplots()
-        NHI, fc = lya_fit(target, ax=ax)
-        ax.set_title(target + "\nlogNHI = {:2f}".format(np.log10(NHI)))
+        logNHI, fc, file_used = lya_fit(target, ax=ax)
+        ax.set_title(target + f"\nlogNHI = {logNHI:2f}")
         fig.savefig(f"./lya-plots/{target}.pdf")
-        print(target, NHI)
+        targets.append(target)
+        data.append(file_used)
+        logNHIs.append(logNHI)
+
+    overview = astropy.table.QTable(
+        [targets, data, logNHIs], names=("target", "data_used", "logNHI")
+    )
+    print(overview)
+    overview.write("lyafitting_overview.dat", format="ascii", overwrite=True)
 
 
 def run_one(target, compare=None):
     ax = plt.gca()
-    NHI, fc = lya_fit(target, ax=ax)
+    logNHI, fc = lya_fit(target, ax=ax)
     plt.title(target, loc="right")
     if compare is not None:
-        NHIc = np.power(10.0, compare)
-        plot_profile(ax, fc, NHIc)
+        logNHIc = compare
+        plot_profile(ax, fc, logNHIc)
 
     plt.show()
 

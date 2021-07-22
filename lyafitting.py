@@ -110,7 +110,6 @@ def chi2(logNHI, fc, sigma_c, wavs, flux):
     # DS94 divide by n - 1, where n is the number of points used, so we
     # do that here too
     chi2 = square_devs.sum() / (len(square_devs) - 1)
-    # print("chi2 = ", chi2)
     return chi2
 
 
@@ -196,20 +195,46 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     # the fitting itself
     fargs = (fc, sigma_c, wavs[use], flux[use])
     result, chi2_min, NHIgrid, chi2grid = brute(
-        chi2, [(19.0, 22.0)], args=fargs, Ns=1000, full_output=True
+        chi2, [(19.0, 23.0)], args=fargs, Ns=2000, full_output=True
     )
-    print(result)
     logNHI = result[0]
 
-    # error estimation: find where chi2 = chi2_min + 1
-    # TODO
+    # error estimation: sigma is where chi2 = chi2_min + 1. Don't use
+    # bisect here because we don't know how well chi2 behaves.
+    middle = np.argmin(np.abs(NHIgrid - logNHI))
+
+    if np.amax(chi2grid[:middle]) < chi2_min + 1:
+        print("Lower bound not found")
+        lower = NHIgrid[np.argmax(chi2grid[:middle])]
+    else:
+        for i in reversed(range(middle)):
+            if chi2grid[i] > chi2_min + 1:
+                lower = NHIgrid[i]
+                break
+
+    if np.amax(chi2grid[middle:]) < chi2_min + 1:
+        print("Upper bound not found")
+        upper = NHIgrid[middle + np.argmax(chi2grid[middle:])]
+    else:
+        for i in range(middle, len(chi2grid)):
+            if chi2grid[i] > chi2_min + 1:
+                upper = NHIgrid[i]
+                break
+
+    print(
+        f"Fit result for {target}:\n"
+        f"logNHI={logNHI:.2f}, lower={lower:.2f}, upper={upper:.2f}, chi2={chi2_min:.2f}"
+    )
 
     if ax_fit is not None:
         plot_fit(ax_fit, wavs, flux, fc, logNHI)
 
     if ax_chi2 is not None:
-        ax_chi2.plot(NHIgrid, np.exp(-chi2grid), color="k")
+        ax_chi2.plot(NHIgrid, chi2grid, color="k")
+        # ax_chi2.plot(NHIgrid, np.exp(-chi2grid), color="k")
         ax_chi2.set_xlabel("$\\log N(\\mathrm{H I})$ [cm$^{-2}$]")
+        ax_chi2.axvline(upper)
+        ax_chi2.axvline(lower)
         # ax_chi2.set_ylabel("$\\exp(-\\chi^2)$")
         ax_chi2.set_ylabel("$\\chi^2$")
 

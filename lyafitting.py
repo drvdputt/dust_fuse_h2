@@ -14,7 +14,7 @@ LYA = 1215.67
 
 
 def prepare_axes(ax):
-    ax.set_xlabel("wavelength")
+    ax.set_xlabel("wavelength ($\\AA$)")
     ax.set_ylabel("flux (erg cm$^{-2}$s$^{-1}\\AA^{-1}$)")
 
 

@@ -102,8 +102,14 @@ def chi2(logNHI, fc, sigma_c, wavs, flux):
     extinction = 1 / extinction_factor(logNHI, wavs)
     deltas = fc(wavs) - flux * extinction
     sigmas = sigma_c * extinction
-    square_devs = np.square((deltas / sigmas)).sum() / (len(deltas) - 1)
-    chi2 = square_devs[np.isfinite(square_devs)].sum()
+    square_devs = np.square(deltas / sigmas)
+
+    # filter out infinities and nans
+    square_devs = square_devs[np.isfinite(square_devs)]
+
+    # DS94 divide by n - 1, where n is the number of points used, so we
+    # do that here too
+    chi2 = square_devs.sum() / (len(square_devs) - 1)
     # print("chi2 = ", chi2)
     return chi2
 

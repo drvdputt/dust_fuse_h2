@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 import warnings
 import astropy
+from astropy.stats import sigma_clip
 
 warnings.filterwarnings("ignore", category=astropy.units.UnitsWarning)
 
@@ -36,10 +37,18 @@ def wavs_in_ranges(wavs, ranges):
     return in_range
 
 
-def safe_for_cont(wavs):
+def not_peak(wavs, flux):
+    """Return mask to avoid peaks in the spectrum."""
+    masked_array = sigma_clip(flux)  # uses 5 iterations by default
+    return np.logical_not(masked_array.mask)
+
+
+def safe_for_cont(wavs, flux):
+    """Return mask that indicates wavelengths for continuum fit."""
     # use only these points for continuum estimation
     cont_wav_ranges = [[1262, 1275], [1165, 1170], [1179, 1181], [1185, 1188]]
-    return wavs_in_ranges(wavs, cont_wav_ranges)
+    safe = np.logical_and(wavs_in_ranges(wavs, cont_wav_ranges), not_peak(wavs, flux))
+    return safe
 
 
 def safe_for_lya(wavs, flux):
@@ -55,12 +64,13 @@ def safe_for_lya(wavs, flux):
 
     # avoid datapoints where the extinction is too strong (flux too low)
     safe_flux = flux > np.average(flux) / 10
-    return np.logical_and.reduce((safe_flux, safe_range))
+
+    return np.logical_and.reduce((safe_flux, safe_range, not_peak(wavs, flux)))
 
 
 def estimate_continuum(wavs, flux):
     """Estimate the continuum using a linear fit"""
-    use = safe_for_cont(wavs)
+    use = safe_for_cont(wavs, flux)
 
     # simple linear regression
     x = wavs[use]
@@ -121,9 +131,8 @@ def plot_fit(ax, wavs, flux, fc, logNHI):
     ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
     # data / used for cont / used for lya
-    used_for_cont = safe_for_cont(wavs)
+    used_for_cont = safe_for_cont(wavs, flux)
     used_for_lya = safe_for_lya(wavs, flux)
-    ax.plot(wavs, flux, label="data", color="k", zorder=10)
     # change this to an axvspan plot
     ax.plot(
         wavs[used_for_cont],
@@ -131,10 +140,14 @@ def plot_fit(ax, wavs, flux, fc, logNHI):
         label="used for continuum",
         color=cont_color,
         linestyle="none",
-        marker="x",
+        marker="o",
+        markerfacecolor="none",
         alpha=0.5,
         zorder=50,
     )
+
+    # finally, plot the spectrum and the rejected points
+    ax.plot(wavs, flux, label="data", color="k", zorder=10)
     # use red x for rejected points
     ax.plot(
         wavs[np.logical_not(used_for_lya)],

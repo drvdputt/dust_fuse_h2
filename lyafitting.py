@@ -80,9 +80,12 @@ def estimate_continuum(wavs, flux):
     # estimation of spectroscopic noise
     m = linregress_result.slope
     b = linregress_result.intercept
-    sigma = np.sqrt(np.average(np.square(y - m * x + b)))
 
-    return linregress_result.slope, linregress_result.intercept, sigma
+    # DS94 use sum instead of average. Not sure if that is the correct
+    # way.
+    sigma = np.sqrt(np.average(np.square(y - (m * x + b))))
+
+    return m, b, sigma
 
 
 def cross(l):

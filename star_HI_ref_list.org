@@ -255,7 +255,7 @@ HD235874
       | HD046202   |      1 | self                        |     | IUE H       | peak removal               |
       | HD047129   |      1 | self                        |     | IUE H       | peak removal               |
       | HD051013   |      7 | AC1996 21 cm                |     | IUE H       | peak removal               |
-      | HD062542   |      1 | self                        |     | IUE H, STIS | UNUSABLE STIS, use other   |
+      | HD062542   |      1 | self                        |     | IUE H, STIS | UNUSABLE STIS, IUE noisy*  |
       | HD093028   |      1 | self                        |     | IUE H       | peak removal               |
       | HD093827   |      1 | self                        |     | IUE H       | peak removal               |
       | HD094493   |    1,3 | self                        | y   | IUE H, STIS | good                       |
@@ -265,8 +265,11 @@ HD235874
       | HD152248   |      1 | self                        |     | IUE H       | peak removal               |
       | HD179406   |      1 | self                        |     | IUE H       | good                       |
       | HD190603   |      1 | self                        |     | IUE H, STIS | peak removal               |
-      | HD197770   |      1 | self                        |     | IUE H, STIS | UNUSABLE STIS, use other   |
+      | HD197770   |      1 | self                        |     | IUE H, STIS | UNUSABLE STIS, IUE noisy*  |
       | HD209339   |      1 | self                        |     | IUE L, STIS | good                       |
       | HD216898   |      1 | self                        |     | IUE H       | peak removal               |
       | HD235874   |      1 | self                        |     | IUE L       | good (slight shift)        |
       | HD326329   |     12 | Should probably be 13 or 14 |     | IUE H       | peak removal               |
+
+      * Maybe because there is molecular material in the sightline? There is also a weird slope
+        on the short wavelength side.

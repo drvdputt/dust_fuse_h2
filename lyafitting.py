@@ -181,7 +181,8 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     ax: axes to plot the result on
 
     """
-
+    print("-" * 80)
+    print(f"Fitting {target}".center(80))
     wavs, flux, filename = get_spectrum.processed(target)
 
     # continuum
@@ -222,7 +223,6 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
                 break
 
     print(
-        f"Fit result for {target}:\n"
         f"logNHI={logNHI:.2f}, lower={lower:.2f}, upper={upper:.2f}, chi2={chi2_min:.2f}"
     )
 
@@ -233,8 +233,8 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
         ax_chi2.plot(NHIgrid, chi2grid, color="k")
         # ax_chi2.plot(NHIgrid, np.exp(-chi2grid), color="k")
         ax_chi2.set_xlabel("$\\log N(\\mathrm{H I})$ [cm$^{-2}$]")
-        ax_chi2.axvline(upper)
-        ax_chi2.axvline(lower)
+        ax_chi2.axvspan(lower, upper, color="y", alpha=0.3)
+        ax_chi2.axvline(logNHI, color="k", linestyle=":")
         # ax_chi2.set_ylabel("$\\exp(-\\chi^2)$")
         ax_chi2.set_ylabel("$\\chi^2$")
 

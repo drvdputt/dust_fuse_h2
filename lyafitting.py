@@ -6,7 +6,7 @@ import numpy as np
 import argparse
 import warnings
 import astropy
-from astropy.stats import sigma_clip
+from astropy import convolution, stats
 
 warnings.filterwarnings("ignore", category=astropy.units.UnitsWarning)
 
@@ -16,6 +16,21 @@ LYA = 1215.67
 def prepare_axes(ax):
     ax.set_xlabel("wavelength ($\\AA$)")
     ax.set_ylabel("flux (erg cm$^{-2}$s$^{-1}\\AA^{-1}$)")
+
+
+def boxcar_smooth(wavs, flux):
+    """
+    Convolve with a boxcar.
+    """
+    pix_per_ang = len(wavs) / (wavs[-1] - wavs[0])
+    pix_per_o25 = 0.50 * pix_per_ang
+    if pix_per_o25 < 2:
+        # do nothing if spectrum too low res for smoothing
+        return flux
+
+    kernel = convolution.Box1DKernel(pix_per_o25)
+    smoothed = convolution.convolve(flux, kernel)
+    return smoothed
 
 
 def wavs_in_ranges(wavs, ranges):
@@ -39,7 +54,7 @@ def wavs_in_ranges(wavs, ranges):
 
 def not_peak(wavs, flux):
     """Return mask to avoid peaks in the spectrum."""
-    masked_array = sigma_clip(flux)  # uses 5 iterations by default
+    masked_array = stats.sigma_clip(flux)  # uses 5 iterations by default
     return np.logical_not(masked_array.mask)
 
 
@@ -195,6 +210,8 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
 
     # obtain data
     wavs, flux, filename = get_spectrum.processed(target)
+    # smooth (experimental)
+    flux = boxcar_smooth(wavs, flux)
     # estimate continuum
     fc = estimate_continuum(wavs, flux)
     # sigma to use in chi2 equation

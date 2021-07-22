@@ -91,12 +91,12 @@ def cross(l):
 
 
 def extinction_factor(logNHI, l):
-    return np.exp(-np.power(10., logNHI) * cross(l))
+    return np.exp(-np.power(10.0, logNHI) * cross(l))
 
 
 def chi2(logNHI, fc, sigma_c, wavs, flux):
     # overflows easily. Ignore fit points where overflow occurs
-    extinction = 1/extinction_factor(logNHI, wavs)
+    extinction = 1 / extinction_factor(logNHI, wavs)
     deltas = fc(wavs) - flux * extinction
     sigmas = sigma_c * extinction
     square_devs = np.square((deltas / sigmas)).sum() / (len(deltas) - 1)
@@ -160,14 +160,8 @@ def plot_fit(ax, wavs, flux, fc, logNHI):
         zorder=45,
     )
 
-    # fcrec = flux / factor
-    # ax.plot(wavs, fcrec, label="reconstructed")
-
-    # ax.text(
-    #     LYA, ax.get_ylim()[1] * 0.8, , ha="center"
-    # )
+    ax.set_ylim([0, 1.1 * np.amax(flux[used_for_lya])])
     prepare_axes(ax)
-    # ax.set_ylim(None, np.amax(fcs) * 1.05)
 
 
 def lya_fit(target, ax=None):
@@ -225,7 +219,7 @@ def run_all():
 
 def run_one(target, compare=None):
     ax = plt.gca()
-    logNHI, fc = lya_fit(target, ax=ax)
+    logNHI, fc, filename = lya_fit(target, ax=ax)
     plt.title(target, loc="right")
     if compare is not None:
         logNHIc = compare

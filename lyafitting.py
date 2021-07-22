@@ -251,7 +251,7 @@ def run_one(target, compare=None):
     plt.title(target, loc="right")
     if compare is not None:
         logNHIc = compare
-        plot_profile(ax, fc, logNHIc)
+        plot_profile(ax_fit, fc, logNHIc)
 
     plt.show()
 

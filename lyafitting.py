@@ -173,7 +173,7 @@ def plot_fit(ax, wavs, flux, fc, logNHI):
     prepare_axes(ax)
 
 
-def lya_fit(target, ax=None):
+def lya_fit(target, ax_fit=None, ax_chi2=None):
     """Fit logNHI using lya.
 
     target: string referring to any of the targets (see directories in
@@ -195,40 +195,59 @@ def lya_fit(target, ax=None):
 
     # the fitting itself
     fargs = (fc, sigma_c, wavs[use], flux[use])
-    result = brute(chi2, [(19.0, 22.0)], args=fargs, Ns=1000)
+    result, chi2_min, NHIgrid, chi2grid = brute(
+        chi2, [(19.0, 22.0)], args=fargs, Ns=1000, full_output=True
+    )
     print(result)
     logNHI = result[0]
 
-    if ax is not None:
-        plot_fit(ax, wavs, flux, fc, logNHI)
+    # error estimation: find where chi2 = chi2_min + 1
+    # TODO
 
-    return logNHI, fc, filename
+    if ax_fit is not None:
+        plot_fit(ax_fit, wavs, flux, fc, logNHI)
+
+    if ax_chi2 is not None:
+        ax_chi2.plot(NHIgrid, np.exp(-chi2grid), color="k")
+        ax_chi2.set_xlabel("$\\log N(\\mathrm{H I})$ [cm$^{-2}$]")
+        # ax_chi2.set_ylabel("$\\exp(-\\chi^2)$")
+        ax_chi2.set_ylabel("$\\chi^2$")
+
+    info = dict(filename=filename, chi2=chi2)
+    return logNHI, fc, info
 
 
 def run_all():
     targets = []
-    data = []
+    infos = []
     logNHIs = []
 
     for target in get_spectrum.target_use_which_spectrum:
-        fig, ax = plt.subplots()
-        logNHI, fc, file_used = lya_fit(target, ax=ax)
-        ax.set_title(target + f"\nlogNHI = {logNHI:2f}")
-        fig.savefig(f"./lya-plots/{target}.pdf")
+        fig1, ax1 = plt.subplots()
+        fig2, ax2 = plt.subplots()
+        logNHI, fc, info = lya_fit(target, ax_fit=ax1, ax_chi2=ax2)
+        ax1.set_title(target + f"\nlogNHI = {logNHI:2f}")
+        fig1.savefig(f"./lya-plots/{target}.pdf")
+        fig2.savefig(f"./lya-plots/{target}_chi2.pdf")
         targets.append(target)
-        data.append(file_used)
+        infos.append(info)
         logNHIs.append(logNHI)
 
-    overview = astropy.table.QTable(
-        [targets, data, logNHIs], names=("target", "data_used", "logNHI")
-    )
+    col_names = ["target", "logNHI"]
+    col_data = [targets, logNHIs]
+    # add extra output from ly_fit like chi2, file names used, ...
+    for k in infos[0]:
+        col_names.append(k)
+        col_data.append([info[k] for info in infos])
+
+    overview = astropy.table.QTable(col_data, names=col_names)
     print(overview)
     overview.write("lyafitting_overview.dat", format="ascii", overwrite=True)
 
 
 def run_one(target, compare=None):
-    ax = plt.gca()
-    logNHI, fc, filename = lya_fit(target, ax=ax)
+    fig, [ax_fit, ax_chi2] = plt.subplots(1, 2)
+    logNHI, fc, filename = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2)
     plt.title(target, loc="right")
     if compare is not None:
         logNHIc = compare

@@ -81,11 +81,20 @@ def estimate_continuum(wavs, flux):
     m = linregress_result.slope
     b = linregress_result.intercept
 
+    def fc(x):
+        return m * x + b
+
+    return fc
+
+
+def estimate_noise(wavs, flux, fc):
+    # see figure 1 in DS94
+    wav_range_DS94 = [1263, 1269]
+    use = wavs_in_ranges(wavs, [wav_range_DS94])
     # DS94 use sum instead of average. Not sure if that is the correct
     # way.
-    sigma = np.sqrt(np.average(np.square(y - (m * x + b))))
-
-    return m, b, sigma
+    sigma = np.sqrt(np.average(np.square(flux[use] - fc(wavs[use]))))
+    return sigma
 
 
 def cross(l):
@@ -183,14 +192,14 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     """
     print("-" * 80)
     print(f"Fitting {target}".center(80))
+
+    # obtain data
     wavs, flux, filename = get_spectrum.processed(target)
-
-    # continuum
-    slope, intercept, sigma_c = estimate_continuum(wavs, flux)
-
-    def fc(x):
-        return slope * x + intercept
-
+    # estimate continuum
+    fc = estimate_continuum(wavs, flux)
+    # sigma to use in chi2 equation
+    sigma_c = estimate_noise(wavs, flux, fc)
+    # choose clean parts of spectrum
     use = safe_for_lya(wavs, flux)
 
     # the fitting itself

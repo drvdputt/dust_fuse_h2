@@ -150,7 +150,23 @@ def plot_profile(ax, fc, logNHI):
     ax.plot(x, y, color=extra_color, label="user")
 
 
-def plot_fit(ax, wavs, flux, fc, logNHI):
+def plot_fit(ax, wavs, flux, fc, logNHI, lower_upper=None):
+    """Plot lya model, continuum model, and data
+
+    ax: Axes object to use
+
+    wavs: wavelengths to use for x
+
+    flux: flux data to which the fit was performed
+
+    fc: function of wavelength, representing the continuum model
+
+    logNHI: the fit result
+
+    upper_lower: tuple (upper, lower), used to visualize the uncertainty on logNHI
+
+    """
+
     cont_color = "m"
     lya_color = "xkcd:sky blue"
 
@@ -159,7 +175,7 @@ def plot_fit(ax, wavs, flux, fc, logNHI):
     ax.plot(wavs, fcs, label="continuum fit", color=cont_color, zorder=30)
 
     # lya fit
-    fms = fc(wavs) * extinction_factor(logNHI, wavs)
+    fms = fcs * extinction_factor(logNHI, wavs)
     ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
     # data / used for cont / used for lya
@@ -191,6 +207,11 @@ def plot_fit(ax, wavs, flux, fc, logNHI):
         alpha=0.5,
         zorder=45,
     )
+
+    if lower_upper is not None:
+        lower_fms = fcs * extinction_factor(lower_upper[0], wavs)
+        upper_fms = fcs * extinction_factor(lower_upper[1], wavs)
+        ax.fill_between(wavs, lower_fms, upper_fms, alpha=0.3, color=lya_color)
 
     ax.set_ylim([0, 1.1 * np.amax(flux[used_for_lya])])
     prepare_axes(ax)
@@ -253,7 +274,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     )
 
     if ax_fit is not None:
-        plot_fit(ax_fit, wavs, flux, fc, logNHI)
+        plot_fit(ax_fit, wavs, flux, fc, logNHI, (lower, upper))
 
     if ax_chi2 is not None:
         ax_chi2.plot(NHIgrid, chi2grid, color="k")

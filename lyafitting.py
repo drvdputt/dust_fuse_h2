@@ -12,6 +12,9 @@ warnings.filterwarnings("ignore", category=astropy.units.UnitsWarning)
 
 LYA = 1215.67
 
+# see figure 1 in DS94
+wav_range_DS94 = [1265, 1271]
+
 
 def prepare_axes(ax):
     ax.set_xlabel("wavelength ($\\AA$)")
@@ -61,7 +64,7 @@ def not_peak(wavs, flux):
 def safe_for_cont(wavs, flux):
     """Return mask that indicates wavelengths for continuum fit."""
     # use only these points for continuum estimation
-    cont_wav_ranges = [[1262, 1275], [1165, 1170], [1179, 1181], [1185, 1188]]
+    cont_wav_ranges = [wav_range_DS94, [1165, 1170], [1179, 1181], [1185, 1188]]
     safe = np.logical_and(wavs_in_ranges(wavs, cont_wav_ranges), not_peak(wavs, flux))
     return safe
 
@@ -71,7 +74,6 @@ def safe_for_lya(wavs, flux):
     # exp(100) ~ e43 is still relatively safe
     lya_exclude_wav_ranges = [[1212.67, 1218.67]]
     safe_range = np.logical_not(wavs_in_ranges(wavs, lya_exclude_wav_ranges))
-
     # for lya, avoid wavelengths where the cross section is large (maybe
     # better to choose this range explicitly in wavelength numbers)
     # cross_eval = cross(wavs)
@@ -103,8 +105,6 @@ def estimate_continuum(wavs, flux):
 
 
 def estimate_noise(wavs, flux, fc):
-    # see figure 1 in DS94
-    wav_range_DS94 = [1263, 1269]
     use = wavs_in_ranges(wavs, [wav_range_DS94])
     # DS94 use sum instead of average. Not sure if that is the correct
     # way.

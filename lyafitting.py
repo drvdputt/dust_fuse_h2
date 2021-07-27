@@ -20,7 +20,17 @@ target_noise_wav_range = {"BD+56d524": [1243, 1299]}
 
 # per-target wavelength exclusions (due to spectroscopic features seen
 # by eye)
-default_exclude_wav_ranges = [[1171, 1178], [1181, 1185], [1190, 1191], [1192, 1195]]
+default_exclude_wav_ranges = [
+    [1171, 1178],
+    [1181, 1185],
+    [1190, 1191],
+    [1192, 1195],
+    [1198, 1201.4],
+    [1205.5, 1207],
+    [1227.6, 1239],
+    [1249, 1252],
+    [1258.5, 1262],
+]
 target_exclude_wav_ranges = {
     "BD+52d3210": [
         [1209, 1221],  # geocoronal
@@ -35,6 +45,8 @@ target_exclude_wav_ranges = {
         [1236.5, 1240],
         [1171, 1180],
     ],
+    "HD047129": default_exclude_wav_ranges + [[1242, 1250]],
+    "HD152248": default_exclude_wav_ranges + [[1242, 1250], [1165.6, 1177]],
 }
 
 

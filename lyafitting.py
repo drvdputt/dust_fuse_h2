@@ -211,7 +211,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     # obtain data
     wavs, flux, filename = get_spectrum.processed(target)
     # smooth (experimental)
-    flux = boxcar_smooth(wavs, flux)
+    # flux = boxcar_smooth(wavs, flux)
     # estimate continuum
     fc = estimate_continuum(wavs, flux)
     # sigma to use in chi2 equation

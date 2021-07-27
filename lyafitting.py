@@ -13,7 +13,29 @@ warnings.filterwarnings("ignore", category=astropy.units.UnitsWarning)
 LYA = 1215.67
 
 # see figure 1 in DS94
-wav_range_DS94 = [1265, 1271]
+default_noise_wav_range_DS94 = [1265, 1271]
+
+# use a different value for certain targets
+target_noise_wav_range = {"BD+56d524": [1243, 1299]}
+
+# per-target wavelength exclusions (due to spectroscopic features seen
+# by eye)
+default_exclude_wav_ranges = [[1171, 1178], [1181, 1185], [1190, 1191], [1192, 1195]]
+target_exclude_wav_ranges = {
+    "BD+52d3210": [
+        [1209, 1221],  # geocoronal
+        [1247, 1266],
+        [1236.5, 1240],
+        [1171, 1180],
+        [1194, 1199],
+    ],
+    "BD+56d524": [
+        [1206, 1223],  # geocoronal
+        [1247, 1266],
+        [1236.5, 1240],
+        [1171, 1180],
+    ],
+}
 
 
 def prepare_axes(ax):
@@ -51,43 +73,54 @@ def wavs_in_ranges(wavs, ranges):
     """
     in_range = np.full(len(wavs), False)
     for (lo, hi) in ranges:
-        in_range = np.logical_or(in_range, np.logical_and(wavs > lo, wavs < hi))
+        in_range = in_range | ((wavs > lo) & (wavs < hi))
     return in_range
 
 
-def not_peak(wavs, flux):
+def is_good_data(wavs, flux, target):
+    peak = is_peak(wavs, flux)
+
+    exclude_wav_ranges = target_exclude_wav_ranges.get(
+        target, default_exclude_wav_ranges
+    )
+    excluded = wavs_in_ranges(wavs, exclude_wav_ranges)
+
+    return np.logical_not(peak | excluded)
+
+
+def is_peak(wavs, flux):
     """Return mask to avoid peaks in the spectrum."""
     masked_array = stats.sigma_clip(flux)  # uses 5 iterations by default
-    return np.logical_not(masked_array.mask)
+    return masked_array.mask
 
 
-def safe_for_cont(wavs, flux):
+def safe_for_cont(wavs, flux, target):
     """Return mask that indicates wavelengths for continuum fit."""
     # use only these points for continuum estimation
-    cont_wav_ranges = [wav_range_DS94, [1165, 1170], [1179, 1181], [1185, 1188]]
-    safe = np.logical_and(wavs_in_ranges(wavs, cont_wav_ranges), not_peak(wavs, flux))
-    return safe
+
+    noise_wav_range = target_noise_wav_range.get(target, default_noise_wav_range_DS94)
+    cont_wav_ranges = [
+        noise_wav_range,
+        [1165, 1170],
+        [1179, 1181],
+        [1185, 1188],
+    ]
+    use = wavs_in_ranges(wavs, cont_wav_ranges)
+    good = is_good_data(wavs, flux, target)
+    return use & good
 
 
-def safe_for_lya(wavs, flux):
+def safe_for_lya(wavs, flux, target):
     # at these wavelengths, 1e22 * cross is about 100
     # exp(100) ~ e43 is still relatively safe
-    lya_exclude_wav_ranges = [[1212.67, 1218.67]]
-    safe_range = np.logical_not(wavs_in_ranges(wavs, lya_exclude_wav_ranges))
-    # for lya, avoid wavelengths where the cross section is large (maybe
-    # better to choose this range explicitly in wavelength numbers)
-    # cross_eval = cross(wavs)
-    # safe_cross = cross_eval < 0.05 * np.amax(cross_eval)
-
-    # avoid datapoints where the extinction is too strong (flux too low)
-    safe_flux = flux > np.average(flux) / 10
-
-    return np.logical_and.reduce((safe_flux, safe_range, not_peak(wavs, flux)))
+    center = wavs_in_ranges(wavs, [[1212.67, 1218.67]])
+    good = is_good_data(wavs, flux, target)
+    return np.logical_not(center) & good
 
 
-def estimate_continuum(wavs, flux):
+def estimate_continuum(wavs, flux, target):
     """Estimate the continuum using a linear fit"""
-    use = safe_for_cont(wavs, flux)
+    use = safe_for_cont(wavs, flux, target)
 
     # simple linear regression
     x = wavs[use]
@@ -104,8 +137,10 @@ def estimate_continuum(wavs, flux):
     return fc
 
 
-def estimate_noise(wavs, flux, fc):
-    use = wavs_in_ranges(wavs, [wav_range_DS94])
+def estimate_noise(wavs, flux, fc, target):
+    use = wavs_in_ranges(wavs, [default_noise_wav_range_DS94]) & safe_for_cont(
+        wavs, flux, target
+    )
     # DS94 use sum instead of average. Not sure if that is the correct
     # way.
     sigma = np.sqrt(np.average(np.square(flux[use] - fc(wavs[use]))))
@@ -150,8 +185,10 @@ def plot_profile(ax, fc, logNHI):
     ax.plot(x, y, color=extra_color, label="user")
 
 
-def plot_fit(ax, wavs, flux, fc, logNHI, lower_upper=None):
+def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
     """Plot lya model, continuum model, and data
+
+    target: target name
 
     ax: Axes object to use
 
@@ -179,8 +216,8 @@ def plot_fit(ax, wavs, flux, fc, logNHI, lower_upper=None):
     ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
     # data / used for cont / used for lya
-    used_for_cont = safe_for_cont(wavs, flux)
-    used_for_lya = safe_for_lya(wavs, flux)
+    used_for_cont = safe_for_cont(wavs, flux, target)
+    used_for_lya = safe_for_lya(wavs, flux, target)
     # change this to an axvspan plot
     ax.plot(
         wavs[used_for_cont],
@@ -234,11 +271,11 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     # smooth (experimental)
     # flux = boxcar_smooth(wavs, flux)
     # estimate continuum
-    fc = estimate_continuum(wavs, flux)
+    fc = estimate_continuum(wavs, flux, target)
     # sigma to use in chi2 equation
-    sigma_c = estimate_noise(wavs, flux, fc)
+    sigma_c = estimate_noise(wavs, flux, fc, target)
     # choose clean parts of spectrum
-    use = safe_for_lya(wavs, flux)
+    use = safe_for_lya(wavs, flux, target)
 
     # the fitting itself
     fargs = (fc, sigma_c, wavs[use], flux[use])
@@ -274,7 +311,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     )
 
     if ax_fit is not None:
-        plot_fit(ax_fit, wavs, flux, fc, logNHI, (lower, upper))
+        plot_fit(target, ax_fit, wavs, flux, fc, logNHI, (lower, upper))
 
     if ax_chi2 is not None:
         ax_chi2.plot(NHIgrid, chi2grid, color="k")

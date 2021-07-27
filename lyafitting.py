@@ -274,12 +274,11 @@ def run_all():
     logNHIs = []
 
     for target in get_spectrum.target_use_which_spectrum:
-        fig1, ax1 = plt.subplots()
-        fig2, ax2 = plt.subplots()
+        fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8, 4))
         logNHI, fc, info = lya_fit(target, ax_fit=ax1, ax_chi2=ax2)
         ax1.set_title(target + f"\nlogNHI = {logNHI:2f}")
+        fig1.tight_layout()
         fig1.savefig(f"./lya-plots/{target}.pdf")
-        fig2.savefig(f"./lya-plots/{target}_chi2.pdf")
         targets.append(target)
         infos.append(info)
         logNHIs.append(logNHI)

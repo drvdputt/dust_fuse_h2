@@ -273,3 +273,11 @@ HD235874
 
       * Maybe because there is molecular material in the sightline? There is also a weird slope
         on the short wavelength side.
+
+** Data choice notes
+
+*** Default
+    Choose STIS over IUE H over IUE L
+
+*** Modifications
+    - HD062542: use IUE L instead of IUE H or stis because of very difficult data

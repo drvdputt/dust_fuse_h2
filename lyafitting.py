@@ -176,16 +176,17 @@ def extinction_factor(logNHI, l):
 
 def chi2(logNHI, fc, sigma_c, wavs, flux):
     # overflows easily. Ignore fit points where overflow occurs
-    extinction = 1 / extinction_factor(logNHI, wavs)
-    deltas = fc(wavs) - flux * extinction
-    sigmas = sigma_c * extinction
-    square_devs = np.square(deltas / sigmas)
+    extf = extinction_factor(logNHI, wavs)
+    physical_model = fc(wavs) * extf
+    # not sure if we want to scale noise with extinction
+    # noise_model = sigma_c * extf
+    noise_model = sigma_c
+    square_devs = np.square((physical_model - flux) / noise_model)
 
     # filter out infinities and nans
     square_devs = square_devs[np.isfinite(square_devs)]
 
-    # DS94 divide by n - 1, where n is the number of points used, so we
-    # do that here too
+    # DS94 divide by n - 1, where n is the number of points used
     chi2 = square_devs.sum() / (len(square_devs) - 1)
     return chi2
 

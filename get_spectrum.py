@@ -13,8 +13,9 @@ from astropy.table import Table
 import numpy as np
 from pathlib import Path
 from warnings import warn
+from collections import Counter
 
-# can be manually tweaked. If the value is a list, the spectra will be coadded
+# can be manually tweaked. TODO: If the value is a list or contains *, the spectra will be coadded
 target_use_which_spectrum = {
     "HD097471": "data/HD097471/swp19375mxlo_vo.fits",
     "HD094493": "data/HD094493/mastDownload/HST/o54306010/o54306010_x1d.fits",
@@ -120,7 +121,9 @@ def merged_stis_data(filename):
 
 
 def merged_iue_h_data(filename):
-    """Get wavelengths, fluxes and errors from IUE high res data."""
+    """
+    Get wavelengths, fluxes and errors from IUE high res data.
+    """
     t = Table.read(filename)
 
     def iue_wavs(i):
@@ -129,10 +132,24 @@ def merged_iue_h_data(filename):
     def pixrange(i):
         return slice(t[i]["STARTPIX"], t[i]["STARTPIX"] + t[i]["NPOINTS"])
 
+    def all_of_column(colname):
+        return np.concatenate([t[i][colname][pixrange(i)] for i in range(len(t))])
+
     allwavs = np.concatenate([iue_wavs(i) for i in range(len(t))])
-    allflux = np.concatenate([t[i]["ABS_CAL"][pixrange(i)] for i in range(len(t))])
+    allflux = all_of_column("ABS_CAL")
     # warning: the noise data is uncalibrated! Let's see what happens.
-    allerrs = np.concatenate([t[i]["NOISE"][pixrange(i)] for i in range(len(t))])
+    allerrs = all_of_column("NOISE")
+    alldq = all_of_column("QUALITY")
+    print(f"{filename} DQ ", Counter(alldq))
+
+    # clean up using DQ
+    goodDQ = alldq == 0
+    print(sum(goodDQ), "good points out of ", len(allflux))
+    allwavs = allwavs[goodDQ]
+    allflux = allflux[goodDQ]
+    allerrs = allerrs[goodDQ]
+
+    # sort by wavelength
     idxs = np.argsort(allwavs)
     return allwavs[idxs], allflux[idxs], allerrs[idxs]
 

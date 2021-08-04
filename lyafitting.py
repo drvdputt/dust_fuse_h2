@@ -16,7 +16,7 @@ LYA = 1215.67
 default_noise_wav_range_DS94 = [1265, 1271]
 
 # use a different value for certain targets
-target_noise_wav_range = {"BD+56d524": [1243, 1299]}
+target_noise_wav_range = {"BD+56d524": [1243, 1299], "HD062542": [1243, 1282]}
 
 # per-target wavelength exclusions (due to spectroscopic features seen
 # by eye)
@@ -46,6 +46,12 @@ target_exclude_wav_ranges = {
         [1171, 1180],
     ],
     "HD047129": default_exclude_wav_ranges + [[1242, 1250]],
+    "HD062542": [
+        [1206, 1223],  # geocoronal
+        [1247, 1266],
+        [1236.5, 1240],
+        [1171, 1180],
+    ],
     "HD152248": default_exclude_wav_ranges + [[1242, 1250], [1165.6, 1177]],
 }
 

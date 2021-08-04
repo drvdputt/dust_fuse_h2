@@ -340,7 +340,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
         # ax_chi2.set_ylabel("$\\exp(-\\chi^2)$")
         ax_chi2.set_ylabel("$\\chi^2$")
 
-    info = dict(filename=filename, chi2=chi2)
+    info = dict(filename=filename, chi2=chi2_min)
     return logNHI, fc, info
 
 

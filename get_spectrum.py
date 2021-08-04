@@ -14,7 +14,7 @@ import numpy as np
 from pathlib import Path
 from warnings import warn
 
-# can be manually tweaked
+# can be manually tweaked. If the value is a list, the spectra will be coadded
 target_use_which_spectrum = {
     "HD097471": "data/HD097471/swp19375mxlo_vo.fits",
     "HD094493": "data/HD094493/mastDownload/HST/o54306010/o54306010_x1d.fits",
@@ -62,19 +62,7 @@ def processed(target):
     # choose data
     filename = target_use_which_spectrum[target]
     print("Getting data from ", filename)
-
-    if "x1d" in filename:
-        wavs, flux, errs = merged_stis_data(filename)
-        rebin = True
-    elif "mxhi" in filename:
-        wavs, flux, errs = merged_iue_h_data(filename)
-        rebin = True
-    elif "mxlo" in filename:
-        wavs, flux, errs = iue_l_data(filename)
-        rebin = False
-    else:
-        warn("File {} not supported yet, exiting".format(filename))
-        exit()
+    wavs, flux, errs, rebin = auto_wavs_flux_errs(filename)
 
     if rebin:
         binnedwavs, binnedflux = bin_spectrum_around_lya(wavs, flux, errs)
@@ -90,6 +78,24 @@ def processed(target):
     safewavs = binnedwavs[safe]
     safeflux = binnedflux[safe]
     return safewavs, safeflux, filename
+
+
+def auto_wavs_flux_errs(filename):
+    """Choose function for loading spectrum based on file name."""
+    if "x1d" in filename:
+        wavs, flux, errs = merged_stis_data(filename)
+        rebin = True
+    elif "mxhi" in filename:
+        wavs, flux, errs = merged_iue_h_data(filename)
+        rebin = True
+    elif "mxlo" in filename:
+        wavs, flux, errs = iue_l_data(filename)
+        rebin = False
+    else:
+        warn("File {} not supported yet, exiting".format(filename))
+        exit()
+
+    return wavs, flux, errs, rebin
 
 
 def merged_stis_data(filename):

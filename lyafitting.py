@@ -352,7 +352,16 @@ def run_all():
     for target in get_spectrum.target_use_which_spectrum:
         fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8, 4))
         logNHI, fc, info = lya_fit(target, ax_fit=ax1, ax_chi2=ax2)
-        ax1.set_title(target + f"\nlogNHI = {logNHI:2f}")
+        data_filename = get_spectrum.target_use_which_spectrum[target]
+        data_type = None
+        if "x1d" in data_filename:
+            data_type = "STIS"
+        elif "mxhi" in data_filename:
+            data_type = "IUE H"
+        elif "mxlo" in data_filename:
+            data_type = "IUE L"
+
+        ax1.set_title(target + f"\nlogNHI = {logNHI:2f} ({data_type})")
         fig1.tight_layout()
         fig1.savefig(f"./lya-plots/{target}.pdf")
         targets.append(target)

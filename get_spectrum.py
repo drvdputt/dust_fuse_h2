@@ -10,10 +10,11 @@ module directly will print out the default value for this dictionary.
 
 """
 from astropy.table import Table
+from astropy.io import fits
 import numpy as np
 from pathlib import Path
 from warnings import warn
-from collections import Counter
+from scipy.interpolate import interp1d
 
 # can be manually tweaked. TODO: If the value is a list or contains *, the spectra will be coadded
 target_use_which_spectrum = {

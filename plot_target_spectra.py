@@ -26,13 +26,13 @@ def main():
     fig, ax = plt.subplots()
     for fn in filenames:
         plot_spectrum(ax, fn)
-
+    plt.legend()
     plt.show()
 
 
 def plot_spectrum(ax, filename):
     wavs, flux, errs, _ = get_spectrum.auto_wavs_flux_errs(str(filename))
-    ax.plot(wavs, flux, alpha=0.5)
+    ax.plot(wavs, flux, alpha=0.5, label=Path(filename).name)
 
 
 if __name__ == "__main__":

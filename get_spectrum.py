@@ -122,11 +122,13 @@ def auto_wavs_flux_errs(filename):
     else:
         if "x1d" in to_be_coadded[0]:
             wavs, flux, errs = coadd_hst_stis(to_be_coadded)
+            rebin = True
         elif "mxhi" in to_be_coadded[0]:
             wavs, flux, errs = coadd_iue_h(to_be_coadded)
+            rebin = True
         elif "mxlo" in to_be_coadded[0]:
             wavs, flux, errs = coadd_iue_l(to_be_coadded)
-        rebin = False
+            rebin = False
 
     return wavs, flux, errs, rebin
 
@@ -159,6 +161,11 @@ def merged_stis_data(filename_or_scidata, get_net=False):
         output_columns.append("NET")
 
     output = [np.concatenate(t[c]) for c in output_columns]
+
+    dq = np.concatenate(t["DQ"])
+    good = dq == 0
+    print(f"STIS: {good.sum()} out of {len(good)} wavelength points are good")
+
     # sort by wavelength
     idxs = np.argsort(output[0])
     return [array[idxs] for array in output]
@@ -349,7 +356,7 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
     return newwavs, flux_result, errs_result
 
 
-def bin_spectrum_around_lya(wavs, flux, errs):
+def bin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1300, disp=0.25):
     """
     Rebin spectrum to for lya fitting, and reject certain points.
 
@@ -368,11 +375,9 @@ def bin_spectrum_around_lya(wavs, flux, errs):
     newflux: average flux in each bin
 
     """
-    # the bin details are hardcoded here
-    numbins = 1000
-    wavmin = 1150
-    wavmax = 1280
-    wavbins = np.linspace(wavmin, wavmax, numbins, endpoint=True)
+    wavmin = max(wmin, np.amin(wavs))
+    wavmax = min(wmax, np.amax(wavs))
+    wavbins = np.arange(wavmin, wavmax, disp)
 
     # np.digitize returns list of indices. b = 1 means that the data point
     # is between wav[0] (first) and wav[1]. b = n-1 means between wav[n-2]

@@ -89,11 +89,13 @@ def auto_wavs_flux_errs(filename):
     """Load spectrum or multiple spectra based on file name."""
 
     # determine if multiple files were provided. If a glob pattern was provided, this counts as
-    multiple_files = None
-    if isinstance(filename, str) and "*" in filename:
-        multiple_files = [str(p) for p in Path(".").glob(filename)]
-    elif isinstance(filename, list):
+    if isinstance(filename, list):
         multiple_files = filename
+    elif isinstance(filename, str):
+        if "*" in filename:
+            multiple_files = [str(p) for p in Path(".").glob(filename)]
+        else:
+            multiple_files = None
     else:
         warn("filename should be str or list!")
         raise

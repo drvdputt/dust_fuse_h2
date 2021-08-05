@@ -333,6 +333,14 @@ def bin_spectrum_around_lya(wavs, flux, errs):
     return newwavs, newflux
 
 
+def get_exptime(header):
+    """Tries a couple of keywords to find the exposure time in a FITS header"""
+    for exptime_key in ("EXPTIME", "LEXPTIME", "SEXPTIME"):
+        if exptime_key in header:
+            exptime = float(header[exptime_key])
+            return exptime
+
+
 # Some code to generate the above dict from scratch. Manual tweaking can
 # occur after.
 if __name__ == "__main__":

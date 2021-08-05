@@ -41,8 +41,8 @@ target_use_which_spectrum = {
     # "HD046202": "data/HD046202/mastDownload/HST/ocb6e0030/ocb6e0030_x1d.fits",
     # "HD046202": "data/HD046202/mastDownload/HST/ocb6e1030/ocb6e1030_x1d.fits",
     "HD046202": "data/HD046202/mastDownload/HST/**/*_x1d.fits",
-    "HD047129": "data/HD047129/swp07077.mxhi.gz",
-    # "HD047129": "data/HD047129/*.mxhi.gz",
+    # "HD047129": "data/HD047129/swp07077.mxhi.gz",
+    "HD047129": "data/HD047129/*.mxhi.gz",
     "HD235874": "data/HD235874/swp34158mxlo_vo.fits",
     "HD216898": "data/HD216898/swp43934.mxhi.gz",
     "HD326329": "data/HD326329/swp48698.mxhi.gz",
@@ -183,25 +183,23 @@ def merged_iue_h_data(filename, extra_columns=None):
         return np.concatenate([t[i][colname][pixrange(i)] for i in range(len(t))])
 
     allwavs = np.concatenate([iue_wavs(i) for i in range(len(t))])
-    idxs = np.argsort(allwavs)
 
     colnames = ["WAVELENGTH", "ABS_CAL", "NOISE"]
     if extra_columns is not None:
         colnames += extra_columns
 
-    column_values = [allwavs[idxs]]
+    column_values = [allwavs]
     for colname in colnames[1:]:
-        array = all_of_column(colname)
-        # already sorted by wavelength here
-        column_values.append(array[idxs])
+        column_values.append(all_of_column(colname))
 
     # clean up using DQ
-    alldq = all_of_column("QUALITY")
-    goodDQ = alldq == 0
+    dq = all_of_column("QUALITY")
     for array in column_values:
-        array = array[goodDQ]
+        array = array[dq == 0]
 
-    return column_values
+    # sort by wavelength
+    idxs = np.argsort(column_values[0])
+    return [c[idxs] for c in column_values]
 
 
 def coadd_iue_h(filenames):
@@ -293,12 +291,15 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
         #         = flux * sensitivity * exptime / (sensitivity * exptime)**2
         #         = flux / (sensitivity * exptime)
 
-        # counts per flux unit
+        # sens = counts per flux unit
         sensitivity = ni / fi
         weights = sensitivity * exptime_getf(i)
-        weight_sum += weights
-        flux_sum += weights * fi
-        variance_sum += np.square(ei * weights)
+
+        # sometimes, fi is zero or nan, so only use data at good indices
+        good = np.isfinite(weights) & (weights > 0)
+        weight_sum[good] += weights[good]
+        flux_sum[good] += weights[good] * fi[good]
+        variance_sum[good] += np.square(ei[good] * weights[good])
 
     flux_result = flux_sum / weight_sum
     errs_result = np.sqrt(variance_sum) / weight_sum

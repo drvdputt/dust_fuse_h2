@@ -6,7 +6,7 @@ import numpy as np
 import argparse
 import warnings
 import astropy
-from astropy import convolution, stats
+from astropy import stats
 
 warnings.filterwarnings("ignore", category=astropy.units.UnitsWarning)
 
@@ -289,6 +289,8 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     # error estimation: sigma is where chi2 = chi2_min + 1. Don't use
     # bisect here because we don't know how well chi2 behaves.
     middle = np.argmin(np.abs(NHIgrid - logNHI))
+    if middle == 0:
+        middle = 1 # works around empty slice problems
 
     if np.amax(chi2grid[:middle]) < chi2_min + 1:
         print("Lower bound not found")

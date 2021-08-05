@@ -280,4 +280,10 @@ HD235874
     Choose STIS over IUE H over IUE L
 
 *** Modifications
-    - HD062542: use IUE L instead of IUE H or stis because of very difficult data
+    - HD062542: use IUE L instead of IUE H or stis because of very difficult data. Coadd
+      multiple low res.
+
+    - HD046202: switched to STIS, and coadded
+
+    - HD047129: many IUE exposures, be there seem to be two groups, with a spectral shift in
+      between.

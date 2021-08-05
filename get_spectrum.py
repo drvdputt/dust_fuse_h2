@@ -120,9 +120,14 @@ def merged_stis_data(filename):
     return allwavs[idxs], allflux[idxs], allerrs[idxs]
 
 
-def merged_iue_h_data(filename):
+def merged_iue_h_data(filename, extra_columns=None):
     """
     Get wavelengths, fluxes and errors from IUE high res data.
+
+    Returns
+    -------
+    column_values : list containing wavelengths, "ABS_CAL", "NOISE" plus
+        any of the extra_columns
     """
     t = Table.read(filename)
 
@@ -136,22 +141,94 @@ def merged_iue_h_data(filename):
         return np.concatenate([t[i][colname][pixrange(i)] for i in range(len(t))])
 
     allwavs = np.concatenate([iue_wavs(i) for i in range(len(t))])
-    allflux = all_of_column("ABS_CAL")
-    # warning: the noise data is uncalibrated! Let's see what happens.
-    allerrs = all_of_column("NOISE")
-    alldq = all_of_column("QUALITY")
-    print(f"{filename} DQ ", Counter(alldq))
+    idxs = np.argsort(allwavs)
+
+    colnames = ["WAVELENGTH", "ABS_CAL"]
+    if extra_columns is not None:
+        colnames += extra_columns
+
+    column_values = [allwavs[idxs]]
+    for colname in colnames[1:]:
+        array = all_of_column(colname)
+        # already sorted by wavelength here
+        column_values.append(array[idxs])
 
     # clean up using DQ
+    alldq = all_of_column("QUALITY")
     goodDQ = alldq == 0
-    print(sum(goodDQ), "good points out of ", len(allflux))
-    allwavs = allwavs[goodDQ]
-    allflux = allflux[goodDQ]
-    allerrs = allerrs[goodDQ]
+    for array in column_values:
+        array = array[goodDQ]
 
-    # sort by wavelength
-    idxs = np.argsort(allwavs)
-    return allwavs[idxs], allflux[idxs], allerrs[idxs]
+    return column_values
+
+
+def coadd_iue_h_data(filenames):
+    num_files = len(filenames)
+
+    all_wavs = []
+    all_flux = []
+    all_errs = []
+    all_net = []
+
+
+    # get all the data
+    for i in range(num_files):
+        wavs, flux, errs, net = merged_iue_h_data(filenames[i], extra_columns=["NET"])
+        all_wavs.append(wavs)
+        all_flux.append(flux)
+        all_errs.append(errs)
+        all_net.append(net)
+
+    # determine new wavelength grid, using max of median of wavelength
+    # increment as step size
+    maxwav = np.amin(all_wavs)
+    minwav = np.amax(all_wavs)
+    disp = np.amax(np.median(np.diff(w)) for w in all_wavs)
+    newwav = np.arange(minwav, maxwav, disp)
+
+    # instead of binning, we're just going to do nearest neighbour on a
+    # slightly coarser wavelength grid. It worked for Julia, so...
+    flux_sum = np.zeros(len(newwav))
+    weight_sum = np.zeros(len(newwav))
+    errsquare_sum = np.zeros(len(newwav))
+    for i in range(num_files):
+        # get exposure time from the primary hdu
+        header = fits.getheader(filenames[i], ext="PRIMARY")
+        exptime = float(header["SEXPTIME"])
+
+        # nearest neighbour interpolation of all relevant quantities
+        def do_interp1d(quantity):
+            function = interp1d(
+                all_wavs[i],
+                quantity,
+                kind="nearest",
+                fill_value=np.nan,
+                bounds_error=False,
+            )
+            return function(newwav)
+
+        fi = do_interp1d(all_flux[i])
+        ei = do_interp1d(all_errs[i])
+        ni = do_interp1d(all_net[i])
+
+        # total_counts = flux * sensitivity * exptime
+        # --> flux = total_counts / (sensitivity * exptime)
+
+        # V(flux) = V(total_counts) / (sensitivity * exptime)**2
+        #         = total_counts / (sensitivity * exptime)**2 (poisson)
+        #         = flux * sensitivity * exptime / (sensitivity * exptime)**2
+        #         = flux / (sensitivity * exptime)
+
+        # counts per flux unit
+        sensitivity = ni / fi
+        weights = sensitivity * exptime
+        weight_sum += weights
+        flux_sum += weights * fi
+        errsquare_sum += np.square(ei * weights)
+
+    flux_result = flux_sum / weight_sum
+    errs_result = np.sqrt(errsquare_sum) / weight_sum
+    return newwavs, flux_result, errs_result
 
 
 def iue_l_data(filename):

@@ -124,8 +124,10 @@ def auto_wavs_flux_errs(filename):
     return wavs, flux, errs, rebin
 
 
-def merged_stis_data(filename):
+def merged_stis_data(filename, get_net=False):
     """Get wavelengths, fluxes and errors from all STIS spectral orders.
+
+    get_net : add net column to output
 
     Returns
     -------
@@ -138,11 +140,14 @@ def merged_stis_data(filename):
 
     """
     t = Table.read(filename)
-    allwavs = np.concatenate(t["WAVELENGTH"])
-    allflux = np.concatenate(t["FLUX"])
-    allerrs = np.concatenate(t["ERROR"])
-    idxs = np.argsort(allwavs)
-    return allwavs[idxs], allflux[idxs], allerrs[idxs]
+    output_columns = ["WAVELENGTH", "FLUX", "ERROR"]
+    if get_net:
+        output_columns.append("NET")
+
+    output = [np.concatenate(t[c]) for c in output_columns]
+    # sort by wavelength
+    idxs = np.argsort(output[0])
+    return [array[idxs] for array in output]
 
 
 def merged_iue_h_data(filename, extra_columns=None):

@@ -26,7 +26,8 @@ target_use_which_spectrum = {
     "HD096675": "data/HD096675/swp41717.mxhi.gz",
     "HD023060": "data/HD023060/swp11151mxlo_vo.fits",
     "HD099872": "data/HD099872/mastDownload/HST/o6lj0i020/o6lj0i020_x1d.fits",
-    "HD152248": "data/HD152248/swp54576.mxhi.gz",
+    # "HD152248": "data/HD152248/swp54576.mxhi.gz",
+    "HD152248": "data/HD152248/*.mxhi.gz",
     "HD209339": "data/HD209339/mastDownload/HST/o5lh0b010/o5lh0b010_x1d.fits",
     # "HD197770": "data/HD197770/mastDownload/HST/oedl04010/oedl04010_x1d.fits",
     "HD197770": "data/HD197770/swp49267.mxhi.gz",
@@ -83,19 +84,38 @@ def processed(target):
 
 
 def auto_wavs_flux_errs(filename):
-    """Choose function for loading spectrum based on file name."""
-    if "x1d" in filename:
-        wavs, flux, errs = merged_stis_data(filename)
-        rebin = True
-    elif "mxhi" in filename:
-        wavs, flux, errs = merged_iue_h_data(filename)
-        rebin = True
-    elif "mxlo" in filename:
-        wavs, flux, errs = iue_l_data(filename)
-        rebin = False
+    """Load spectrum or multiple spectra based on file name."""
+
+    # determine if multiple files were provided. If a glob pattern was provided, this counts as
+    multiple_files = None
+    if isinstance(filename, str) and "*" in filename:
+        multiple_files = [str(p) for p in Path(".").glob(filename)]
+    elif isinstance(filename, list):
+        multiple_files = filename
     else:
-        warn("File {} not supported yet, exiting".format(filename))
-        exit()
+        warn("filename should be str or list!")
+        raise
+
+    if multiple_files is None:
+        if "x1d" in filename:
+            wavs, flux, errs = merged_stis_data(filename)
+            rebin = True
+        elif "mxhi" in filename:
+            wavs, flux, errs = merged_iue_h_data(filename)
+            rebin = True
+        elif "mxlo" in filename:
+            wavs, flux, errs = iue_l_data(filename)
+            rebin = False
+        else:
+            warn("File {} not supported yet, exiting".format(filename))
+            exit()
+    else:
+        if "mxhi" not in multiple_files[0]:
+            warn("Only coadding of mxhi is supported")
+            raise
+
+        wavs, flux, errs = coadd_iue_h_data(multiple_files)
+        rebin = False
 
     return wavs, flux, errs, rebin
 
@@ -166,13 +186,11 @@ def merged_iue_h_data(filename, extra_columns=None):
 def coadd_iue_h_data(filenames):
     num_files = len(filenames)
 
+    # get all the per-wavelength data
     all_wavs = []
     all_flux = []
     all_errs = []
     all_net = []
-
-
-    # get all the data
     for i in range(num_files):
         wavs, flux, errs, net = merged_iue_h_data(filenames[i], extra_columns=["NET"])
         all_wavs.append(wavs)
@@ -182,31 +200,34 @@ def coadd_iue_h_data(filenames):
 
     # determine new wavelength grid, using max of median of wavelength
     # increment as step size
-    maxwav = np.amin(all_wavs)
-    minwav = np.amax(all_wavs)
-    disp = np.amax(np.median(np.diff(w)) for w in all_wavs)
-    newwav = np.arange(minwav, maxwav, disp)
+    maxwav = np.amax(all_wavs)
+    minwav = np.amin(all_wavs)
+    disp = np.amax([np.median(np.diff(w)) for w in all_wavs])
+    newwavs = np.arange(minwav, maxwav, disp)
 
     # instead of binning, we're just going to do nearest neighbour on a
     # slightly coarser wavelength grid. It worked for Julia, so...
-    flux_sum = np.zeros(len(newwav))
-    weight_sum = np.zeros(len(newwav))
-    errsquare_sum = np.zeros(len(newwav))
+    flux_sum = np.zeros(len(newwavs))
+    weight_sum = np.zeros(len(newwavs))
+    variance_sum = np.zeros(len(newwavs))
     for i in range(num_files):
-        # get exposure time from the primary hdu
-        header = fits.getheader(filenames[i], ext="PRIMARY")
-        exptime = float(header["SEXPTIME"])
+        # get exposure time from the primary hdu. The keyword can have
+        # different names sometimes.
+        header = fits.getheader(filenames[i], ext=0)
+        for exptime_key in ("LEXPTIME", "SEXPTIME"):
+            if exptime_key in header:
+                exptime = float(header[exptime_key])
+                break
 
         # nearest neighbour interpolation of all relevant quantities
         def do_interp1d(quantity):
-            function = interp1d(
+            return interp1d(
                 all_wavs[i],
                 quantity,
                 kind="nearest",
                 fill_value=np.nan,
                 bounds_error=False,
-            )
-            return function(newwav)
+            )(newwavs)
 
         fi = do_interp1d(all_flux[i])
         ei = do_interp1d(all_errs[i])
@@ -214,7 +235,7 @@ def coadd_iue_h_data(filenames):
 
         # total_counts = flux * sensitivity * exptime
         # --> flux = total_counts / (sensitivity * exptime)
-
+        #
         # V(flux) = V(total_counts) / (sensitivity * exptime)**2
         #         = total_counts / (sensitivity * exptime)**2 (poisson)
         #         = flux * sensitivity * exptime / (sensitivity * exptime)**2
@@ -225,10 +246,10 @@ def coadd_iue_h_data(filenames):
         weights = sensitivity * exptime
         weight_sum += weights
         flux_sum += weights * fi
-        errsquare_sum += np.square(ei * weights)
+        variance_sum += np.square(ei * weights)
 
     flux_result = flux_sum / weight_sum
-    errs_result = np.sqrt(errsquare_sum) / weight_sum
+    errs_result = np.sqrt(variance_sum) / weight_sum
     return newwavs, flux_result, errs_result
 
 

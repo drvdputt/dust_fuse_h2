@@ -26,7 +26,7 @@ target_use_which_spectrum = {
     "HD051013": "data/HD051013/swp22860.mxhi.gz",
     "HD096675": "data/HD096675/swp41717.mxhi.gz",
     "HD023060": "data/HD023060/swp11151mxlo_vo.fits",
-    "HD099872": "data/HD099872/mastDownload/HST/o6lj0i020/o6lj0i020_x1d.fits",
+    "HD099872": "data/HD099872/mastDownload/HST/**/*_x1d.fits",
     # "HD152248": "data/HD152248/swp54576.mxhi.gz",
     "HD152248": "data/HD152248/*.mxhi.gz",
     "HD209339": "data/HD209339/mastDownload/HST/o5lh0b010/o5lh0b010_x1d.fits",
@@ -311,8 +311,8 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
 
     # determine new wavelength grid, using max of median of wavelength
     # increment as step size
-    maxwav = np.amax(all_wavs)
-    minwav = np.amin(all_wavs)
+    maxwav = np.amax(np.concatenate(all_wavs))
+    minwav = np.amin(np.concatenate(all_wavs))
     disp = np.amax([np.median(np.diff(w)) for w in all_wavs])
     newwavs = np.arange(minwav, maxwav, disp)
 

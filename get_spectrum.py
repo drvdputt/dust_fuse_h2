@@ -33,9 +33,9 @@ target_use_which_spectrum = {
     "HD197770": "data/HD197770/swp49267.mxhi.gz",
     "HD037332": "data/HD037332/swp32289.mxhi.gz",
     "HD093028": "data/HD093028/swp05521.mxhi.gz",
-    # "HD062542": "data/HD062542/mastDownload/HST/obik01020/obik01020_x1d.fits",
-    # "HD062542": "data/HD062542/swp36353.mxhi.gz",
-    "HD062542": "data/HD062542/swp29213mxlo_vo.fits",
+    # "HD062542": "data/HD062542/mastDownload/HST/obik01020/obik01020_x1d.fits", # wavelength range
+    # "HD062542": "data/HD062542/*.mxhi.gz", # way too noisy
+    "HD062542": "data/HD062542/*mxlo_vo.fits",
     "HD190603": "data/HD190603/swp01822.mxhi.gz",
     # "HD046202": "data/HD046202/swp08845.mxhi.gz",
     # "HD046202": "data/HD046202/mastDownload/HST/ocb6e0030/ocb6e0030_x1d.fits",
@@ -124,6 +124,8 @@ def auto_wavs_flux_errs(filename):
             wavs, flux, errs = coadd_hst_stis(to_be_coadded)
         elif "mxhi" in to_be_coadded[0]:
             wavs, flux, errs = coadd_iue_h(to_be_coadded)
+        elif "mxlo" in to_be_coadded[0]:
+            wavs, flux, errs = coadd_iue_l(to_be_coadded)
         rebin = False
 
     return wavs, flux, errs, rebin
@@ -202,6 +204,14 @@ def merged_iue_h_data(filename, extra_columns=None):
     return [c[idxs] for c in column_values]
 
 
+def iue_l_data(filename):
+    t = Table.read(filename)
+    wavs = t["WAVE"][0]
+    flux = t["FLUX"][0]
+    sigma = t["SIGMA"][0]
+    return wavs, flux, sigma
+
+
 def coadd_iue_h(filenames):
     print(f"Coadding {len(filenames)} IUE H exposures")
     return coadd_general(
@@ -209,6 +219,39 @@ def coadd_iue_h(filenames):
         lambda i: merged_iue_h_data(filenames[i], extra_columns=["NET"]),
         lambda i: get_exptime(fits.getheader(filenames[i], ext=0)),
     )
+
+
+def coadd_iue_l(filenames):
+    print(f"Coadding {len(filenames)} IUE L exposures")
+    all_wavs = []
+    all_flux = []
+    all_errs = []
+    for fn in filenames:
+        wav, flux, err = iue_l_data(fn)
+        all_wavs.append(wav)
+        all_flux.append(flux)
+        all_errs.append(err)
+
+    if not np.equal.reduce(all_wavs).all():
+        warn(
+            "Not all wavs are equal in IUE L. Rebinning or interpolation should be implemented."
+        )
+        raise
+
+    # Assume that the wavs are always the same. If not, the above error
+    # will trigger, and I should reconsider.
+    flux_sum = np.zeros(len(all_wavs[0]))
+    weight_sum = np.zeros(len(all_wavs[0]))
+    for i in range(len(all_flux)):
+        good = (all_flux[i] > 0) & np.isfinite(all_flux[i])
+        weight = 1 / np.square(all_errs[1])
+        flux_sum[good] += all_flux[i][good] * weight[good]
+        weight_sum[good] += weight[good]
+
+    # simply the 1/sigma2 weighting rule
+    new_flux = flux_sum / weight_sum
+    new_errs = np.sqrt(1 / weight_sum)
+    return all_wavs[0], new_flux, new_errs
 
 
 def coadd_hst_stis(filenames):
@@ -304,14 +347,6 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
     flux_result = flux_sum / weight_sum
     errs_result = np.sqrt(variance_sum) / weight_sum
     return newwavs, flux_result, errs_result
-
-
-def iue_l_data(filename):
-    t = Table.read(filename)
-    wavs = t["WAVE"]
-    flux = t["FLUX"]
-    sigma = t["SIGMA"]
-    return wavs, flux, sigma
 
 
 def bin_spectrum_around_lya(wavs, flux, errs):

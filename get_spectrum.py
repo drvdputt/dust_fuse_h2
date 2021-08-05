@@ -15,6 +15,7 @@ import numpy as np
 from pathlib import Path
 from warnings import warn
 from scipy.interpolate import interp1d
+from astropy import stats
 
 # can be manually tweaked. TODO: If the value is a list or contains *, the spectra will be coadded
 target_use_which_spectrum = {
@@ -72,7 +73,9 @@ def processed(target):
     wavs, flux, errs, rebin = auto_wavs_flux_errs(filename)
 
     if rebin:
-        binnedwavs, binnedflux = bin_spectrum_around_lya(wavs, flux, errs)
+        binnedwavs, binnedflux = bin_spectrum_around_lya(
+            wavs, flux, errs, sigma_clip=True
+        )
     else:
         wavmin = 1150
         wavmax = 1300
@@ -356,18 +359,18 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
     return newwavs, flux_result, errs_result
 
 
-def bin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1300, disp=0.25):
+def bin_spectrum_around_lya(
+    wavs, flux, errs, wmin=0, wmax=1300, disp=0.25, sigma_clip=False
+):
     """
     Rebin spectrum to for lya fitting, and reject certain points.
 
     A rebinning of the spectrum to make it more useful for lya fitting.
     Every new point is the weighted average of all data within the range
-    of a bin. The weights are 1 / errs**2. The bins are chosen as 1000
-    equally spaced intervals, from 1150 to 1280 angstrom. **subject to
-    change**
-
-    Additionally, only the points that satisfy some basic data rejection
-    criteria are used. E.g flux > 0.
+    of a bin. The weights are 1 / errs**2. The bins can be specified by
+    choosing a minimum, maximum wavelength and a resolution (in
+    Angstrom). Additionally, only the points that satisfy some basic
+    data rejection criteria are used. E.g flux > 0.
 
     Returns
     -------
@@ -396,8 +399,19 @@ def bin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1300, disp=0.25):
             newwavs[i] = 0
             newflux[i] = np.nan
         else:
-            newwavs[i] = np.average(wavs[use], weights=weights)
-            newflux[i] = np.average(flux[use], weights=weights)
+            # experimental sigma clipping here
+            if sigma_clip:
+                masked_flux = stats.sigma_clip(flux[use])
+                not_clipped = np.logical_not(masked_flux.mask)
+            else:
+                not_clipped = np.full(flux[use].shape, True)
+
+            newwavs[i] = np.average(
+                wavs[use][not_clipped], weights=weights[not_clipped]
+            )
+            newflux[i] = np.average(
+                flux[use][not_clipped], weights=weights[not_clipped]
+            )
 
     return newwavs, newflux
 

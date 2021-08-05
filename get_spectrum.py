@@ -90,17 +90,21 @@ def auto_wavs_flux_errs(filename):
 
     # determine if multiple files were provided. If a glob pattern was provided, this counts as
     if isinstance(filename, list):
-        multiple_files = filename
+        to_be_coadded = filename
     elif isinstance(filename, str):
         if "*" in filename:
-            multiple_files = [str(p) for p in Path(".").glob(filename)]
+            to_be_coadded = [str(p) for p in Path(".").glob(filename)]
+        elif "x1d" in filename:
+            # a single x1d file can contain multiple extensions, which
+            # need to be coadded
+            to_be_coadded = [filename]
         else:
-            multiple_files = None
+            to_be_coadded = None
     else:
         warn("filename should be str or list!")
         raise
 
-    if multiple_files is None:
+    if to_be_coadded is None:
         if "x1d" in filename:
             wavs, flux, errs = merged_stis_data(filename)
             rebin = True
@@ -114,18 +118,20 @@ def auto_wavs_flux_errs(filename):
             warn("File {} not supported yet, exiting".format(filename))
             exit()
     else:
-        if "mxhi" not in multiple_files[0]:
-            warn("Only coadding of mxhi is supported")
-            raise
-
-        wavs, flux, errs = coadd_iue_h(multiple_files)
+        if "x1d" in to_be_coadded[0]:
+            wavs, flux, errs = coadd_hst_stis(to_be_coadded)
+        elif "mxhi" in to_be_coadded[0]:
+            wavs, flux, errs = coadd_iue_h(to_be_coadded)
         rebin = False
 
     return wavs, flux, errs, rebin
 
 
-def merged_stis_data(filename, get_net=False):
+def merged_stis_data(filename_or_scidata, get_net=False):
     """Get wavelengths, fluxes and errors from all STIS spectral orders.
+
+    If filename is given, use only first SCI extension. If other data
+    needs to be merged, pass SCI data directly.
 
     get_net : add net column to output
 
@@ -139,7 +145,11 @@ def merged_stis_data(filename, get_net=False):
     errs: all errors at these wavelengths
 
     """
-    t = Table.read(filename)
+    if isinstance(filename_or_scidata, str):
+        t = Table.read(filename_or_scidata)
+    else:
+        t = filename_or_scidata
+
     output_columns = ["WAVELENGTH", "FLUX", "ERROR"]
     if get_net:
         output_columns.append("NET")
@@ -193,30 +203,54 @@ def merged_iue_h_data(filename, extra_columns=None):
 
 
 def coadd_iue_h(filenames):
+    print(f"Coadding {len(filenames)} IUE H exposures")
     return coadd_general(
-        filenames, lambda x: merged_iue_h_data(x, extra_columns=["NET"])
+        len(filenames),
+        lambda i: merged_iue_h_data(filenames[i], extra_columns=["NET"]),
+        lambda i: get_exptime(fits.getheader(filenames[i], ext=0)),
     )
 
 
-def coadd_general(filenames, wavs_flux_errs_net_get_function):
-    """General function for coadding spectra in filenames
+def coadd_hst_stis(filenames):
+    # get all science exposures
+    sci_hdus = []
 
-    The second argument should be a function that takes a file name, and
-    returns [wavs, flux, errs, net].
+    # remember handles so we can close them later
+    open_files = [fits.open(fn) for fn in filenames]
+    for hdul in open_files:
+        sci_hdus += [h for h in hdul if h.name == "SCI"]
+
+    print(f"Coadding {len(sci_hdus)} STIS exposures from {len(filenames)} files")
+    output = coadd_general(
+        len(sci_hdus),
+        lambda i: merged_stis_data(sci_hdus[i].data, get_net=True),
+        lambda i: get_exptime(sci_hdus[i].header),
+    )
+
+    for f in open_files:
+        f.close()
+
+    return output
+
+
+def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
+    """General function for coadding spectra.
+
+    The second argument should be a function that takes an index in
+    range(num_spectra), and returns [wavs, flux, errs, net].
 
     Returns
     -------
         coadded wavs, flux, errs
-    """
-    num_files = len(filenames)
 
+    """
     # get all the per-wavelength data
     all_wavs = []
     all_flux = []
     all_errs = []
     all_net = []
-    for i in range(num_files):
-        wavs, flux, errs, net = wavs_flux_errs_net_get_function(filenames[i])
+    for i in range(num_spectra):
+        wavs, flux, errs, net = wavs_flux_errs_net_getf(i)
         all_wavs.append(wavs)
         all_flux.append(flux)
         all_errs.append(errs)
@@ -234,15 +268,7 @@ def coadd_general(filenames, wavs_flux_errs_net_get_function):
     flux_sum = np.zeros(len(newwavs))
     weight_sum = np.zeros(len(newwavs))
     variance_sum = np.zeros(len(newwavs))
-    for i in range(num_files):
-        # get exposure time from the primary hdu. The keyword can have
-        # different names sometimes.
-        header = fits.getheader(filenames[i], ext=0)
-        for exptime_key in ("LEXPTIME", "SEXPTIME"):
-            if exptime_key in header:
-                exptime = float(header[exptime_key])
-                break
-
+    for i in range(num_spectra):
         # nearest neighbour interpolation of all relevant quantities
         def do_interp1d(quantity):
             return interp1d(
@@ -267,7 +293,7 @@ def coadd_general(filenames, wavs_flux_errs_net_get_function):
 
         # counts per flux unit
         sensitivity = ni / fi
-        weights = sensitivity * exptime
+        weights = sensitivity * exptime_getf(i)
         weight_sum += weights
         flux_sum += weights * fi
         variance_sum += np.square(ei * weights)

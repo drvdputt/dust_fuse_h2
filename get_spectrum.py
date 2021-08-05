@@ -73,7 +73,7 @@ def processed(target):
     wavs, flux, errs, rebin = auto_wavs_flux_errs(filename)
 
     if rebin:
-        binnedwavs, binnedflux = bin_spectrum_around_lya(
+        binnedwavs, binnedflux = rebin_spectrum_around_lya(
             wavs, flux, errs, sigma_clip=True
         )
     else:
@@ -349,7 +349,16 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
         weights = sensitivity * exptime_getf(i)
 
         # sometimes, fi is zero or nan, so only use data at good indices
-        good = np.isfinite(weights) & (weights > 0)
+        good = np.logical_and.reduce(
+            [
+                np.isfinite(fi),
+                np.isfinite(ei),
+                np.isfinite(weights),
+                weights > 0,
+                fi > 0,
+                ei > 0,
+            ]
+        )
         weight_sum[good] += weights[good]
         flux_sum[good] += weights[good] * fi[good]
         variance_sum[good] += np.square(ei[good] * weights[good])
@@ -359,7 +368,7 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
     return newwavs, flux_result, errs_result
 
 
-def bin_spectrum_around_lya(
+def rebin_spectrum_around_lya(
     wavs, flux, errs, wmin=0, wmax=1300, disp=0.25, sigma_clip=False
 ):
     """
@@ -390,28 +399,17 @@ def bin_spectrum_around_lya(
     newflux = np.zeros(len(wavbins) - 1)
     for i in range(0, len(wavbins) - 1):
         in_bin = bs == i + 1  # b runs from 1 to n-1
-        use = np.logical_and(in_bin, flux > 0)
-        weights = 1 / np.square(errs[use])
-
+        use = np.logical_and.reduce([in_bin, flux > 0, errs > 0])
         # if a bin is empty or something else is wrong, the nans will be
         # filtered out later
-        if not use.any() or weights.sum() == 0:
+        if not use.any():
             newwavs[i] = 0
             newflux[i] = np.nan
-        else:
-            # experimental sigma clipping here
-            if sigma_clip:
-                masked_flux = stats.sigma_clip(flux[use])
-                not_clipped = np.logical_not(masked_flux.mask)
-            else:
-                not_clipped = np.full(flux[use].shape, True)
+            continue
 
-            newwavs[i] = np.average(
-                wavs[use][not_clipped], weights=weights[not_clipped]
-            )
-            newflux[i] = np.average(
-                flux[use][not_clipped], weights=weights[not_clipped]
-            )
+        weights_use = 1 / np.square(errs)[use]
+        newwavs[i] = np.average(wavs[use], weights=weights_use)
+        newflux[i] = np.average(flux[use], weights=weights_use)
 
     return newwavs, newflux
 

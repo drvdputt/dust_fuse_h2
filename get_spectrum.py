@@ -193,6 +193,21 @@ def merged_iue_h_data(filename, extra_columns=None):
 
 
 def coadd_iue_h(filenames):
+    return coadd_general(
+        filenames, lambda x: merged_iue_h_data(x, extra_columns=["NET"])
+    )
+
+
+def coadd_general(filenames, wavs_flux_errs_net_get_function):
+    """General function for coadding spectra in filenames
+
+    The second argument should be a function that takes a file name, and
+    returns [wavs, flux, errs, net].
+
+    Returns
+    -------
+        coadded wavs, flux, errs
+    """
     num_files = len(filenames)
 
     # get all the per-wavelength data
@@ -201,7 +216,7 @@ def coadd_iue_h(filenames):
     all_errs = []
     all_net = []
     for i in range(num_files):
-        wavs, flux, errs, net = merged_iue_h_data(filenames[i], extra_columns=["NET"])
+        wavs, flux, errs, net = wavs_flux_errs_net_get_function(filenames[i])
         all_wavs.append(wavs)
         all_flux.append(flux)
         all_errs.append(errs)
@@ -271,7 +286,8 @@ def iue_l_data(filename):
 
 
 def bin_spectrum_around_lya(wavs, flux, errs):
-    """Rebin spectrum to for lya fitting, and reject certain points.
+    """
+    Rebin spectrum to for lya fitting, and reject certain points.
 
     A rebinning of the spectrum to make it more useful for lya fitting.
     Every new point is the weighted average of all data within the range

@@ -118,7 +118,7 @@ def auto_wavs_flux_errs(filename):
             warn("Only coadding of mxhi is supported")
             raise
 
-        wavs, flux, errs = coadd_iue_h_data(multiple_files)
+        wavs, flux, errs = coadd_iue_h(multiple_files)
         rebin = False
 
     return wavs, flux, errs, rebin
@@ -187,7 +187,7 @@ def merged_iue_h_data(filename, extra_columns=None):
     return column_values
 
 
-def coadd_iue_h_data(filenames):
+def coadd_iue_h(filenames):
     num_files = len(filenames)
 
     # get all the per-wavelength data

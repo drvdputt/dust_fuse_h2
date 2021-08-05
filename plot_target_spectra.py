@@ -20,6 +20,8 @@ def main():
         filenames = data_dir.glob("*mxhi.gz")
     elif data_type == "IUEL":
         filenames = data_dir.glob("*mxlo_vo.fits")
+    # convert all to string to make sure the rest works
+    filenames = [str(f) for f in filenames]
 
     fig, ax = plt.subplots()
     for fn in filenames:

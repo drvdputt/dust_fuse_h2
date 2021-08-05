@@ -144,7 +144,7 @@ def merged_iue_h_data(filename, extra_columns=None):
     allwavs = np.concatenate([iue_wavs(i) for i in range(len(t))])
     idxs = np.argsort(allwavs)
 
-    colnames = ["WAVELENGTH", "ABS_CAL"]
+    colnames = ["WAVELENGTH", "ABS_CAL", "NOISE"]
     if extra_columns is not None:
         colnames += extra_columns
 

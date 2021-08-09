@@ -396,7 +396,9 @@ def rebin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1400, disp=0.25):
     newflux = np.zeros(len(wavbins) - 1)
     for i in range(0, len(wavbins) - 1):
         in_bin = bs == i + 1  # b runs from 1 to n-1
-        use = np.logical_and.reduce([in_bin, flux > 0, errs > 0])
+        use = np.logical_and.reduce(
+            [in_bin, flux > 0, errs > 0, np.isfinite(flux), np.isfinite(errs)]
+        )
         # if a bin is empty or something else is wrong, the nans will be
         # filtered out later
         if not use.any():

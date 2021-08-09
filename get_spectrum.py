@@ -47,7 +47,13 @@ target_use_which_spectrum = {
     "HD235874": "data/HD235874/swp34158mxlo_vo.fits",
     "HD216898": "data/HD216898/swp43934.mxhi.gz",
     "HD326329": "data/HD326329/swp48698.mxhi.gz",
-    "HD179406": "data/HD179406/swp36939.mxhi.gz",
+    "HD179406": [
+        "data/HD179406/swp08974.mxhi.gz",
+        "data/HD179406/swp08976.mxhi.gz",
+        "data/HD179406/swp13865.mxhi.gz",
+        "data/HD179406/swp36939.mxhi.gz",
+        "data/HD179406/swp36940.mxhi.gz",
+    ],
     "BD+52d3210": "data/BD+52d3210/swp34153mxlo_vo.fits",
     "BD+56d524": "data/BD+56d524/swp20330mxlo_vo.fits",
 }

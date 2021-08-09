@@ -291,7 +291,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     # bisect here because we don't know how well chi2 behaves.
     middle = np.argmin(np.abs(NHIgrid - logNHI))
     if middle == 0:
-        middle = 1 # works around empty slice problems
+        middle = 1  # works around empty slice problems
 
     if np.amax(chi2grid[:middle]) < chi2_min + 1:
         print("Lower bound not found")

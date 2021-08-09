@@ -7,6 +7,7 @@ import argparse
 import warnings
 import astropy
 from astropy import stats
+from astropy.table import Table
 
 warnings.filterwarnings("ignore", category=astropy.units.UnitsWarning)
 
@@ -326,7 +327,10 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
         # ax_chi2.set_ylabel("$\\exp(-\\chi^2)$")
         ax_chi2.set_ylabel("$\\chi^2$")
 
-    info = dict(filename=filename, chi2=chi2_min)
+    # very naive, maybe max(upper - real, real - lower) would be better
+    unc = (upper - lower) / 2
+
+    info = dict(filename=filename, logNHI_unc=unc, chi2=chi2_min)
     return logNHI, fc, info
 
 
@@ -364,6 +368,7 @@ def run_all():
     overview = astropy.table.QTable(col_data, names=col_names)
     print(overview)
     overview.write("lyafitting_overview.dat", format="ascii", overwrite=True)
+    return overview
 
 
 def run_one(target, compare=None):
@@ -376,6 +381,18 @@ def run_one(target, compare=None):
 
     plt.show()
 
+
+def update_catalog(overview_table, original_file):
+    """Write the fit results into updated data table."""
+    old_data = Table.read(original_file, format="ascii.commented_header")
+    for row in overview_table:
+        name = row["target"]
+        old_index = np.where(old_data["name"].data == s)[0][0]
+        # Will crash if name is not there. This is intended. 
+        old_data[old_index]["lognhi"] = overview_table['logNHI']
+        old_data[old_index]["lognhi_unc"] = overview_table['logNHI_unc']
+        old_data[old_index]["hiref"] = 0
+    old_data
 
 def main():
     # STIS example
@@ -392,12 +409,14 @@ def main():
         default=None,
         help="Plot extra profile using this logNHI value",
     )
+    ap.add_argument("--update_catalog", default=None, help="File name")
     args = ap.parse_args()
 
     if args.target == "all":
-        run_all()
+        overview = run_all()
+        if args.update_catalog is not None:
+            update_catalog(overview, args.update_catalog)
     else:
         run_one(args.target, args.compare)
-
 
 main()

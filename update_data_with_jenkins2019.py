@@ -1,10 +1,7 @@
 from astropy.table import Table
 import numpy as np
 
-old_data = Table.read(
-    "data/fuse_h1_h2.dat", format="ascii.commented_header", header_start=-1
-)
-
+old_data = Table.read("data/fuse_h1_h2.dat", format="ascii")
 jenkins_data = Table.read("data/jenkins2019_hi_h2.fits")
 
 # modify the name column of jenkins data
@@ -44,7 +41,6 @@ for ji, s in enumerate(jenkins_names):
 old_data.write(
     "data/fuse_h1_h2_update.dat",
     format="ascii.commented_header",
-    header_start=-1,
     overwrite=True,
     formats={"lognhi_unc": "{:.2f}"},
 )

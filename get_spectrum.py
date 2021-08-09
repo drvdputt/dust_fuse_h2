@@ -53,7 +53,7 @@ target_use_which_spectrum = {
 }
 
 
-def processed(target):
+def processed(target, wmin=0, wmax=1400, disp=0.25):
     """Get spectrum data ready for fitting Lya for the given target.
 
     Tweak the variable get_spectrum.target_use_which_spectrum to choose
@@ -71,15 +71,12 @@ def processed(target):
     filename = target_use_which_spectrum[target]
     print("Getting data from ", filename)
     wavs, flux, errs, rebin = auto_wavs_flux_errs(filename)
-
     if rebin:
         binnedwavs, binnedflux = rebin_spectrum_around_lya(
-            wavs, flux, errs, sigma_clip=True
+            wavs, flux, errs, wmin, wmax, disp
         )
     else:
-        wavmin = 1150
-        wavmax = 1300
-        use = np.logical_and(wavmin < wavs, wavs < wavmax)
+        use = np.logical_and(wmin < wavs, wavs < wmax)
         binnedwavs, binnedflux = wavs[use], flux[use]
 
     # remove nans (these are very annoying when they propagate, e.g.
@@ -368,9 +365,7 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
     return newwavs, flux_result, errs_result
 
 
-def rebin_spectrum_around_lya(
-    wavs, flux, errs, wmin=0, wmax=1300, disp=0.25, sigma_clip=False
-):
+def rebin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1400, disp=0.25):
     """
     Rebin spectrum to for lya fitting, and reject certain points.
 

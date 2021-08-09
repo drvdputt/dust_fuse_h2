@@ -29,7 +29,7 @@ target_use_which_spectrum = {
     "HD099872": "data/HD099872/mastDownload/HST/**/*_x1d.fits",
     # "HD152248": "data/HD152248/swp54576.mxhi.gz",
     "HD152248": "data/HD152248/*.mxhi.gz",
-    "HD209339": "data/HD209339/mastDownload/HST/o5lh0b010/o5lh0b010_x1d.fits",
+    "HD209339": "data/HD209339/mastDownload/HST/**/*_x1d.fits",
     # "HD197770": "data/HD197770/mastDownload/HST/oedl04010/oedl04010_x1d.fits",
     "HD197770": "data/HD197770/*.mxhi.gz",
     "HD037332": "data/HD037332/swp32289.mxhi.gz",
@@ -100,7 +100,6 @@ def processed(target, wmin=0, wmax=1400, disp=0.25):
 
 def auto_wavs_flux_errs(filename):
     """Load spectrum or multiple spectra based on file name."""
-
     # determine if multiple files were provided. If a glob pattern was provided, this counts as
     if isinstance(filename, list):
         to_be_coadded = filename

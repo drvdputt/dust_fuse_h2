@@ -386,13 +386,19 @@ def update_catalog(overview_table, original_file):
     """Write the fit results into updated data table."""
     old_data = Table.read(original_file, format="ascii.commented_header")
     for row in overview_table:
-        name = row["target"]
-        old_index = np.where(old_data["name"].data == s)[0][0]
-        # Will crash if name is not there. This is intended. 
-        old_data[old_index]["lognhi"] = overview_table['logNHI']
-        old_data[old_index]["lognhi_unc"] = overview_table['logNHI_unc']
+        old_index = np.where(old_data["name"].data == row["target"])[0][0]
+        # Will crash if name is not there. This is intended.
+        old_data[old_index]["lognhi"] = row["logNHI"]
+        old_data[old_index]["lognhi_unc"] = row["logNHI_unc"]
         old_data[old_index]["hiref"] = 0
-    old_data
+
+    old_data.write(
+        "data/fuse_h1_h2_with_lyafitting.dat",
+        format="ascii.commented_header",
+        overwrite=True,
+        formats={"lognhi_unc": "{:.2f}"},
+    )
+
 
 def main():
     # STIS example
@@ -418,5 +424,6 @@ def main():
             update_catalog(overview, args.update_catalog)
     else:
         run_one(args.target, args.compare)
+
 
 main()

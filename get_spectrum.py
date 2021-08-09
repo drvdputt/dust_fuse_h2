@@ -203,8 +203,10 @@ def merged_iue_h_data(filename, extra_columns=None):
 
     # clean up using DQ
     dq = all_of_column("QUALITY")
+    good = dq == 0
+    print(f"IUE: {good.sum()} out of {len(good)} wavelength points are good")
     for array in column_values:
-        array = array[dq == 0]
+        array = array[good]
 
     # sort by wavelength
     idxs = np.argsort(column_values[0])

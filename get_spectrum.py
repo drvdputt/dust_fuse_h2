@@ -15,7 +15,7 @@ import numpy as np
 from pathlib import Path
 from warnings import warn
 from scipy.interpolate import interp1d
-from astropy import stats
+import collections
 
 # can be manually tweaked. TODO: If the value is a list or contains *, the spectra will be coadded
 target_use_which_spectrum = {
@@ -59,6 +59,12 @@ target_use_which_spectrum = {
 }
 
 
+# namedtuple defines a simple class
+Spectrum = collections.namedtuple(
+    "Spectrum", ["wavs", "flux", "errs", "net", "exptime"]
+)
+
+
 def processed(target, wmin=0, wmax=1400, disp=0.25):
     """Get spectrum data ready for fitting Lya for the given target.
 
@@ -76,12 +82,11 @@ def processed(target, wmin=0, wmax=1400, disp=0.25):
     # choose data
     filename = target_use_which_spectrum[target]
     print("Getting data from ", filename)
-    wavs, flux, errs, rebin = auto_wavs_flux_errs(filename)
+    spectrum, rebin = auto_wavs_flux_errs(filename)
     if rebin:
-        binnedwavs, binnedflux = rebin_spectrum_around_lya(
-            wavs, flux, errs, wmin, wmax, disp
-        )
+        binnedwavs, binnedflux = rebin_spectrum_around_lya(spectrum, wmin, wmax, disp)
     else:
+        wavs, flux = spectrum.wavs, spectrum.flux
         use = np.logical_and(wmin < wavs, wavs < wmax)
         binnedwavs, binnedflux = wavs[use], flux[use]
 
@@ -114,38 +119,35 @@ def auto_wavs_flux_errs(filename):
 
     if to_be_coadded is None:
         if "x1d" in filename:
-            wavs, flux, errs = merged_stis_data(filename)
+            spectrum = merged_stis_data(filename)
             rebin = True
         elif "mxhi" in filename:
-            wavs, flux, errs = merged_iue_h_data(filename)
+            spectrum = merged_iue_h_data(filename)
             rebin = True
         elif "mxlo" in filename:
-            wavs, flux, errs = iue_l_data(filename)
+            spectrum = iue_l_data(filename)
             rebin = False
         else:
             warn("File {} not supported yet, exiting".format(filename))
             exit()
     else:
         if "x1d" in to_be_coadded[0]:
-            wavs, flux, errs = coadd_hst_stis(to_be_coadded)
+            spectrum = coadd_hst_stis(to_be_coadded)
             rebin = True
         elif "mxhi" in to_be_coadded[0]:
-            wavs, flux, errs = coadd_iue_h(to_be_coadded)
+            spectrum = coadd_iue_h(to_be_coadded)
             rebin = True
         elif "mxlo" in to_be_coadded[0]:
-            wavs, flux, errs = coadd_iue_l(to_be_coadded)
+            spectrum = coadd_iue_l(to_be_coadded)
             rebin = False
 
-    return wavs, flux, errs, rebin
+    return spectrum, rebin
 
 
-def merged_stis_data(filename_or_scidata, get_net=False):
-    """Get wavelengths, fluxes and errors from all STIS spectral orders.
+def merged_stis_data(filename, extension=1):
+    """Get spectrum data from all STIS spectral orders.
 
-    If filename is given, use only first SCI extension. If other data
-    needs to be merged, pass SCI data directly.
-
-    get_net : add net column to output
+    If only filename is given, use SCI extension.
 
     Returns
     -------
@@ -157,34 +159,36 @@ def merged_stis_data(filename_or_scidata, get_net=False):
     errs: all errors at these wavelengths
 
     """
-    if isinstance(filename_or_scidata, str):
-        t = Table.read(filename_or_scidata)
-    else:
-        t = filename_or_scidata
+    with fits.open(filename) as f:
+        t = f[extension].data
+        exptime = get_exptime(f[extension].header)
 
-    output_columns = ["WAVELENGTH", "FLUX", "ERROR"]
-    if get_net:
-        output_columns.append("NET")
+    output_columns = ["WAVELENGTH", "FLUX", "ERROR", "NET"]
+    fields = [np.concatenate(t[c]) for c in output_columns]
 
-    output = [np.concatenate(t[c]) for c in output_columns]
-
+    # clean up by dq
     dq = np.concatenate(t["DQ"])
     good = dq == 0
     print(f"STIS: {good.sum()} out of {len(good)} wavelength points are good")
+    fields = [c[good] for c in fields]
 
     # sort by wavelength
-    idxs = np.argsort(output[0])
-    return [array[idxs] for array in output]
+    idxs = np.argsort(fields[0])
+    fields = [c[idxs] for c in fields]
+
+    # add exptime and create Spectrum (namedtuple) object (* unpacks,
+    # should be in right order)
+    fields.append(exptime)
+    return Spectrum(*fields)
 
 
-def merged_iue_h_data(filename, extra_columns=None):
+def merged_iue_h_data(filename):
     """
-    Get wavelengths, fluxes and errors from IUE high res data.
+    Get Spectrumn info over all orders of high res IUE data.
 
     Returns
     -------
-    column_values : list containing wavelengths, "ABS_CAL", "NOISE" plus
-        any of the extra_columns
+    Spectrum
     """
     t = Table.read(filename)
 
@@ -199,9 +203,7 @@ def merged_iue_h_data(filename, extra_columns=None):
 
     allwavs = np.concatenate([iue_wavs(i) for i in range(len(t))])
 
-    colnames = ["WAVELENGTH", "ABS_CAL", "NOISE"]
-    if extra_columns is not None:
-        colnames += extra_columns
+    colnames = ["WAVELENGTH", "ABS_CAL", "NOISE", "NET"]
 
     column_values = [allwavs]
     for colname in colnames[1:]:
@@ -216,7 +218,13 @@ def merged_iue_h_data(filename, extra_columns=None):
 
     # sort by wavelength
     idxs = np.argsort(column_values[0])
-    return [c[idxs] for c in column_values]
+    column_values = [c[idxs] for c in column_values]
+
+    # add exptime and create Spectrum
+    exptime = get_exptime(fits.getheader(filename, ext=0))
+
+    fields = column_values + [exptime]
+    return Spectrum(*fields)
 
 
 def iue_l_data(filename):
@@ -224,95 +232,69 @@ def iue_l_data(filename):
     wavs = t["WAVE"][0]
     flux = t["FLUX"][0]
     sigma = t["SIGMA"][0]
-    return wavs, flux, sigma
+    # net is not available
+    net = None
+    # exptime is not used (for now)
+    exptime = None
+    return Spectrum(wavs, flux, sigma, net, exptime)
 
 
 def coadd_iue_h(filenames):
     print(f"Coadding {len(filenames)} IUE H exposures")
-    return coadd_general(
-        len(filenames),
-        lambda i: merged_iue_h_data(filenames[i], extra_columns=["NET"]),
-        lambda i: get_exptime(fits.getheader(filenames[i], ext=0)),
-    )
+    return coadd_general([merged_iue_h_data(fn) for fn in filenames])
 
 
 def coadd_iue_l(filenames):
     print(f"Coadding {len(filenames)} IUE L exposures")
-    all_wavs = []
-    all_flux = []
-    all_errs = []
-    for fn in filenames:
-        wav, flux, err = iue_l_data(fn)
-        all_wavs.append(wav)
-        all_flux.append(flux)
-        all_errs.append(err)
+    spectrums = [iue_l_data(fn) for fn in filenames]
 
-    if not np.equal.reduce(all_wavs).all():
-        warn(
-            "Not all wavs are equal in IUE L. Rebinning or interpolation should be implemented."
-        )
+    if not np.equal.reduce([s.wavs for s in spectrums]).all():
+        warn("Not all wavs are equal in IUE L. Implement fix pls.")
         raise
 
     # Assume that the wavs are always the same. If not, the above error
     # will trigger, and I should reconsider.
-    flux_sum = np.zeros(len(all_wavs[0]))
-    weight_sum = np.zeros(len(all_wavs[0]))
-    for i in range(len(all_flux)):
-        good = (all_flux[i] > 0) & np.isfinite(all_flux[i])
-        weight = 1 / np.square(all_errs[1])
-        flux_sum[good] += all_flux[i][good] * weight[good]
+    numwavs = len(spectrums[0].wavs)
+    flux_sum = np.zeros(numwavs)
+    weight_sum = np.zeros(numwavs)
+    for s in spectrums:
+        good = np.isfinite(s.flux) & (s.errs > 0)
+        weight = 1 / s.errs ** 2
+        flux_sum[good] += s.flux[good] * weight[good]
         weight_sum[good] += weight[good]
 
     # simply the 1/sigma2 weighting rule
     new_flux = flux_sum / weight_sum
     new_errs = np.sqrt(1 / weight_sum)
-    return all_wavs[0], new_flux, new_errs
+    return Spectrum(spectrums[0].wavs, new_flux, new_errs, None, None)
 
 
 def coadd_hst_stis(filenames):
-    # get all science exposures
-    sci_hdus = []
+    # get all SCI exposures
+    spectrums = []
 
     # remember handles so we can close them later
-    open_files = [fits.open(fn) for fn in filenames]
-    for hdul in open_files:
-        sci_hdus += [h for h in hdul if h.name == "SCI"]
+    for fn in filenames:
+        with fits.open(fn) as hdus:
+            for extension in range(1, len(hdus)):
+                spectrums.append(merged_stis_data(fn, extension))
 
-    print(f"Coadding {len(sci_hdus)} STIS exposures from {len(filenames)} files")
-    output = coadd_general(
-        len(sci_hdus),
-        lambda i: merged_stis_data(sci_hdus[i].data, get_net=True),
-        lambda i: get_exptime(sci_hdus[i].header),
-    )
-
-    for f in open_files:
-        f.close()
-
-    return output
+    print(f"Coadding {len(spectrums)} STIS exposures from {len(filenames)} files")
+    return coadd_general(spectrums)
 
 
-def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
+def coadd_general(spectrums):
     """General function for coadding spectra.
 
-    The second argument should be a function that takes an index in
-    range(num_spectra), and returns [wavs, flux, errs, net].
+    spectrums : list of Spectrum objects
 
     Returns
     -------
-        coadded wavs, flux, errs
+    spectrum : Spectrum object representing the coadded data
 
     """
     # get all the per-wavelength data
-    all_wavs = []
-    all_flux = []
-    all_errs = []
-    all_net = []
-    for i in range(num_spectra):
-        wavs, flux, errs, net = wavs_flux_errs_net_getf(i)
-        all_wavs.append(wavs)
-        all_flux.append(flux)
-        all_errs.append(errs)
-        all_net.append(net)
+    all_wavs = [s.wavs for s in spectrums]
 
     # determine new wavelength grid, using max of median of wavelength
     # increment as step size
@@ -326,20 +308,24 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
     flux_sum = np.zeros(len(newwavs))
     weight_sum = np.zeros(len(newwavs))
     variance_sum = np.zeros(len(newwavs))
-    for i in range(num_spectra):
+    net_sum = np.zeros(len(newwavs))
+    total_exptime = np.zeros(len(newwavs))
+    for s in spectrums:
         # nearest neighbour interpolation of all relevant quantities
         def do_interp1d(quantity):
             return interp1d(
-                all_wavs[i],
-                quantity,
-                kind="nearest",
-                fill_value=np.nan,
-                bounds_error=False,
+                s.wavs, quantity, kind="nearest", fill_value=np.nan, bounds_error=False,
             )(newwavs)
 
-        fi = do_interp1d(all_flux[i])
-        ei = do_interp1d(all_errs[i])
-        ni = do_interp1d(all_net[i])
+        fi = do_interp1d(s.flux)
+        ei = do_interp1d(s.errs)
+        ni = do_interp1d(s.net)
+        exptime = s.exptime
+
+        # weights scale with ni / fi = sensitivity
+        good_fi_ni = (fi != 0) & np.isfinite(fi) & (ni != 0) & np.isfinite(ni)
+        wi = np.where(good_fi_ni, ni / fi, 0) * exptime
+        good_wi = wi > 0
 
         # total_counts = flux * sensitivity * exptime
         # --> flux = total_counts / (sensitivity * exptime)
@@ -350,39 +336,31 @@ def coadd_general(num_spectra, wavs_flux_errs_net_getf, exptime_getf):
         #         = flux / (sensitivity * exptime)
 
         # sens = counts per flux unit
-        sensitivity = ni / fi
-        weights = sensitivity * exptime_getf(i)
 
-        # sometimes, fi is zero or nan, so only use data at good indices
-        good = np.logical_and.reduce(
-            [
-                np.isfinite(fi),
-                np.isfinite(ei),
-                np.isfinite(weights),
-                weights > 0,
-                fi > 0,
-                ei > 0,
-            ]
-        )
-        weight_sum[good] += weights[good]
-        flux_sum[good] += weights[good] * fi[good]
-        variance_sum[good] += np.square(ei[good] * weights[good])
+        weight_sum[good_wi] += wi[good_wi]
+        flux_sum[good_wi] += wi[good_wi] * fi[good_wi]
+        variance_sum[good_wi] += np.square(ei[good_wi] * wi[good_wi])
+
+        net_sum[good_wi] += ni[good_wi] * exptime
+        total_exptime[good_wi] += exptime
 
     flux_result = flux_sum / weight_sum
     errs_result = np.sqrt(variance_sum) / weight_sum
-    return newwavs, flux_result, errs_result
+    net_result = net_sum / total_exptime
+
+    return Spectrum(newwavs, flux_result, errs_result, net_result, total_exptime)
 
 
-def rebin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1400, disp=0.25):
-    """
-    Rebin spectrum to for lya fitting, and reject certain points.
+def rebin_spectrum_around_lya(spectrum, wmin=0, wmax=1400, disp=0.25):
+    """Rebin spectrum to for lya fitting, and reject certain points.
 
     A rebinning of the spectrum to make it more useful for lya fitting.
     Every new point is the weighted average of all data within the range
-    of a bin. The weights are 1 / errs**2. The bins can be specified by
+    of a bin. The weights are flux / net * exptime if those are
+    available. If not 1 / errs**2 is used. The bins can be specified by
     choosing a minimum, maximum wavelength and a resolution (in
     Angstrom). Additionally, only the points that satisfy some basic
-    data rejection criteria are used. E.g flux > 0.
+    data rejection criteria are used.
 
     Returns
     -------
@@ -390,9 +368,16 @@ def rebin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1400, disp=0.25):
     newflux: average flux in each bin
 
     """
+    wavs = spectrum.wavs
+    flux = spectrum.flux
     wavmin = max(wmin, np.amin(wavs))
     wavmax = min(wmax, np.amax(wavs))
     wavbins = np.arange(wavmin, wavmax, disp)
+
+    if spectrum.net is not None and spectrum.exptime is not None:
+        weights = spectrum.net / flux * spectrum.exptime
+    else:
+        weights = 1 / spectrum.errs ** 2
 
     # np.digitize returns list of indices. b = 1 means that the data point
     # is between wav[0] (first) and wav[1]. b = n-1 means between wav[n-2]
@@ -403,7 +388,7 @@ def rebin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1400, disp=0.25):
     for i in range(0, len(wavbins) - 1):
         in_bin = bs == i + 1  # b runs from 1 to n-1
         use = np.logical_and.reduce(
-            [in_bin, flux > 0, errs > 0, np.isfinite(flux), np.isfinite(errs)]
+            [in_bin, np.isfinite(flux), weights > 0, np.isfinite(weights)]
         )
         # if a bin is empty or something else is wrong, the nans will be
         # filtered out later
@@ -412,9 +397,8 @@ def rebin_spectrum_around_lya(wavs, flux, errs, wmin=0, wmax=1400, disp=0.25):
             newflux[i] = np.nan
             continue
 
-        weights_use = 1 / np.square(errs)[use]
-        newwavs[i] = np.average(wavs[use], weights=weights_use)
-        newflux[i] = np.average(flux[use], weights=weights_use)
+        newwavs[i] = np.average(wavs[use], weights=weights[use])
+        newflux[i] = np.average(flux[use], weights=weights[use])
 
     return newwavs, newflux
 

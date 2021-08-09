@@ -303,3 +303,9 @@ HD235874
     - HD190603: weird stuff is happening. It gets worse when I increase the wmax of the rebin
       function. Important hint: does not happen when coadding only swp01822 and swp02984.
       Happens a bit when swp01846 is added. Does not happen when rebinning is disabled.
+
+      Many of the errs are inf or nan, even before the rebinning step. Just the coadding is
+      enough to cause it.
+
+      After a big refactor, I was able to pass the exptime and net counts around, so I could
+      avoid using the noise column. This fixes the issue.

@@ -31,13 +31,13 @@ target_use_which_spectrum = {
     "HD152248": "data/HD152248/*.mxhi.gz",
     "HD209339": "data/HD209339/mastDownload/HST/o5lh0b010/o5lh0b010_x1d.fits",
     # "HD197770": "data/HD197770/mastDownload/HST/oedl04010/oedl04010_x1d.fits",
-    "HD197770": "data/HD197770/swp49267.mxhi.gz",
+    "HD197770": "data/HD197770/*.mxhi.gz",
     "HD037332": "data/HD037332/swp32289.mxhi.gz",
     "HD093028": "data/HD093028/swp05521.mxhi.gz",
     # "HD062542": "data/HD062542/mastDownload/HST/obik01020/obik01020_x1d.fits", # wavelength range
     # "HD062542": "data/HD062542/*.mxhi.gz", # way too noisy
     "HD062542": "data/HD062542/*mxlo_vo.fits",
-    "HD190603": "data/HD190603/swp01822.mxhi.gz",
+    "HD190603": "data/HD190603/*.mxhi.gz",
     # "HD046202": "data/HD046202/swp08845.mxhi.gz",
     # "HD046202": "data/HD046202/mastDownload/HST/ocb6e0030/ocb6e0030_x1d.fits",
     # "HD046202": "data/HD046202/mastDownload/HST/ocb6e1030/ocb6e1030_x1d.fits",

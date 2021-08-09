@@ -392,11 +392,12 @@ def update_catalog(overview_table, original_file):
         old_data[old_index]["lognhi_unc"] = row["logNHI_unc"]
         old_data[old_index]["hiref"] = 0
 
+    two_decimals = "{:.2f}"
     old_data.write(
         "data/fuse_h1_h2_with_lyafitting.dat",
         format="ascii.commented_header",
         overwrite=True,
-        formats={"lognhi_unc": "{:.2f}"},
+        formats={"lognhi": two_decimals, "lognhi_unc": two_decimals},
     )
 
 

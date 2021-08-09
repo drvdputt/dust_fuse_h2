@@ -16,7 +16,7 @@ def get_fuse_h1_h2():
        Table of the data (h1, h2, htot, etc.)
     """
 
-    data = Table.read("data/fuse_h1_h2_update.dat", format="ascii")
+    data = Table.read("data/fuse_h1_h2_with_lyafitting.dat", format="ascii")
 
     # rename column to have the same name as other tables
     data.rename_column("name", "Name")

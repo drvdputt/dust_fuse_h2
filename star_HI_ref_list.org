@@ -287,3 +287,19 @@ HD235874
 
     - HD047129: many IUE exposures, be there seem to be two groups, with a spectral shift in
       between.
+
+    - HD093827: strong slope, but has two low res. Maybe use them.
+
+    - HD094493: many spikes without rebinning. Might need dq check.
+
+    - HD099872: STIS, but needs good selection of fit points
+
+    - HD152248: combining 26 IUE exposures gives pretty good quality. But very strong stellar
+      features.
+
+    - HD179406: one of the IUE H exposures has many negative spikes. I use all except swp08975.
+      Even then there's some weird spikes left.
+
+    - HD190603: weird stuff is happening. It gets worse when I increase the wmax of the rebin
+      function. Important hint: does not happen when coadding only swp01822 and swp02984.
+      Happens a bit when swp01846 is added. Does not happen when rebinning is disabled.

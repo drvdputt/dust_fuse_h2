@@ -330,7 +330,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     # very naive, maybe max(upper - real, real - lower) would be better
     unc = (upper - lower) / 2
 
-    info = dict(filename=filename, logNHI_unc=unc, chi2=chi2_min)
+    info = dict(logNHI_unc=unc, chi2=chi2_min)
     return logNHI, fc, info
 
 

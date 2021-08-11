@@ -24,7 +24,7 @@ default_lya_wav_ranges = [[1175, 1200], [1225, 1250]]
 # manually choose range for continuum fit and lya fit for each target
 target_continuum_wav_ranges = {
     "BD+52d3210": [[1155, 1168], [1266, 1291], [1311, 1328], [1342, 1372]],
-    "BD+56d524": None,
+    "BD+56d524": [[1265, 1275], [1282, 1296], [1309, 1321], [1348, 1382]],
     "HD023060": None,
     "HD037332": None,
     "HD037525": None,
@@ -50,7 +50,7 @@ target_continuum_wav_ranges = {
 
 target_lya_wav_ranges = {
     "BD+52d3210": [[1155, 1168], [1266, 1291], [1180, 1210], [1222, 1249]],
-    "BD+56d524": None,
+    "BD+56d524": [[1192, 1207], [1224, 1234], [1241, 1254]],
     "HD023060": None,
     "HD037332": None,
     "HD037525": None,

@@ -16,45 +16,100 @@ LYA = 1215.67
 # see figure 1 in DS94
 default_noise_wav_range_DS94 = [1265, 1271]
 
-# use a different value for certain targets
-target_noise_wav_range = {"BD+56d524": [1243, 1299], "HD062542": [1243, 1282]}
+# None is specified, these are used. Useful for making a test plots of
+# sources for which the good ranges are unknown yet.
+default_continuum_wav_ranges = [[1150, 1175], [1265, 1271]]
+default_lya_wav_ranges = [[1175, 1200], [1225, 1250]]
 
-# per-target wavelength exclusions (due to spectroscopic features seen
-# by eye)
-default_exclude_wav_ranges = [
-    [1171, 1178],
-    [1181, 1185],
-    [1190, 1191],
-    [1192, 1195],
-    [1198, 1201.4],
-    [1205.5, 1207],
-    [1227.6, 1239],
-    [1249, 1252],
-    [1258.5, 1262],
-]
-target_exclude_wav_ranges = {
-    "BD+52d3210": [
-        [1209, 1221],  # geocoronal
-        [1247, 1266],
-        [1236.5, 1240],
-        [1171, 1180],
-        [1194, 1199],
-    ],
-    "BD+56d524": [
-        [1206, 1223],  # geocoronal
-        [1247, 1266],
-        [1236.5, 1240],
-        [1171, 1180],
-    ],
-    "HD047129": default_exclude_wav_ranges + [[1242, 1250]],
-    "HD062542": [
-        [1206, 1223],  # geocoronal
-        [1247, 1266],
-        [1236.5, 1240],
-        [1171, 1180],
-    ],
-    "HD152248": default_exclude_wav_ranges + [[1242, 1250], [1165.6, 1177]],
+# manually choose range for continuum fit and lya fit for each target
+target_continuum_wav_ranges = {
+    "BD+52d3210": [[1155, 1168], [1266, 1291], [1311, 1328], [1342, 1372]],
+    "BD+56d524": None,
+    "HD023060": None,
+    "HD037332": None,
+    "HD037525": None,
+    "HD046202": None,
+    "HD047129": None,
+    "HD051013": None,
+    "HD062542": None,
+    "HD093028": None,
+    "HD093827": None,
+    "HD094493": None,
+    "HD096675": None,
+    "HD097471": None,
+    "HD099872": None,
+    "HD152248": None,
+    "HD179406": None,
+    "HD190603": None,
+    "HD197770": None,
+    "HD209339": None,
+    "HD216898": None,
+    "HD235874": None,
+    "HD326329": None,
 }
+
+target_lya_wav_ranges = {
+    "BD+52d3210": [[1155, 1168], [1266, 1291], [1180, 1210], [1222, 1249]],
+    "BD+56d524": None,
+    "HD023060": None,
+    "HD037332": None,
+    "HD037525": None,
+    "HD046202": None,
+    "HD047129": None,
+    "HD051013": None,
+    "HD062542": None,
+    "HD093028": None,
+    "HD093827": None,
+    "HD094493": None,
+    "HD096675": None,
+    "HD097471": None,
+    "HD099872": None,
+    "HD152248": None,
+    "HD179406": None,
+    "HD190603": None,
+    "HD197770": None,
+    "HD209339": None,
+    "HD216898": None,
+    "HD235874": None,
+    "HD326329": None,
+}
+
+
+# keeping these old settings as a comment, as the number might be useful
+# default_exclude_wav_ranges = [
+#     [1171, 1178],
+#     [1181, 1185],
+#     [1190, 1191],
+#     [1192, 1195],
+#     [1198, 1201.4],
+#     [1205.5, 1207],
+#     [1227.6, 1239],
+#     [1249, 1252],
+#     [1258.5, 1262],
+# ]
+# target_exclude_wav_ranges = {
+#     "BD+52d3210": [
+#         [1209, 1221],  # geocoronal
+#         [1247, 1266],
+#         [1236.5, 1240],
+#         [1171, 1180],
+#         [1194, 1199],
+#     ],
+#     "BD+56d524": [
+#         [1206, 1223],  # geocoronal
+#         [1247, 1266],
+#         [1236.5, 1240],
+#         [1171, 1180],
+#     ],
+#     "HD047129": default_exclude_wav_ranges + [[1242, 1250]],
+#     "HD062542": [
+#         [1206, 1223],  # geocoronal
+#         [1247, 1266],
+#         [1236.5, 1240],
+#         [1171, 1180],
+#     ],
+#     "HD152248": default_exclude_wav_ranges + [[1242, 1250], [1165.6, 1177]],
+# }
 
 
 def prepare_axes(ax):
@@ -83,13 +138,7 @@ def wavs_in_ranges(wavs, ranges):
 
 def is_good_data(wavs, flux, target):
     peak = is_peak(wavs, flux)
-
-    exclude_wav_ranges = target_exclude_wav_ranges.get(
-        target, default_exclude_wav_ranges
-    )
-    excluded = wavs_in_ranges(wavs, exclude_wav_ranges)
-
-    return np.logical_not(peak | excluded)
+    return np.logical_not(peak)
 
 
 def is_peak(wavs, flux):
@@ -98,33 +147,31 @@ def is_peak(wavs, flux):
     return masked_array.mask
 
 
-def safe_for_cont(wavs, flux, target):
-    """Return mask that indicates wavelengths for continuum fit."""
+def use_for_cont(wavs, flux, target):
+    """Return mask indicating wavelengths for continuum fit."""
     # use only these points for continuum estimation
-
-    noise_wav_range = target_noise_wav_range.get(target, default_noise_wav_range_DS94)
-    cont_wav_ranges = [
-        noise_wav_range,
-        [1165, 1170],
-        [1179, 1181],
-        [1185, 1188],
-    ]
-    use = wavs_in_ranges(wavs, cont_wav_ranges)
+    use = wavs_in_ranges(wavs, target_continuum_wav_ranges[target])
     good = is_good_data(wavs, flux, target)
     return use & good
 
 
-def safe_for_lya(wavs, flux, target):
+def use_for_lya(wavs, flux, target):
+    """Return mask indicating wavelengths for lya fit."""
     # at these wavelengths, 1e22 * cross is about 100
     # exp(100) ~ e43 is still relatively safe
-    center = wavs_in_ranges(wavs, [[1212.67, 1218.67]])
+    # center = wavs_in_ranges(wavs, [[1212.67, 1218.67]])
+    use = wavs_in_ranges(wavs, target_lya_wav_ranges[target])
     good = is_good_data(wavs, flux, target)
-    return np.logical_not(center) & good
+    return use & good
 
 
 def estimate_continuum(wavs, flux, target):
-    """Estimate the continuum using a linear fit"""
-    use = safe_for_cont(wavs, flux, target)
+    """Estimate the continuum using a linear fit.
+
+    Specific wavelength ranges are used.
+
+    """
+    use = use_for_cont(wavs, flux, target)
 
     # simple linear regression
     x = wavs[use]
@@ -142,9 +189,12 @@ def estimate_continuum(wavs, flux, target):
 
 
 def estimate_noise(wavs, flux, fc, target):
-    use = wavs_in_ranges(wavs, [default_noise_wav_range_DS94]) & safe_for_cont(
-        wavs, flux, target
-    )
+    """Estimate noise as RMS of (data - continuum).
+
+    Wavelength ranges used to fit continuum are used.
+
+    """
+    use = use_for_cont(wavs, flux, target)
     # DS94 use sum instead of average. Not sure if that is the correct
     # way.
     sigma = np.sqrt(np.average(np.square(flux[use] - fc(wavs[use]))))
@@ -220,14 +270,13 @@ def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
     fms = fcs * extinction_factor(logNHI, wavs)
     ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
-    # data / used for cont / used for lya
-    used_for_cont = safe_for_cont(wavs, flux, target)
-    used_for_lya = safe_for_lya(wavs, flux, target)
-    # change this to an axvspan plot
+    # data
+    ax.plot(wavs, flux, label="data", color="k", zorder=10)
+    used_for_cont = use_for_cont(wavs, flux, target)
     ax.plot(
         wavs[used_for_cont],
         flux[used_for_cont],
-        label="used for continuum",
+        label="continuum fit",
         color=cont_color,
         linestyle="none",
         marker="o",
@@ -235,27 +284,25 @@ def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
         alpha=0.5,
         zorder=50,
     )
-
-    # finally, plot the spectrum and the rejected points
-    ax.plot(wavs, flux, label="data", color="k", zorder=10)
-    # use red x for rejected points
+    used_for_lya = use_for_lya(wavs, flux, target)
     ax.plot(
-        wavs[np.logical_not(used_for_lya)],
-        flux[np.logical_not(used_for_lya)],
-        label="rejected",
-        color="r",
+        wavs[used_for_lya],
+        flux[used_for_lya],
+        label="lya fit",
+        color='b',
         linestyle="none",
-        marker="x",
-        alpha=0.5,
-        zorder=45,
+        marker="+",
+        markerfacecolor="none",
+        zorder=50,
     )
 
+    # uncertainty
     if lower_upper is not None:
         lower_fms = fcs * extinction_factor(lower_upper[0], wavs)
         upper_fms = fcs * extinction_factor(lower_upper[1], wavs)
         ax.fill_between(wavs, lower_fms, upper_fms, alpha=0.3, color=lya_color)
 
-    ax.set_ylim([0, 1.1 * np.amax(flux[used_for_lya])])
+    ax.set_ylim([0, 1.1 * np.percentile(flux, 99)])
     prepare_axes(ax)
 
 
@@ -278,7 +325,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     # sigma to use in chi2 equation
     sigma_c = estimate_noise(wavs, flux, fc, target)
     # choose clean parts of spectrum
-    use = safe_for_lya(wavs, flux, target)
+    use = use_for_lya(wavs, flux, target)
 
     # the fitting itself
     fargs = (fc, sigma_c, wavs[use], flux[use])
@@ -340,6 +387,11 @@ def run_all():
     logNHIs = []
 
     for target in get_spectrum.target_use_which_spectrum:
+        if target_continuum_wav_ranges[target] is None:
+            target_continuum_wav_ranges[target] = default_continuum_wav_ranges
+        if target_lya_wav_ranges[target] is None:
+            target_lya_wav_ranges[target] = default_lya_wav_ranges
+
         fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8, 4))
         logNHI, fc, info = lya_fit(target, ax_fit=ax1, ax_chi2=ax2)
         data_filename = get_spectrum.target_use_which_spectrum[target]
@@ -372,7 +424,12 @@ def run_all():
 
 
 def run_one(target, compare=None):
-    fig, [ax_fit, ax_chi2] = plt.subplots(1, 2)
+    if target_continuum_wav_ranges[target] is None:
+        target_continuum_wav_ranges[target] = default_continuum_wav_ranges
+    if target_lya_wav_ranges[target] is None:
+        target_lya_wav_ranges[target] = default_lya_wav_ranges
+
+    fig, [ax_fit, ax_chi2] = plt.subplots(1, 2, figsize=(9, 6))
     logNHI, fc, filename = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2)
     plt.title(target, loc="right")
     if compare is not None:
@@ -427,4 +484,5 @@ def main():
         run_one(args.target, args.compare)
 
 
-main()
+if __name__ == "__main__":
+    main()

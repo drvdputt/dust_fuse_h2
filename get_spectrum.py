@@ -47,6 +47,7 @@ target_use_which_spectrum = {
     "HD047129": "data/HD047129/*.mxhi.gz",
     "HD235874": "data/HD235874/swp34158mxlo_vo.fits",
     "HD216898": "data/HD216898/swp43934.mxhi.gz",
+    # "HD216898": "data/HD216898/swp17175mxlo_vo.fits",
     "HD326329": "data/HD326329/swp48698.mxhi.gz",
     "HD179406": [
         "data/HD179406/swp08974.mxhi.gz",

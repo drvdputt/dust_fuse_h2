@@ -23,6 +23,7 @@ target_use_which_spectrum = {
     "HD094493": "data/HD094493/mastDownload/HST/o54306010/o54306010_x1d.fits",
     "HD037525": "data/HD037525/swp27579.mxhi.gz",
     "HD093827": "data/HD093827/swp50536.mxhi.gz",
+    # "HD093827": "data/HD093827/*mxlo_vo.fits",
     "HD051013": "data/HD051013/swp22860.mxhi.gz",
     "HD096675": "data/HD096675/swp41717.mxhi.gz",
     "HD023060": "data/HD023060/swp11151mxlo_vo.fits",

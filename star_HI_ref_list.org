@@ -311,3 +311,9 @@ HD235874
       avoid using the noise column. This fixes the issue.
 
     - HD197770: 9 files. Files 3-9 look pretty good. Double check 0-3 later.
+
+*** Choosing fit ranges
+    Notes about problematic stars here
+
+    - HD093827: Unclear what the continuum needs to be. Switching to low resolution data doesn't
+      really help.

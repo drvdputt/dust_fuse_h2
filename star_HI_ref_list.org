@@ -315,5 +315,11 @@ HD235874
 *** Choosing fit ranges
     Notes about problematic stars here
 
+    - HD062542: Even with custom fit ranges, the high res data is just too hard to deal with.
+      Low res data still works better.
+    
     - HD093827: Unclear what the continuum needs to be. Switching to low resolution data doesn't
       really help.
+
+    - HD190603: Have multiple mxhi files, but still too noisy. Also multipl mxlo files. Come
+      back to this later.

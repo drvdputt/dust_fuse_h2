@@ -455,7 +455,7 @@ def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
     ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
     # data
-    ax.plot(wavs, flux, label="data", color="k", zorder=10)
+    ax.plot(wavs, flux, label="data", color="k", zorder=10, linewidth=1)
     used_for_cont = use_for_cont(wavs, flux, target)
     ax.plot(
         wavs[used_for_cont],
@@ -568,6 +568,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
         ax_chi2.axvline(logNHI, color="k", linestyle=":")
         # ax_chi2.set_ylabel("$\\exp(-\\chi^2)$")
         ax_chi2.set_ylabel("$\\chi^2$")
+        ax_chi2.set_title(f"$\\chi^2_{{\\mathrm{{min}}}} = {chi2_min:.2f}$")
 
     # very naive, maybe max(upper - real, real - lower) would be better
     unc = (upper - lower) / 2

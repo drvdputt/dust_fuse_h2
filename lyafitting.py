@@ -163,7 +163,7 @@ def is_good_data(wavs, flux, target):
 
 def is_peak(wavs, flux):
     """Return mask to avoid peaks in the spectrum."""
-    masked_array = stats.sigma_clip(flux)  # uses 5 iterations by default
+    masked_array = stats.sigma_clip(flux, sigma=4)  # uses 5 iterations by default
     return masked_array.mask
 
 

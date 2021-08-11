@@ -289,11 +289,22 @@ def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
         wavs[used_for_lya],
         flux[used_for_lya],
         label="lya fit",
-        color='b',
+        color="b",
         linestyle="none",
         marker="+",
         markerfacecolor="none",
         zorder=50,
+    )
+    # rejections
+    bad = np.logical_not(is_good_data(wavs, flux, target))
+    ax.plot(
+        wavs[bad],
+        flux[bad],
+        label="bad",
+        color="r",
+        linestyle="none",
+        marker="x",
+        zorder=60,
     )
 
     # uncertainty

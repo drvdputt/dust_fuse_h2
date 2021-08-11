@@ -405,16 +405,8 @@ def run_all():
 
         fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8, 4))
         logNHI, fc, info = lya_fit(target, ax_fit=ax1, ax_chi2=ax2)
-        data_filename = get_spectrum.target_use_which_spectrum[target]
-        data_type = None
-        if "x1d" in data_filename:
-            data_type = "STIS"
-        elif "mxhi" in data_filename:
-            data_type = "IUE H"
-        elif "mxlo" in data_filename:
-            data_type = "IUE L"
 
-        ax1.set_title(target + f"\nlogNHI = {logNHI:2f} ({data_type})")
+        set_title(ax1, target, logNHI)
         fig1.tight_layout()
         fig1.savefig(f"./lya-plots/{target}.pdf")
         targets.append(target)
@@ -442,12 +434,25 @@ def run_one(target, compare=None):
 
     fig, [ax_fit, ax_chi2] = plt.subplots(1, 2, figsize=(9, 6))
     logNHI, fc, filename = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2)
-    plt.title(target, loc="right")
+    set_title(ax_fit, target, logNHI)
     if compare is not None:
         logNHIc = compare
         plot_profile(ax_fit, fc, logNHIc)
 
     plt.show()
+
+
+def set_title(ax, target, logNHI):
+    data_filename = get_spectrum.target_use_which_spectrum[target]
+    data_type = None
+    if "x1d" in data_filename:
+        data_type = "STIS"
+    elif "mxhi" in data_filename:
+        data_type = "IUE H"
+    elif "mxlo" in data_filename:
+        data_type = "IUE L"
+
+    ax.set_title(target + f"\nlogNHI = {logNHI:2f} ({data_type})")
 
 
 def update_catalog(overview_table, original_file):

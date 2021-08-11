@@ -327,3 +327,5 @@ HD235874
     - HD197770: Continuum unclear. Maybe try again later with mxlo.
 
     - HD216898: Noisy and difficult shape
+
+    - HD326329: Noisy but might be manageable

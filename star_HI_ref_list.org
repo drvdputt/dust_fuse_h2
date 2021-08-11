@@ -323,3 +323,7 @@ HD235874
 
     - HD190603: Have multiple mxhi files, but still too noisy. Also multipl mxlo files. Come
       back to this later.
+
+    - HD197770: Continuum unclear. Maybe try again later with mxlo.
+
+     

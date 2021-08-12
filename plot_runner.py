@@ -7,7 +7,8 @@ from plot_fuse_results import plot_results2
 from get_data import get_merged_table, get_bohlin78
 from astropy.table import Column
 from pathlib import Path
-
+from multiprocessing.pool import Pool
+import numpy as np
 
 def main():
     out_dir = Path("./scatter-plots")
@@ -52,23 +53,41 @@ def main():
         ["nhtot", "fh2"],
     )
 
+    job_args = []
     for (xparam, yparam) in columns_to_correlate:
         if xparam in data_bohlin78.colnames and yparam in data_bohlin78.colnames:
             use_bohlin = data_bohlin78
         else:
             use_bohlin = None
+        job_args.append((data, xparam, yparam, data_comp, use_bohlin, ignore, out_dir))
 
-        fig = plot_results2(
-            data,
-            xparam,
-            yparam,
-            data_comp=data_comp,
-            data_bohlin=use_bohlin,
-            ignore_comments=ignore,
-        )
-        fig.tight_layout()
-        fn = f"{xparam}_{yparam}.pdf"
-        fig.savefig(out_dir / fn, bbox_inches="tight")
+    with Pool(16) as p:
+        p.map(wrapper, job_args)
+
+
+def wrapper(args):
+    data, xparam, yparam, data_comp, use_bohlin, ignore, out_dir = args
+
+    xdata = np.concatenate([data[xparam], data_comp[xparam]])
+    ydata = np.concatenate([data[yparam], data_comp[yparam]])
+    sx = np.std(xdata)
+    sy = np.std(ydata)
+    pxrange = [min(xdata) - sx, max(xdata) + sx]
+    pyrange = [min(ydata) - sy, max(ydata) + sy]
+
+    fig = plot_results2(
+        data,
+        xparam,
+        yparam,
+        pxrange,
+        pyrange,
+        data_comp=data_comp,
+        data_bohlin=use_bohlin,
+        ignore_comments=ignore,
+    )
+    fig.tight_layout()
+    fn = f"{xparam}_{yparam}.pdf"
+    fig.savefig(out_dir / fn, bbox_inches="tight")
 
 
 if __name__ == "__main__":

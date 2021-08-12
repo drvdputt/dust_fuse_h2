@@ -7,7 +7,7 @@ from matplotlib import rc
 from astropy.modeling import models, fitting
 from get_data import get_merged_table, get_bohlin78
 from covariance import plot_scatter_with_ellipses
-import myfitting
+import linear_ortho_fit
 
 # some easily customizable constants
 BOHLIN_COLOR = "green"
@@ -202,15 +202,15 @@ def plot_results2(
     if pyrange is not None:
         ax.set_ylim(pyrange)
 
-    m, b = myfitting.linear_ortho_maxlh(xs, ys, covs, ax)
-    cov_mb = myfitting.bootstrap_fit_errors(xs, ys, covs)
+    m, b = linear_ortho_fit.linear_ortho_maxlh(xs, ys, covs, ax)
+    cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs, ys, covs)
     sm, sb = np.sqrt(np.diag(cov_mb))
     a = 2
     area = [m - a * sm, m + a * sm, b - a * sb, b + a * sb]
-    myfitting.plot_solution_neighborhood(
+    linear_ortho_fit.plot_solution_neighborhood(
         ax2, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="logL"
     )
-    myfitting.plot_solution_neighborhood(
+    linear_ortho_fit.plot_solution_neighborhood(
         ax3, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="L"
     )
     ax3.set_ylabel("")

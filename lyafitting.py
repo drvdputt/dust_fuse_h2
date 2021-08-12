@@ -621,16 +621,16 @@ def run_one(target, compare=None):
 
     fig, [ax_fit, ax_chi2] = plt.subplots(1, 2, figsize=(9, 6))
     ax_p = ax_chi2.twinx()
-    logNHI, fc, filename = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2, ax_p=ax_p)
-    set_title(ax_fit, target, logNHI)
+    lognhi, fc, filename = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2, ax_p=ax_p)
+    set_title(ax_fit, target, lognhi)
     if compare is not None:
-        logNHIc = compare
-        plot_profile(ax_fit, fc, logNHIc)
+        lognhic = compare
+        plot_profile(ax_fit, fc, lognhic)
 
     plt.show()
 
 
-def set_title(ax, target, logNHI):
+def set_title(ax, target, lognhi):
     data_filename = get_spectrum.target_use_which_spectrum[target]
     data_type = None
     if "x1d" in data_filename:
@@ -640,26 +640,33 @@ def set_title(ax, target, logNHI):
     elif "mxlo" in data_filename:
         data_type = "IUE L"
 
-    ax.set_title(target + f"\nlogNHI = {logNHI:2f} ({data_type})")
+    ax.set_title(target + f"\nlognhi = {lognhi:2f} ({data_type})")
 
 
 def update_catalog(overview_table, original_file):
     """Write the fit results into updated data table."""
+    # do not overwrite the recent data from jenkins (ref nr 15)
+    jenkins2019_index = 15
+
     old_data = Table.read(original_file, format="ascii.commented_header")
     for row in overview_table:
         old_index = np.where(old_data["name"].data == row["target"])[0][0]
-        # Will crash if name is not there. This is intended.
-        old_data[old_index]["lognhi"] = row["logNHI"]
-        old_data[old_index]["lognhi_unc"] = row["logNHI_unc"]
-        old_data[old_index]["hiref"] = 0
+
+        if old_data[old_index]["hiref"] != jenkins2019_index:
+            old_data[old_index]["hiref"] = 0
+            old_data[old_index]["lognhi"] = row["lognhi"]
+            old_data[old_index]["lognhi_unc"] = row["lognhi_unc"]
 
     two_decimals = "{:.2f}"
+    formats = {"lognhi": two_decimals, "lognhi_unc": two_decimals}
     old_data.write(
         "data/fuse_h1_h2_with_lyafitting.dat",
         format="ascii.commented_header",
         overwrite=True,
-        formats={"lognhi": two_decimals, "lognhi_unc": two_decimals},
+        formats=formats,
     )
+    # also write in fits format, so we can open in topcat
+    old_data.write("data/fuse_h1_h2_with_lyafitting.fits", overwrite=True)
 
 
 def main():
@@ -675,7 +682,7 @@ def main():
         "--compare",
         type=float,
         default=None,
-        help="Plot extra profile using this logNHI value",
+        help="Plot extra profile using this lognhi value",
     )
     ap.add_argument("--update_catalog", default=None, help="File name")
     args = ap.parse_args()

@@ -13,6 +13,7 @@ import linear_ortho_fit
 BOHLIN_COLOR = "green"
 COMP_COLOR = "purple"
 SAMPLE_COLOR = "grey"
+BAD_COLOR = "red"
 
 
 def set_params(lw=1.5, universal_color="#262626", fontsize=16):
@@ -155,12 +156,45 @@ def plot_results2(
     data_bohlin=None,
     figsize=None,
     alpha=0.5,
+    ignore_comments=None,
 ):
+    """
+    Plot the fuse results with specificed x and y axes
+
+    Parameters
+    ----------
+    data: astropy.table
+       Table of the data to plot
+
+    xparam: str
+       name of column to plot as the x variable
+
+    yparam: str
+       name of column to plot as the y variable
+
+    pxrange: float[2]
+       min/max x range to plot
+
+    pyrange: float[2]
+       min/max y range to plot
+
+    data_comp: astropy.table
+       Table of the data to plot for the comparision stars
+
+    figsize : float[2]
+       x,y size of plot
+
+    ignore_comments : list of str
+       exclude points for which data['comment'] equals one of the given
+       strings from fitting (they will still be plotted in a highlighted
+       color)
+    """
     set_params(lw=1, universal_color="#202026", fontsize=10)
 
     # fig, ax = plt.subplots(figsize=figsize)
     fig, (ax, ax2, ax3) = plt.subplots(figsize=(12, 5), ncols=3)
 
+    # plot bohlin data (not used for fitting)
     if data_bohlin is not None:
         if (xparam in data_bohlin.colnames) and (yparam in data_bohlin.colnames):
             xcol = data_bohlin[xparam]
@@ -179,20 +213,39 @@ def plot_results2(
                 alpha=alpha,
             )
 
+    # plot comparison star data (not used for fitting)
     if data_comp is not None:
         xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
         plot_scatter_with_ellipses(ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha)
 
+    # decide which points to ignore
+    if ignore_comments is not None:
+        # only use points for which the comment does not match any of
+        # the ignore flags
+        use = np.logical_and.reduce([c != data["comment"] for c in ignore_comments])
+    else:
+        use = np.full(len(data), True)
+
+    # choose columns and calculate covariance matrices
     if yparam[0:3] == "CAV":
         cparam = "AV"
     elif yparam[0:1] == "C":
         cparam = "EBV"
     else:
         cparam = "AV"
-    xs, ys, covs = get_xs_ys_covs(data, xparam, yparam, cparam)
+    xs, ys, covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
     plot_scatter_with_ellipses(
         ax, xs, ys, covs, 1, color=SAMPLE_COLOR, alpha=alpha, marker="x"
     )
+
+    # plot ignored points in different color
+    if not use.all():
+        bad_xs, bad_ys, bad_covs = get_xs_ys_covs(
+            data[np.logical_not(use)], xparam, yparam, cparam
+        )
+        plot_scatter_with_ellipses(
+            ax, bad_xs, bad_ys, bad_covs, 1, color=BAD_COLOR, alpha=alpha, marker="x"
+        )
 
     ax.set_xlabel(format_colname(xparam))
     ax.set_ylabel(format_colname(yparam))
@@ -214,14 +267,6 @@ def plot_results2(
         ax3, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="L"
     )
     ax3.set_ylabel("")
-
-    # m, b, m_brute, b_brute = myfitting.linear_ortho_maxlh(
-    #     xs, ys, covs, ax, get_brute=True
-    # )
-    # # check if maximum LH is actually reached
-    # myfitting.plot_solution_neighborhood(
-    #     ax2, m, b, xs, ys, covs, extra_points=[[m_brute, b_brute]]
-    # )
 
     # plot the fitted line
     xlim = ax.get_xlim()

@@ -32,11 +32,6 @@ def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
         vectors = np.array([[1, 0], [0, 1]])
         # angle = 0
 
-    # print(position, width, height, angle)
-    # return Ellipse(
-    #     position, width=width, height=height, angle=angle * 180 / np.pi, **kwargs
-    # )
-
     # I ended up using a Polygon just like Karl's plotting code. The
     # ellipse is buggy when the difference in axes is extreme (1e22). I
     # think it is because even a slight rotation will make the ellipse
@@ -48,7 +43,7 @@ def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
     vh = vectors[:, 1] * height / 2
 
     # generate corners
-    num_corners = 8
+    num_corners = 16
     angles = np.linspace(0, 2 * np.pi, num_corners, endpoint=False)
     corners = np.row_stack([position + vw * cos(a) + vh * sin(a) for a in angles])
     return Polygon(corners, **kwargs)

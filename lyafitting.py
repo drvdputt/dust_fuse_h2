@@ -390,13 +390,13 @@ def cross(l):
     return 4.26e-20 / (6.04e-10 + np.square(l - l0))
 
 
-def extinction_factor(logNHI, l):
-    return np.exp(-np.power(10.0, logNHI) * cross(l))
+def extinction_factor(lognhi, l):
+    return np.exp(-np.power(10.0, lognhi) * cross(l))
 
 
-def chi2(logNHI, fc, sigma_c, wavs, flux):
+def chi2(lognhi, fc, sigma_c, wavs, flux):
     # overflows easily. Ignore fit points where overflow occurs
-    extf = extinction_factor(logNHI, wavs)
+    extf = extinction_factor(lognhi, wavs)
     physical_model = fc(wavs) * extf
     # not sure if we want to scale noise with extinction
     # noise_model = sigma_c * extf
@@ -411,8 +411,8 @@ def chi2(logNHI, fc, sigma_c, wavs, flux):
     return chi2
 
 
-def plot_profile(ax, fc, logNHI):
-    """Plot an extra profile of user-specified NHI.
+def plot_profile(ax, fc, lognhi):
+    """Plot an extra profile of user-specified nhi.
 
     Ax needs to have been prepared properly (xlims already in their
     final form), and fc is the continuum fit.
@@ -420,11 +420,11 @@ def plot_profile(ax, fc, logNHI):
     """
     extra_color = "g"
     x = np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], 500)
-    y = fc(x) * extinction_factor(logNHI, x)
+    y = fc(x) * extinction_factor(lognhi, x)
     ax.plot(x, y, color=extra_color, label="user")
 
 
-def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
+def plot_fit(target, ax, wavs, flux, fc, lognhi, lower_upper=None):
     """Plot lya model, continuum model, and data
 
     target: target name
@@ -437,9 +437,9 @@ def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
 
     fc: function of wavelength, representing the continuum model
 
-    logNHI: the fit result
+    lognhi: the fit result
 
-    upper_lower: tuple (upper, lower), used to visualize the uncertainty on logNHI
+    upper_lower: tuple (upper, lower), used to visualize the uncertainty on lognhi
 
     """
 
@@ -451,7 +451,7 @@ def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
     ax.plot(wavs, fcs, label="continuum fit", color=cont_color, zorder=30)
 
     # lya fit
-    fms = fcs * extinction_factor(logNHI, wavs)
+    fms = fcs * extinction_factor(lognhi, wavs)
     ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
     # data
@@ -502,7 +502,7 @@ def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
 
 
 def lya_fit(target, ax_fit=None, ax_chi2=None, ax_p=None):
-    """Fit logNHI using lya.
+    """Fit lognhi using lya.
 
     target: string referring to any of the targets (see directories in
     ./data/)
@@ -524,10 +524,10 @@ def lya_fit(target, ax_fit=None, ax_chi2=None, ax_p=None):
 
     # the fitting itself
     fargs = (fc, sigma_c, wavs[use], flux[use])
-    result, chi2_min, NHIgrid, chi2grid = brute(
+    result, chi2_min, nhigrid, chi2grid = brute(
         chi2, [(19.0, 23.0)], args=fargs, Ns=2000, full_output=True
     )
-    logNHI = result[0]
+    lognhi = result[0]
 
     # normalized pdf for error estimation
     P = np.exp(-chi2grid)
@@ -535,28 +535,28 @@ def lya_fit(target, ax_fit=None, ax_chi2=None, ax_p=None):
     Pcumul = np.cumsum(P)
 
     # find where cumulative P becomes 16 and 84
-    # find percentiles by interpolating inverse of cumulative (= NHI as
+    # find percentiles by interpolating inverse of cumulative (= nhi as
     # a function of percentile)
     q84 = 0.8413447460685429
     q16 = 0.15865525393145707
-    [p16, p84] = np.interp([q16, q84], Pcumul, NHIgrid)
+    [p16, p84] = np.interp([q16, q84], Pcumul, nhigrid)
     # Estimate for 1 sigma. Is correct if shape of P is gaussian.
     unc = (p84 - p16) / 2
 
     if ax_fit is not None:
-        plot_fit(target, ax_fit, wavs, flux, fc, logNHI, (p16, p84))
+        plot_fit(target, ax_fit, wavs, flux, fc, lognhi, (p16, p84))
 
     if ax_chi2 is not None:
         color = "xkcd:dark red"
-        ax_chi2.plot(NHIgrid, chi2grid, color=color)
-        ax_chi2.axvline(logNHI, color=color, linestyle=":")
+        ax_chi2.plot(nhigrid, chi2grid, color=color)
+        ax_chi2.axvline(lognhi, color=color, linestyle=":")
         ax_chi2.set_xlabel("$\\log N(\\mathrm{H I})$ [cm$^{-2}$]")
         ax_chi2.set_ylabel("$\\chi^2$", color=color)
         ax_chi2.set_title(f"$\\chi^2_{{\\mathrm{{min}}}} = {chi2_min:.2f}$")
 
     if ax_p is not None:
         color = "b"
-        plt.plot(NHIgrid, P, color=color)
+        plt.plot(nhigrid, P, color=color)
         ax_p.set_ylabel("PDF", color=color, zorder=2)
         ax_p.axvspan(p16, p84, color=color, alpha=0.3, zorder=1)
         # zorder problem: axvspan should be below the other plot
@@ -566,14 +566,14 @@ def lya_fit(target, ax_fit=None, ax_chi2=None, ax_p=None):
             # make canvas of top axes transparent
             ax_chi2.patch.set_visible(False)
 
-    info = dict(logNHI_unc=unc, chi2=chi2_min)
-    return logNHI, fc, info
+    info = dict(lognhi_unc=unc, chi2=chi2_min)
+    return lognhi, fc, info
 
 
 def run_all():
     targets = []
     infos = []
-    logNHIs = []
+    lognhis = []
 
     for target in get_spectrum.target_use_which_spectrum:
         if target_continuum_wav_ranges[target] is None:
@@ -583,19 +583,19 @@ def run_all():
 
         fig1, [ax_left, ax_right_l] = plt.subplots(1, 2, figsize=(8, 4))
         ax_right_r = ax_right_l.twinx()
-        logNHI, fc, info = lya_fit(
+        lognhi, fc, info = lya_fit(
             target, ax_fit=ax_left, ax_chi2=ax_right_l, ax_p=ax_right_r
         )
 
-        set_title(ax_left, target, logNHI)
+        set_title(ax_left, target, lognhi)
         fig1.tight_layout()
         fig1.savefig(f"./lya-plots/{target}.pdf")
         targets.append(target)
         infos.append(info)
-        logNHIs.append(logNHI)
+        lognhis.append(lognhi)
 
-    col_names = ["target", "logNHI"]
-    col_data = [targets, logNHIs]
+    col_names = ["target", "lognhi"]
+    col_data = [targets, lognhis]
     # add extra output from ly_fit like chi2, file names used, ...
     for k in infos[0]:
         col_names.append(k)
@@ -603,6 +603,12 @@ def run_all():
 
     overview = astropy.table.QTable(col_data, names=col_names)
     print(overview)
+
+    print("5 largest uncertainties:")
+    unc_sort = np.argsort(overview["lognhi_unc"])
+    largest_unc_names = overview[unc_sort][-5:]
+    print(largest_unc_names)
+
     overview.write("lyafitting_overview.dat", format="ascii", overwrite=True)
     return overview
 

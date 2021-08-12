@@ -501,7 +501,7 @@ def plot_fit(target, ax, wavs, flux, fc, logNHI, lower_upper=None):
     prepare_axes(ax)
 
 
-def lya_fit(target, ax_fit=None, ax_chi2=None):
+def lya_fit(target, ax_fit=None, ax_chi2=None, ax_p=None):
     """Fit logNHI using lya.
 
     target: string referring to any of the targets (see directories in
@@ -514,7 +514,7 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     print(f"Fitting {target}".center(80))
 
     # obtain data
-    wavs, flux, filename = get_spectrum.processed(target)
+    wavs, flux, filename = get_spectrum.processed(target, wmax=2000)
     # estimate continuum
     fc = estimate_continuum(wavs, flux, target)
     # sigma to use in chi2 equation
@@ -529,49 +529,42 @@ def lya_fit(target, ax_fit=None, ax_chi2=None):
     )
     logNHI = result[0]
 
-    # error estimation: sigma is where chi2 = chi2_min + 1. Don't use
-    # bisect here because we don't know how well chi2 behaves.
-    middle = np.argmin(np.abs(NHIgrid - logNHI))
-    if middle == 0:
-        middle = 1  # works around empty slice problems
+    # normalized pdf for error estimation
+    P = np.exp(-chi2grid)
+    P /= sum(P)
+    Pcumul = np.cumsum(P)
 
-    if np.amax(chi2grid[:middle]) < chi2_min + 1:
-        print("Lower bound not found")
-        lower = NHIgrid[np.argmax(chi2grid[:middle])]
-    else:
-        for i in reversed(range(middle)):
-            if chi2grid[i] > chi2_min + 1:
-                lower = NHIgrid[i]
-                break
-
-    if np.amax(chi2grid[middle:]) < chi2_min + 1:
-        print("Upper bound not found")
-        upper = NHIgrid[middle + np.argmax(chi2grid[middle:])]
-    else:
-        for i in range(middle, len(chi2grid)):
-            if chi2grid[i] > chi2_min + 1:
-                upper = NHIgrid[i]
-                break
-
-    print(
-        f"logNHI={logNHI:.2f}, lower={lower:.2f}, upper={upper:.2f}, chi2={chi2_min:.2f}"
-    )
+    # find where cumulative P becomes 16 and 84
+    # find percentiles by interpolating inverse of cumulative (= NHI as
+    # a function of percentile)
+    q84 = 0.8413447460685429
+    q16 = 0.15865525393145707
+    [p16, p84] = np.interp([q16, q84], Pcumul, NHIgrid)
+    # Estimate for 1 sigma. Is correct if shape of P is gaussian.
+    unc = (p84 - p16) / 2
 
     if ax_fit is not None:
-        plot_fit(target, ax_fit, wavs, flux, fc, logNHI, (lower, upper))
+        plot_fit(target, ax_fit, wavs, flux, fc, logNHI, (p16, p84))
 
     if ax_chi2 is not None:
-        ax_chi2.plot(NHIgrid, chi2grid, color="k")
-        # ax_chi2.plot(NHIgrid, np.exp(-chi2grid), color="k")
+        color = "xkcd:dark red"
+        ax_chi2.plot(NHIgrid, chi2grid, color=color)
+        ax_chi2.axvline(logNHI, color=color, linestyle=":")
         ax_chi2.set_xlabel("$\\log N(\\mathrm{H I})$ [cm$^{-2}$]")
-        ax_chi2.axvspan(lower, upper, color="y", alpha=0.3)
-        ax_chi2.axvline(logNHI, color="k", linestyle=":")
-        # ax_chi2.set_ylabel("$\\exp(-\\chi^2)$")
-        ax_chi2.set_ylabel("$\\chi^2$")
+        ax_chi2.set_ylabel("$\\chi^2$", color=color)
         ax_chi2.set_title(f"$\\chi^2_{{\\mathrm{{min}}}} = {chi2_min:.2f}$")
 
-    # very naive, maybe max(upper - real, real - lower) would be better
-    unc = (upper - lower) / 2
+    if ax_p is not None:
+        color = "b"
+        plt.plot(NHIgrid, P, color=color)
+        ax_p.set_ylabel("PDF", color=color, zorder=2)
+        ax_p.axvspan(p16, p84, color=color, alpha=0.3, zorder=1)
+        # zorder problem: axvspan should be below the other plot
+        if ax_chi2 is not None:
+            # set zorder of axes
+            ax_p.set_zorder(ax_chi2.get_zorder() - 1)
+            # make canvas of top axes transparent
+            ax_chi2.patch.set_visible(False)
 
     info = dict(logNHI_unc=unc, chi2=chi2_min)
     return logNHI, fc, info
@@ -588,10 +581,13 @@ def run_all():
         if target_lya_wav_ranges[target] is None:
             target_lya_wav_ranges[target] = default_lya_wav_ranges
 
-        fig1, [ax1, ax2] = plt.subplots(1, 2, figsize=(8, 4))
-        logNHI, fc, info = lya_fit(target, ax_fit=ax1, ax_chi2=ax2)
+        fig1, [ax_left, ax_right_l] = plt.subplots(1, 2, figsize=(8, 4))
+        ax_right_r = ax_right_l.twinx()
+        logNHI, fc, info = lya_fit(
+            target, ax_fit=ax_left, ax_chi2=ax_right_l, ax_p=ax_right_r
+        )
 
-        set_title(ax1, target, logNHI)
+        set_title(ax_left, target, logNHI)
         fig1.tight_layout()
         fig1.savefig(f"./lya-plots/{target}.pdf")
         targets.append(target)
@@ -618,7 +614,8 @@ def run_one(target, compare=None):
         target_lya_wav_ranges[target] = default_lya_wav_ranges
 
     fig, [ax_fit, ax_chi2] = plt.subplots(1, 2, figsize=(9, 6))
-    logNHI, fc, filename = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2)
+    ax_p = ax_chi2.twinx()
+    logNHI, fc, filename = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2, ax_p=ax_p)
     set_title(ax_fit, target, logNHI)
     if compare is not None:
         logNHIc = compare

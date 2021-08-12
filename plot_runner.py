@@ -10,6 +10,7 @@ from pathlib import Path
 from multiprocessing.pool import Pool
 import numpy as np
 
+
 def main():
     out_dir = Path("./scatter-plots")
     out_dir.mkdir(exist_ok=True)
@@ -68,25 +69,34 @@ def main():
 def wrapper(args):
     data, xparam, yparam, data_comp, use_bohlin, ignore, out_dir = args
 
-    xdata = np.concatenate([data[xparam], data_comp[xparam]])
-    ydata = np.concatenate([data[yparam], data_comp[yparam]])
-    sx = np.std(xdata)
-    sy = np.std(ydata)
-    pxrange = [min(xdata) - sx, max(xdata) + sx]
-    pyrange = [min(ydata) - sy, max(ydata) + sy]
+    xdata_main = data[xparam]
+    ydata_main = data[yparam]
+    xdata_all = np.concatenate([data[xparam], data_comp[xparam]])
+    ydata_all = np.concatenate([data[yparam], data_comp[yparam]])
+    sx = np.std(xdata_all)
+    sy = np.std(ydata_all)
+
+    def suitable_range(param):
+        data_main = data[param]
+        all_data = np.concatenate([data[param], data_comp[param]])
+        s = np.std(all_data)
+        # use smallest range using suggested boundaries
+        pmin = max(min(data_main) - s, min(all_data) - 0.1 * s)
+        pmax = min(max(data_main) + s, max(all_data) + 0.1 * s)
+        return [pmin, pmax]
 
     fig = plot_results2(
         data,
         xparam,
         yparam,
-        pxrange,
-        pyrange,
+        suitable_range(xparam),
+        suitable_range(yparam),
         data_comp=data_comp,
         data_bohlin=use_bohlin,
         ignore_comments=ignore,
     )
     fig.tight_layout()
-    fn = f"{xparam}_{yparam}.pdf"
+    fn = f"{yparam}_vs_{xparam}.pdf"
     fig.savefig(out_dir / fn, bbox_inches="tight")
 
 

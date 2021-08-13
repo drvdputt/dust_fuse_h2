@@ -25,9 +25,9 @@ def main():
     # Write out data as used, for later reference. Might be useful for
     # thinking about specific points using e.g. highlighting subsets
     # using TopCat.
-    data.write("data_main.fits")
-    data_comp.write("data_comp.fits")
-    data_bohlin78.write("data_bohlin.fits")
+    data.write(out_dir / "data_main.fits")
+    data_comp.write(out_dir / "data_comp.fits")
+    data_bohlin78.write(out_dir / "data_bohlin.fits")
 
     # add comments for certain stars here
     data.add_column(Column(["no"] * len(data), dtype="<U16", name="comment"))

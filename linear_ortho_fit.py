@@ -157,12 +157,9 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute
     )
 
     initial_guess = np.array(
-        [
-            fitted_model_weights.slope.value,
-            fitted_model_weights.intercept.value,
-        ]
+        [fitted_model_weights.slope.value, fitted_model_weights.intercept.value,]
     )
-    initial_guess[1] *= 1 / np.sqrt(1 + initial_guess[0] ** 2)
+    initial_guess[1] = b_to_b_perp(*initial_guess)
 
     # get an idea of the order of magnitude
     logL_start = logL(initial_guess[0], initial_guess[1], xy, covs)
@@ -234,8 +231,7 @@ down {}
     # sigma_m, sigma_b_perp = np.sqrt(np.diag(hess_inv))
     # rho_mb_perp = hess_inv[0, 1] / (sigma_m * sigma_b_perp)
 
-    # reminder: b_perp = b cos(theta) = b / sqrt(1 + m^2)
-    b = b_perp * np.sqrt(1 + m * m)
+    b = b_perp_to_b(m, b_perp)
 
     if print_on:
         print(res)
@@ -283,6 +279,20 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
     return cov
 
 
+def plot_solution_linescatter(ax, m, b_perp, cov_mb, num_lines, **plot_kwargs):
+    """Visualize the spread on the linear fits using transparent plots.
+
+    Currently approximated as gaussian. Should properly sample the likelihood
+    function later.
+
+    """
+    mb_samples = np.random.multivariate_normal((m, b_perp), cov_mb, num_lines)
+    x = np.array(ax.get_xlim())
+    for (m, b_perp) in mb_samples:
+        y = m * x + b_perp_to_b(m, b_perp)
+        ax.plot(x, y, **plot_kwargs)
+
+
 def plot_solution_neighborhood(
     ax, m, b, xs, ys, covs, cov_mb=None, area=None, extra_points=None, what="logL"
 ):
@@ -311,9 +321,9 @@ def plot_solution_neighborhood(
         mmin, mmax, bmin, bmax = area
 
     xy = np.column_stack([xs, ys])
-
-    grid_m = np.linspace(mmin, mmax, 100)
-    grid_b = np.linspace(bmin, bmax, 100)
+    res = 400
+    grid_m = np.linspace(mmin, mmax, res)
+    grid_b = np.linspace(bmin, bmax, res)
     image = np.zeros((len(grid_m), len(grid_b)))
     for ((i, mi), (j, bj)) in itertools.product(enumerate(grid_m), enumerate(grid_b)):
         image[i, j] = logL(mi, bj, xy, covs)
@@ -357,3 +367,12 @@ def unscale_mb(m, b, factor_x, factor_y):
     # b = y * factor_y --> y = ...
     b_real = b / factor_y
     return m_real, b_real
+
+
+def b_perp_to_b(m, b_perp):
+    # reminder: b_perp = b cos(theta) = b / sqrt(1 + m^2)
+    return b_perp * np.sqrt(1 + m * m)
+
+
+def b_to_b_perp(m, b):
+    return b / np.sqrt(1 + m * m)

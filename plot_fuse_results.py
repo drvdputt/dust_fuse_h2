@@ -10,10 +10,11 @@ from covariance import plot_scatter_with_ellipses
 import linear_ortho_fit
 
 # some easily customizable constants
-BOHLIN_COLOR = "green"
-COMP_COLOR = "purple"
-SAMPLE_COLOR = "grey"
-BAD_COLOR = "red"
+BOHLIN_COLOR = "orange"
+COMP_COLOR = "xkcd:sky blue"
+MAIN_COLOR = "b"
+FIT_COLOR = "k"
+BAD_COLOR = "r"
 
 
 def set_params(lw=1.5, universal_color="#262626", fontsize=16):
@@ -235,7 +236,7 @@ def plot_results2(
         cparam = "AV"
     xs, ys, covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
     plot_scatter_with_ellipses(
-        ax, xs, ys, covs, 1, color=SAMPLE_COLOR, alpha=alpha, marker="x"
+        ax, xs, ys, covs, 1, color=MAIN_COLOR, alpha=alpha, marker="x"
     )
 
     # plot ignored points in different color
@@ -272,10 +273,16 @@ def plot_results2(
     xlim = ax.get_xlim()
     xp = np.linspace(xlim[0], xlim[1], 3)
     yp = m * xp + b * np.sqrt(1 + m * m)
-    ax.plot(xp, yp, color="k")
+    ax.plot(xp, yp, color=FIT_COLOR, linewidth=2)
+
+    # plot 100 sampled lines
+    linear_ortho_fit.plot_solution_linescatter(
+        ax, m, b, cov_mb, 100, color=FIT_COLOR, alpha=0.05
+    )
 
     # compare to naive regression
     plot_naive_regression(ax, xs, ys, covs)
+
     return fig
 
 

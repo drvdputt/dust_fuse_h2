@@ -248,7 +248,7 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
         boot_x = data_x[idxs]
         boot_y = data_y[idxs]
         boot_cov = cov_xy[idxs]
-        (ms[m], bs[m]) = linear_ortho_maxlh(boot_x, boot_y, boot_cov, print_on=False)
+        (ms[m], bs[m]) = linear_ortho_maxlh(boot_x, boot_y, boot_cov, basic_print=False)
 
     print("Bootstrap: m = {} ; b = {}".format(np.average(ms), np.average(bs)))
     print("Bootstrap: sm = {} ; sb = {}".format(np.std(ms), np.std(bs)))

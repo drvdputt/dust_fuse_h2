@@ -306,53 +306,6 @@ def get_unc(param, data):
         return None
 
 
-def get_corr(xparam, yparam, x, y, xerr, yerr, cterm=None, cterm_unc=None):
-    """
-    Return the correlation coefficient between pairs of parameters
-    """
-    if (xparam == "AV" and yparam == "NH_AV") or (
-        xparam == "EBV" and yparam == "NH_EBV"
-    ):
-        yfac = yerr / y
-        xfac = xerr / x
-        corr = -1.0 * xfac / yfac
-    elif (
-        xparam == "RV"
-        and yparam == "NH_AV"
-        and cterm is not None
-        and cterm_unc is not None
-    ):
-        avfac = cterm_unc / cterm
-        yfac = yerr / y
-        corr = -1.0 * avfac / yfac
-    elif xparam == "AV" and yparam == "RV":
-        yfac = yerr / y
-        xfac = xerr / x
-        corr = xfac / yfac
-    elif (
-        ((xparam == "RV") or (xparam == "AV"))
-        and ((yparam[0:3] == "CAV") or (yparam == "bump_area"))
-        and cterm is not None
-        and cterm_unc is not None
-    ):
-        avfac = cterm_unc / cterm
-        yfac = yerr / y
-        corr = -1.0 * avfac / yfac
-    elif (
-        ((xparam == "RV") or (xparam == "EBV"))
-        and (yparam[0:1] == "C")
-        and cterm is not None
-        and cterm_unc is not None
-    ):
-        ebvfac = cterm_unc / cterm
-        yfac = yerr / y
-        corr = ebvfac / yfac
-    else:
-        corr = np.full(len(x), 0.0)
-
-    return corr
-
-
 def get_xs_ys_covs(data, xparam, yparam, cparam):
     """
     Return arrays of x, y, and cov(x,y) for a pair of parameters

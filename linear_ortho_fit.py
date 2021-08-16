@@ -102,7 +102,9 @@ def hess_logL(m, b, xy, covs):
     return np.array([[d2_d1d2(0, 0), d2_d1d2(0, 1)], [d2_d1d2(0, 1), d2_d1d2(1, 1)]])
 
 
-def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute=False):
+def linear_ortho_maxlh(
+    data_x, data_y, cov_xy, ax=None, basic_print=True, debug_print=False
+):
     """Do a linear fit based on orthogonal distance, to data where each
     point can have a different covariance between x and y. Uses the
     likelihood function from Hogg et al. (2010). The likelihood is
@@ -161,28 +163,14 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute
     )
     initial_guess[1] = b_to_b_perp(*initial_guess)
 
-    # get an idea of the order of magnitude
-    logL_start = logL(initial_guess[0], initial_guess[1], xy, covs)
-    freltol = 1e-6
-    logL_atol = abs(logL_start * freltol)
-
-    if print_on:
-        # do some checks before starting
-        print("initial guess: ", initial_guess)
+    if debug_print:
         eps = np.abs(1.0e-6 * initial_guess)
         grad_approx = optimize.approx_fprime(initial_guess, to_minimize, eps)
         grad_exact = jac(initial_guess)
+        print("initial guess: ", initial_guess)
         print("grad approx", grad_approx, "grad exact", grad_exact)
 
-    # res = optimize.minimize(to_minimize, initial_guess, method="Powell")
-    # res = optimize.minimize(
-    #     to_minimize, initial_guess, method="Nelder-Mead", options={"fatol": logL_atol}
-    # )
-
     gtol = np.linalg.norm(jac(initial_guess)) * 1e-6
-    # res = optimize.minimize(
-    #     to_minimize, initial_guess, method="BFGS", options={"disp": False, "gtol": gtol}
-    # )
     res = optimize.minimize(
         to_minimize,
         initial_guess,
@@ -190,27 +178,17 @@ def linear_ortho_maxlh(data_x, data_y, cov_xy, ax=None, print_on=True, get_brute
         jac=jac,
         options={"disp": False, "gtol": gtol},
     )
-
     m, b_perp = res.x
 
-    # brute force solution
-    if get_brute:
-        print("Brute forcing...")
-        mmin, bmin = np.abs(initial_guess) * -5
-        mmax, bmax = np.abs(initial_guess) * 5
-        x0 = optimize.brute(to_minimize, ranges=((mmin, mmax), (bmin, bmax)), Ns=1000)
-        m_brute, b_brute = x0
-        print("Brute solution: ", m_brute, b_brute)
-        # m, b_perp = x0
+    if debug_print:
+        print(res)
+        # manual check for convergence
+        logL0 = logL(m, b_perp, xy, covs)
+        logL_up = logL(m + 0.1 * abs(m), b_perp, xy, covs)
+        logL_down = logL(m - 0.1 * abs(m), b_perp, xy, covs)
+        logL_right = logL(m, b_perp + 0.1 * abs(b_perp), xy, covs)
+        logL_left = logL(m, b_perp - 0.1 * abs(b_perp), xy, covs)
 
-    # manual check for convergence
-    logL0 = logL(m, b_perp, xy, covs)
-    logL_up = logL(m + 0.1 * abs(m), b_perp, xy, covs)
-    logL_down = logL(m - 0.1 * abs(m), b_perp, xy, covs)
-    logL_right = logL(m, b_perp + 0.1 * abs(b_perp), xy, covs)
-    logL_left = logL(m, b_perp - 0.1 * abs(b_perp), xy, covs)
-
-    if print_on:
         string = """ local logL:
 up {}
 left {} middle {} right {}
@@ -232,21 +210,21 @@ down {}
     # rho_mb_perp = hess_inv[0, 1] / (sigma_m * sigma_b_perp)
 
     b = b_perp_to_b(m, b_perp)
-
-    if print_on:
-        print(res)
+    if debug_print:
+        print("Scaled solution")
         print("m, b_perp:", m, b_perp)
-        # print("err, err, rho:", sigma_m, sigma_b_perp, rho_mb_perp)
         print("m, b:", m, b)
 
     # undo the scale factors to get the m and b for the real data
     m_real, b_real = unscale_mb(m, b, factor_x, factor_y)
     b_perp_real = b_real / np.sqrt(1 + m_real * m_real)
 
-    if get_brute:
-        return m_real, b_perp_real, m_brute, b_brute
-    else:
-        return m_real, b_perp_real
+    if basic_print:
+        print("De-scaled solution")
+        print("m, b_perp:", m_real, b_perp_real)
+        print("m, b:", m_real, b_real)
+
+    return m_real, b_perp_real
 
 
 def bootstrap_fit_errors(data_x, data_y, cov_xy):

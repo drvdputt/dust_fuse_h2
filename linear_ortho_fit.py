@@ -38,7 +38,10 @@ def sigma2s(covs, m):
     """Projection of the covariance matrix, perpendicular to y = mx + b"""
     v = perp(m)
     # vT C v
-    return np.einsum("i,kij,j->k", v, covs, v)
+    S2 = np.einsum("i,kij,j->k", v, covs, v)
+    if (S2 == 0).any():
+        print("Sigma^2 zero for some reason!")
+    return S2
 
 
 def grad_sigma2s(covs, m):
@@ -55,7 +58,9 @@ def logL(m, b, xy, covs):
     Log likelihood function from Hogg et al. (2010), using the
     perpendicular distance and covariance.
     """
-    square_devs = np.square(deltas(xy, m, b)) / sigma2s(covs, m)
+    D = deltas(xy, m, b)
+    S2 = sigma2s(covs, m)
+    square_devs = np.square(D) / S2
     return -0.5 * square_devs.sum()
 
 

@@ -1,8 +1,7 @@
 from scipy.linalg import eigh
 import numpy as np
 from math import sqrt, cos, sin
-from matplotlib.patches import Ellipse, Rectangle, Polygon
-from matplotlib import pyplot as plt
+from matplotlib.patches import Polygon
 
 
 def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
@@ -24,13 +23,10 @@ def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
         # symmetric / hermitian matrices.
         values, vectors = eigh(cov)
         width, height = np.sqrt(np.abs(values)) * num_sigma
-        orientation = vectors[:, 0]
-        # angle = np.arctan2(orientation[1], orientation[0])
     else:
         width = sqrt(cov[0, 0])
         height = sqrt(cov[1, 1])
         vectors = np.array([[1, 0], [0, 1]])
-        # angle = 0
 
     # I ended up using a Polygon just like Karl's plotting code. The
     # ellipse is buggy when the difference in axes is extreme (1e22). I
@@ -65,7 +61,112 @@ def plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     draw_ellipses(ax, xs, ys, covs, num_sigma=num_sigma, **ellipse_kwargs)
 
 
-def get_cov_x_ydivx(x, y, xerr, yerr):
-    """Cov(x, ydivx)
+def make_cov_matrix(Vx, Vy, covs=None):
+    cov_matrix = np.zeros((len(Vx), 2, 2))
+    cov_matrix[:, 0, 0] = Vx
+    cov_matrix[:, 1, 1] = Vy
+    if covs is not None:
+        cov_matrix[:, 0, 1] = covs
+        cov_matrix[:, 1, 0] = covs
+    return cov_matrix
+
+
+def get_cov_x_xdy(x, xdy, xerr, xdy_err):
+    """Covariance matrix for (x, x / y)"""
+    Vx = xerr ** 2
+    Vxdy = xdy_err ** 2
+    # cov(x, x / y) = Vx / y = Vx / x * (x/y)
+    cov = (Vx / x) * xdy
+    return make_cov_matrix(Vx, Vxdy, cov)
+
+
+def get_cov_x_ydx(x, ydx, xerr, ydx_err):
+    """Covariance matrix for (x, y / x).
+
+    Parameters
+    ----------
+    x : x values
+    ydx : values of y / x
+    xerr : values of sigma_x
+    ydx_err : values of sigma_(y/x) (as calculated in get_data)
+
+    Returns
+    -------
+    cov_matrix: ndarray
+        covariance matrixes in the shape [len(x), 2, 2]. Indices are
+        (data point, xy, xy).
     """
-    pass
+    # V(x) = sigma_x**2 (trivial)
+    Vx = xerr ** 2
+
+    # V(y/x) = (dg / dx)**2 sigma_x**2 + (dg / dy)**2 sigma_y**2
+    # with g = y/x
+    # -> y**2 / x**4 sigma_x**2 + sigma_y**2 / x**2
+    # = (y/x)**2 * [ sigma_x**2 / x**2 + sigma_y**2 / y**2 ]
+    Vydx = ydx_err ** 2  # is already calculated in get_data
+
+    # cov(x, y/x) = (dx / dx) (dg / dx) Vx + (dx / dy) (dg / dy) Vy
+    #             = -(y / x) Vx / x
+    cov = -ydx * Vx / x
+
+    # old code (in plot results script) works via correlation coefficient:
+    # corr = cov / (sx * sy)
+    # after simplifying
+    # = -(sigma_x / x) / sqrt(sigma_x**2 / x**2 + sigma_y ** / y**2)
+    # = -(sigma_x / x) / sigma_(y/x) / (y/x)
+    return make_cov_matrix(Vx, Vydx, cov)
+
+
+def get_cov_fh2_htot(hi, h2, hi_err, h2_err):
+    """Covariance between [nhi + 2 nh2] and [2 nh2 / (nhi + 2 nh2)]"""
+
+    # Should probably note: the implementation in get_data for fh2_unc
+    # does not seem correct to me. It simply propagates using nh2_unc
+    # and nhtot_unc, without taking into account the covariance between
+    # those two parameters.
+
+    # One could either calculate this covariance (probably not too
+    # hard), and add a +2*cov(nhtot, nh2) term to fh2_unc. Or one could
+    # intermediate steps, and work with the independent variables nhi
+    # and nh2 directly. This is what I did.
+
+    # here's the code I put into mathematica to calculate what I need,
+    # with x = nhi and y = nh2, and vx and vy the square uncertainties.
+
+    # htot[x_, y_] := x + 2 y
+    # fh2[x_, y_] := (2 y)/(x + 2 y)
+    # cov[x_, y_] := vx D[f[x, y], x] D[g[x, y], x] + vy D[f[x, y], y] D[g[x, y], y]
+    # FullSimplify[cov[x, y]]
+    # Output: (4 vy x - 2 vx y)/(x + 2 y)^2
+    x = hi
+    y = h2
+    vx = hi_err ** 2
+    vy = h2_err ** 2
+    cov = (4 * vy * x - 2 * vx * y) / (x + 2 * y) ** 2
+
+    # sigma_x**2 + (2 sigma_y)**2
+    vhtot = vx + 4 * vy
+
+    # analogously, vfh2[x_, y_] := vx D[g[x, y], x] D[g[x, y], x] + vy D[g[x, y], y] D[g[x, y], y]
+    # Output: 4 (vy x^2 + vx y^2))/(x + 2 y)^4
+    vfh2 = 4 * (vy * x ** 2 + vx * y ** 2) / (x + 2 * y) ** 4
+
+    return make_cov_matrix(vfh2, vhtot, cov)
+
+
+def new_cov_when_divide_y(cov_xy, ydA, A, A_err):
+    """Turn cov(x, y) into cov(x / A, y), given x/A and A
+
+    Where A is an independent variable with respect to x and y. """
+
+    # when doing e.g. htot / AV, the covariance gets a factor 1 / AV
+    new_cov = cov_xy.copy()
+    new_cov[:, 0, 1] /= A
+    new_cov[:, 1, 0] /= A
+
+    # fh2 is not affected
+
+    # V(y / A) gets an extra term (y / AV)**2 * sigma_AV**2 / AV**2
+    # (equivalent to value * relative error)
+    new_cov[:, 1, 1] += (ydA * A_err / A) ** 2
+    return new_cov

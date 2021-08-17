@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
+import pdb
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from astropy.modeling import models, fitting
 from get_data import get_merged_table, get_bohlin78
-from covariance import plot_scatter_with_ellipses
+import covariance
 import linear_ortho_fit
 
 # some easily customizable constants
@@ -193,7 +194,7 @@ def plot_results2(
     set_params(lw=1, universal_color="#202026", fontsize=10)
 
     # fig, ax = plt.subplots(figsize=figsize)
-    fig, (ax, ax2, ax3) = plt.subplots(figsize=(12, 5), ncols=3)
+    fig, (ax, ax2,) = plt.subplots(figsize=(12, 5), ncols=2)
 
     # plot bohlin data (not used for fitting)
     if data_bohlin is not None:
@@ -216,8 +217,11 @@ def plot_results2(
 
     # plot comparison star data (not used for fitting)
     if data_comp is not None:
-        xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
-        plot_scatter_with_ellipses(ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha)
+        # xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
+        xs, ys, covs = get_xs_ys_covs_new(data_comp, xparam, yparam)
+        covariance.plot_scatter_with_ellipses(
+            ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha
+        )
 
     # decide which points to ignore
     if ignore_comments is not None:
@@ -234,17 +238,21 @@ def plot_results2(
         cparam = "EBV"
     else:
         cparam = "AV"
-    xs, ys, covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
-    plot_scatter_with_ellipses(
+    # xs, ys, covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
+    xs, ys, covs = get_xs_ys_covs_new(data[use], xparam, yparam)
+    covariance.plot_scatter_with_ellipses(
         ax, xs, ys, covs, 1, color=MAIN_COLOR, alpha=alpha, marker="x"
     )
 
     # plot ignored points in different color
     if not use.all():
-        bad_xs, bad_ys, bad_covs = get_xs_ys_covs(
-            data[np.logical_not(use)], xparam, yparam, cparam
+        # bad_xs, bad_ys, bad_covs = get_xs_ys_covs(
+        #     data[np.logical_not(use)], xparam, yparam, cparam
+        # )
+        bad_xs, bad_ys, bad_covs = get_xs_ys_covs_new(
+            data[np.logical_not(use)], xparam, yparam
         )
-        plot_scatter_with_ellipses(
+        covariance.plot_scatter_with_ellipses(
             ax, bad_xs, bad_ys, bad_covs, 1, color=BAD_COLOR, alpha=alpha, marker="x"
         )
 
@@ -264,10 +272,6 @@ def plot_results2(
     linear_ortho_fit.plot_solution_neighborhood(
         ax2, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="logL"
     )
-    linear_ortho_fit.plot_solution_neighborhood(
-        ax3, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="L"
-    )
-    ax3.set_ylabel("")
 
     # plot the fitted line
     xlim = ax.get_xlim()
@@ -304,6 +308,49 @@ def get_unc(param, data):
         return data[param + "_unc"].data
     else:
         return None
+
+
+def get_xs_ys_covs_new(data, xparam, yparam):
+    px = data[xparam]
+    py = data[yparam]
+    px_unc = get_unc(xparam, data)
+    py_unc = get_unc(yparam, data)
+
+    if xparam == "AV" and yparam == "NH_AV" or xparam == "EBV" and yparam == "NH_EBV":
+        covs = covariance.get_cov_x_ydx(px, py, px_unc, py_unc)
+    if xparam == "NH" and (yparam == "NH_AV" or yparam == "NH_EBV"):
+        covs = covariance.get_cov_x_xdy(px, py, px_unc, py_unc)
+    if xparam == "fh2" and (yparam == "NH_AV" or yparam == "NH_EBV" or yparam == "NH"):
+        covs = covariance.get_cov_fh2_htot(
+            data["nhi"], data["nh2"], data["nhi_unc"], data["nh2_unc"]
+        )
+        # in case of NH, no extra factor is needed
+        if yparam == "NH_AV":
+            covs = covariance.new_cov_when_divide_y(
+                covs, py, data["AV"], get_unc("AV", data)
+            )
+        elif yparam == "NH_EBV":
+            covs = covariance.new_cov_when_divide_y(
+                covs, py, data["EBV"], get_unc("EBV", data)
+            )
+    else:
+        print("New covs method not implemented yet for this parameter pair.")
+        covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2)
+
+    # Check if cauchy schwarz is satisfied. If not, enforce using fudge
+    # factor.
+    bad_cov = covs[:, 0, 1] ** 2 > covs[:, 0, 0] * covs[:, 1, 1]
+    if (bad_cov).any():
+        print("Some covs don't satisfy Cauchy-Schwarz inequality! cov^2 !< Vx * Vy!")
+        print("Fudging the correlation to 99% to avoid further problems.")
+        covs[bad_cov, 0, 1] = (
+            np.sign(covs[bad_cov, 0, 1])
+            * 0.99
+            * np.sqrt(covs[bad_cov, 0, 0] * covs[bad_cov, 1, 1])
+        )
+        covs[bad_cov, 1, 0] = covs[bad_cov, 0, 1]
+
+    return px, py, covs
 
 
 def get_xs_ys_covs(data, xparam, yparam, cparam):

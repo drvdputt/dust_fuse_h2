@@ -194,7 +194,7 @@ def plot_results2(
     set_params(lw=1, universal_color="#202026", fontsize=10)
 
     # fig, ax = plt.subplots(figsize=figsize)
-    fig, (ax, ax2,) = plt.subplots(figsize=(12, 5), ncols=2)
+    fig, (ax, ax2,) = plt.subplots(figsize=(8, 5), ncols=2)
 
     # plot bohlin data (not used for fitting)
     if data_bohlin is not None:
@@ -270,7 +270,7 @@ def plot_results2(
     a = 2
     area = [m - a * sm, m + a * sm, b - a * sb, b + a * sb]
     linear_ortho_fit.plot_solution_neighborhood(
-        ax2, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="logL"
+        ax2, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="L"
     )
 
     # plot the fitted line
@@ -334,7 +334,9 @@ def get_xs_ys_covs_new(data, xparam, yparam):
                 covs, py, data["EBV"], get_unc("EBV", data)
             )
     else:
-        print("New covs method not implemented yet for this parameter pair.")
+        print(
+            "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."
+        )
         covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2)
 
     # Check if cauchy schwarz is satisfied. If not, enforce using fudge

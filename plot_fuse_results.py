@@ -310,7 +310,10 @@ def get_param_and_unc(param, data):
     """
     Returns the unc column if it is in the table
     """
-    return data[param], data[param + "_unc"]
+    d = data[param].data
+    unc_key = param + "_unc"
+    unc = data[unc_key] if unc_key in data.colnames else None
+    return d, unc
 
 
 def get_xs_ys_covs_new(data, xparam, yparam):
@@ -324,17 +327,17 @@ def get_xs_ys_covs_new(data, xparam, yparam):
     elif xparam == "fh2" and (
         yparam == "NH_AV" or yparam == "NH_EBV" or yparam == "nhtot"
     ):
-        x1, x1_unc = get_param_and_unc("nhi")
-        x2, x2_unc = get_param_and_unc("nh2")
+        x1, x1_unc = get_param_and_unc("nhi", data)
+        x2, x2_unc = get_param_and_unc("nh2", data)
         C_fh2_htot = covariance.get_cov_fh2_htot(x1, x2, x1_unc, x2_unc)
         # in case of NH, no extra factor is needed
         if yparam == "NH_AV":
-            av, av_unc = get_param_and_unc("AV")
+            av, av_unc = get_param_and_unc("AV", data)
             covs = covariance.new_cov_when_divide_y(
                 C_fh2_htot, data["nhtot"], av, av_unc
             )
         elif yparam == "NH_EBV":
-            ebv, ebv_unc = get_param_and_unc("EBV")
+            ebv, ebv_unc = get_param_and_unc("EBV", data)
             covs = covariance.new_cov_when_divide_y(
                 C_fh2_htot, data["nhtot"], ebv, ebv_unc
             )

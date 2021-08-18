@@ -275,11 +275,17 @@ def plot_results2(
     boot_cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs, ys, covs)
     boot_sm, boot_sb = np.sqrt(np.diag(boot_cov_mb))
     a = 2
-    area = [m - a * sm, m + a * sm, b_perp - a * sb_perp, b_perp + a * sb_perp]
+    grid_m, grid_b, grid_logL = linear_ortho_fit.logL_grid(
+        m - a * sm, m + a * sm, b_perp - a * sb_perp, b_perp + a * sb_perp, xs, ys, covs
+    )
     linear_ortho_fit.plot_solution_neighborhood(
-        ax2, m, b_perp, xs, ys, covs,
+        ax2,
+        grid_logL,
+        [min(grid_b), max(grid_b), min(grid_m), max(grid_m)],
+        m,
+        b_perp,
         cov_mb=boot_cov_mb,
-        area=area, what="L"
+        what="L",
     )
 
     # plot the fitted line

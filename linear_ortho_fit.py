@@ -109,7 +109,13 @@ def hess_logL(m, b, xy, covs):
 
 
 def linear_ortho_maxlh(
-        data_x, data_y, cov_xy, ax=None, basic_print=True, debug_print=False, sigma_hess=False
+    data_x,
+    data_y,
+    cov_xy,
+    ax=None,
+    basic_print=True,
+    debug_print=False,
+    sigma_hess=False,
 ):
     """Do a linear fit based on orthogonal distance, to data where each
     point can have a different covariance between x and y. Uses the
@@ -237,6 +243,7 @@ down {}
     else:
         return m_real, b_perp_real
 
+
 def bootstrap_fit_errors(data_x, data_y, cov_xy):
     """
     Simple bootstrap of linear_ortho_maxlh. Runs the fitting a set
@@ -281,44 +288,65 @@ def plot_solution_linescatter(ax, m, b_perp, cov_mb, num_lines, **plot_kwargs):
         ax.plot(x, y, **plot_kwargs)
 
 
+def analyze_likelihood(m, b_perp, m_grid, b_perp_grid, logL):
+    """
+    Calculate and analyze the likelihood around the maximum
+
+    Parameters
+    ----------
+    m, b_perp: the fit result
+
+    xs, ys, covs: the data
+
+    area: [[min_m, max_m], [min_b_perp, max_b_perp]]
+        Area around m, b_perp in which to calculate the likelihood
+        function. Calculation is on a cartesian grid.
+    """
+    return None
+
+
+def logL_grid(m_min, m_max, b_perp_min, b_perp_max, xs, ys, covs, res=400):
+    """
+    Calculate logL on a grid.
+
+    Extent of the grid needs to be given. Is best guessed using some
+    estimate of the sigmas.
+
+    m is on the y-axis (index 0), b is on the x-axis (index 1)
+
+    """
+    xy = np.column_stack([xs, ys])
+    grid_m = np.linspace(m_min, m_max, res)
+    grid_b = np.linspace(b_perp_min, b_perp_max, res)
+    grid_logL = np.zeros((len(grid_m), len(grid_b)))
+    for ((i, mi), (j, bj)) in itertools.product(enumerate(grid_m), enumerate(grid_b)):
+        grid_logL[i, j] = logL(mi, bj, xy, covs)
+    return grid_m, grid_b, grid_logL
+
+
 def plot_solution_neighborhood(
-    ax, m, b_perp, xs, ys, covs, cov_mb=None, area=None, extra_points=None, what="logL"
+    ax, image, extent, m, b_perp, cov_mb=None, extra_points=None, what="logL"
 ):
     """
-    Color plot of the 2D likelihood function around the given point (m,
-    b)
+    Color plot of the 2D likelihood function, with optional markings.
+
+    b_perp is on the x-axis, m on the y axis
+
+    image: 2D array
+
+    extent: [b_perp_min, b_perp_max, m_min, m_max]
 
     cov_mb: covariance matrix used to draw an ellipse, so we can see if
     it makes sense
 
-    area: the area over which the function should be plotted, defined as
-    [mmin, mmax, bmin, bmax]
+    m, bperp: the fit solution
 
     extra_points: points to be plotted on the image, in addition to m, b
 
     what: choose 'logL', 'L'
 
     """
-    if area is None:
-        f = 16
-        mmin = m - f * abs(m)
-        mmax = m + f * abs(m)
-        bmin = b_perp - f * abs(b_perp)
-        bmax = b_perp + f * abs(b_perp)
-    else:
-        mmin, mmax, bmin, bmax = area
-
-    xy = np.column_stack([xs, ys])
-    res = 400
-    grid_m = np.linspace(mmin, mmax, res)
-    grid_b = np.linspace(bmin, bmax, res)
-    image = np.zeros((len(grid_m), len(grid_b)))
-    for ((i, mi), (j, bj)) in itertools.product(enumerate(grid_m), enumerate(grid_b)):
-        image[i, j] = logL(mi, bj, xy, covs)
-
-    imshow_kwargs = dict(
-        extent=[bmin, bmax, mmin, mmax], origin="lower", aspect="auto", cmap="viridis"
-    )
+    imshow_kwargs = dict(extent=extent, origin="lower", aspect="auto", cmap="viridis")
 
     if what == "logL":
         im = ax.imshow(image, **imshow_kwargs)

@@ -154,7 +154,7 @@ def get_cov_fh2_htot(hi, h2, hi_err, h2_err):
     return make_cov_matrix(vfh2, vhtot, cov)
 
 
-def new_cov_when_divide_y(cov_xy, ydA, A, A_err):
+def new_cov_when_divide_y(cov_xy, y, A, A_err):
     """Turn cov(x, y) into cov(x / A, y), given x/A and A
 
     Where A is an independent variable with respect to x and y. """
@@ -166,7 +166,25 @@ def new_cov_when_divide_y(cov_xy, ydA, A, A_err):
 
     # fh2 is not affected
 
-    # V(y / A) gets an extra term (y / AV)**2 * sigma_AV**2 / AV**2
-    # (equivalent to value * relative error)
-    new_cov[:, 1, 1] += (ydA * A_err / A) ** 2
+    # V(y / A) becomes (y / A)**2 * (Vy / y**2 + sigma_A**2 / A**2)
+    Vy = cov_xy[:, 1, 1]
+    new_cov[:, 1, 1] = (y / A) ** 2 * (Vy / y ** 2 + (A_err / A) ** 2)
+    return new_cov
+
+
+def new_cov_when_divide_x(cov_xy, x, B, B_err):
+    """Analogous to the above, but when x is divided by independent data.
+
+    Need to give x/B and B."""
+    # when doing e.g. RV = AV / EBV, the covariance gets a factor 1 / EBV
+    new_cov = cov_xy.copy()
+    new_cov[:, 0, 1] /= B
+    new_cov[:, 1, 0] /= B
+
+    # NH_AV is not affected
+
+    # V(RV) = V(x / B) becomes (x / B)**2 * ( (Vx / x)**2 + (VB / B)**2 )
+    # (value * relative error)
+    Vx = cov_xy[:, 0, 0]
+    new_cov[:, 0, 0] = (x / B) ** 2 * (Vx / x ** 2 + (B_err / B) ** 2)
     return new_cov

@@ -199,10 +199,8 @@ def plot_results2(
     # plot bohlin data (not used for fitting)
     if data_bohlin is not None:
         if (xparam in data_bohlin.colnames) and (yparam in data_bohlin.colnames):
-            xcol = data_bohlin[xparam]
-            xcol_unc = get_unc(xparam, data_bohlin)
-            ycol = data_bohlin[yparam]
-            ycol_unc = get_unc(yparam, data_bohlin)
+            xcol, xcol_unc = get_param_and_unc(xparam, data_bohlin)
+            ycol, ycol_unc = get_param_and_unc(yparam, data_bohlin)
             ax.errorbar(
                 xcol,
                 ycol,
@@ -238,8 +236,16 @@ def plot_results2(
         cparam = "EBV"
     else:
         cparam = "AV"
-    # xs, ys, covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
+
     xs, ys, covs = get_xs_ys_covs_new(data[use], xparam, yparam)
+
+    if xparam == "RV" and yparam == "NH_AV":
+        # WIP: check if these are similar (they aren't, but I think the
+        # old implementation is incorrect).
+        old_xs, old_ys, old_covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
+        print("old covs", old_covs)
+        print("new covs", covs)
+
     covariance.plot_scatter_with_ellipses(
         ax, xs, ys, covs, 1, color=MAIN_COLOR, alpha=alpha, marker="x"
     )
@@ -300,39 +306,46 @@ def plot_naive_regression(ax, xs, ys, covs):
     return fitted_model_weights
 
 
-def get_unc(param, data):
+def get_param_and_unc(param, data):
     """
     Returns the unc column if it is in the table
     """
-    if param + "_unc" in data.colnames:
-        return data[param + "_unc"].data
-    else:
-        return None
+    return data[param], data[param + "_unc"]
 
 
 def get_xs_ys_covs_new(data, xparam, yparam):
-    px = data[xparam]
-    py = data[yparam]
-    px_unc = get_unc(xparam, data)
-    py_unc = get_unc(yparam, data)
+    px, px_unc = get_param_and_unc(xparam, data)
+    py, py_unc = get_param_and_unc(yparam, data)
 
     if xparam == "AV" and yparam == "NH_AV" or xparam == "EBV" and yparam == "NH_EBV":
         covs = covariance.get_cov_x_ydx(px, py, px_unc, py_unc)
-    if xparam == "NH" and (yparam == "NH_AV" or yparam == "NH_EBV"):
+    elif xparam == "nhtot" and (yparam == "NH_AV" or yparam == "NH_EBV"):
         covs = covariance.get_cov_x_xdy(px, py, px_unc, py_unc)
-    if xparam == "fh2" and (yparam == "NH_AV" or yparam == "NH_EBV" or yparam == "NH"):
-        covs = covariance.get_cov_fh2_htot(
-            data["nhi"], data["nh2"], data["nhi_unc"], data["nh2_unc"]
-        )
+    elif xparam == "fh2" and (
+        yparam == "NH_AV" or yparam == "NH_EBV" or yparam == "nhtot"
+    ):
+        x1, x1_unc = get_param_and_unc("nhi")
+        x2, x2_unc = get_param_and_unc("nh2")
+        C_fh2_htot = covariance.get_cov_fh2_htot(x1, x2, x1_unc, x2_unc)
         # in case of NH, no extra factor is needed
         if yparam == "NH_AV":
+            av, av_unc = get_param_and_unc("AV")
             covs = covariance.new_cov_when_divide_y(
-                covs, py, data["AV"], get_unc("AV", data)
+                C_fh2_htot, data["nhtot"], av, av_unc
             )
         elif yparam == "NH_EBV":
+            ebv, ebv_unc = get_param_and_unc("EBV")
             covs = covariance.new_cov_when_divide_y(
-                covs, py, data["EBV"], get_unc("EBV", data)
+                C_fh2_htot, data["nhtot"], ebv, ebv_unc
             )
+
+    elif xparam == "RV" and yparam == "NH_AV":
+        # first, get the covariance of AV and NH_AV
+        av, av_unc = get_param_and_unc("AV", data)
+        C_av_nhav = covariance.get_cov_x_ydx(av, py, av_unc, py_unc)
+        # RV = AV / EBV, so adjust x for division by EBV
+        ebv, ebv_unc = get_param_and_unc("EBV", data)
+        covs = covariance.new_cov_when_divide_x(C_av_nhav, av, ebv, ebv_unc)
     else:
         print(
             "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."
@@ -360,12 +373,9 @@ def get_xs_ys_covs(data, xparam, yparam, cparam):
     Return arrays of x, y, and cov(x,y) for a pair of parameters
 
     """
-    x = data[xparam]
-    xerr = get_unc(xparam, data)
-    y = data[yparam]
-    yerr = get_unc(yparam, data)
-    cterm = data[cparam]
-    cterm_unc = get_unc(cparam, data)
+    x, xerr = get_param_and_unc(xparam, data)
+    y, yerr = get_param_and_unc(yparam, data)
+    cterm, cterm_unc = get_param_and_unc(cparam, data)
 
     if (xparam == "AV" and yparam == "NH_AV") or (
         xparam == "EBV" and yparam == "NH_EBV"

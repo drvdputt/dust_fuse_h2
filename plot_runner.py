@@ -27,7 +27,7 @@ def main():
     # using TopCat.
     data.write(out_dir / "data_main.fits", overwrite=True)
     data_comp.write(out_dir / "data_comp.fits", overwrite=True)
-    data_bohlin78.write(out_dir / "data_bohlin.fits", overwrite=True)
+    # data_bohlin78.write(out_dir / "data_bohlin.fits", overwrite=True)
 
     # add comments for certain stars here
     data.add_column(Column(["no"] * len(data), dtype="<U16", name="comment"))
@@ -69,9 +69,13 @@ def main():
             use_bohlin = None
         job_args.append((data, xparam, yparam, data_comp, use_bohlin, ignore, out_dir))
 
-    with Pool(16) as p:
-        p.map(wrapper, job_args)
-
+    debug = False
+    if debug:
+        for j in job_args:
+            wrapper(j)
+    else:
+        with Pool(16) as p:
+            p.map(wrapper, job_args)
 
 def wrapper(args):
     data, xparam, yparam, data_comp, use_bohlin, ignore, out_dir = args

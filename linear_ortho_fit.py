@@ -309,15 +309,14 @@ def sample_likelihood(m, b_perp, m_grid, b_perp_grid, logL_grid):
     """
     L_grid = np.exp(logL_grid)
     L_grid /= np.sum(L_grid)
-    mm, bb = np.meshgrid(m_grid, b_perp_grid)
 
     # sample m and b, using L as weight
     L_flat = L_grid.flatten()
-    m_flat = mm.flatten()
-    b_flat = bb.flatten()
-    random_indices = np.random.choice(range(len(L_flat)), size=1000, p=L_flat)
-    random_m = m_flat[random_indices]
-    random_b = b_flat[random_indices]
+    random_flat_i = np.random.default_rng().choice(len(L_flat), size=1000, p=L_flat)
+    # translate from flat indices, to 0th and 1st indices
+    random_m_i, random_b_i = np.unravel_index(random_flat_i, L_grid.shape)
+    random_m = m_grid[random_m_i]
+    random_b = b_perp_grid[random_b_i]
     return random_m, random_b
 
 

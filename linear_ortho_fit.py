@@ -274,21 +274,20 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
     return cov
 
 
-def plot_solution_linescatter(ax, m, b_perp, cov_mb, num_lines, **plot_kwargs):
+def plot_solution_linescatter(ax, m_samples, b_samples, **plot_kwargs):
     """Visualize the spread on the linear fits using transparent plots.
 
-    Currently approximated as gaussian. Should properly sample the likelihood
-    function later.
+    Requires samples of m and b_perp properly sampled from the
+    likelihood.
 
     """
-    mb_samples = np.random.multivariate_normal((m, b_perp), cov_mb, num_lines)
     x = np.array(ax.get_xlim())
-    for (m, b_perp) in mb_samples:
+    for (m, b_perp) in zip(m_samples, b_samples):
         y = m * x + b_perp_to_b(m, b_perp)
         ax.plot(x, y, **plot_kwargs)
 
 
-def analyze_likelihood(m, b_perp, m_grid, b_perp_grid, logL):
+def sample_likelihood(m, b_perp, m_grid, b_perp_grid, logL_grid):
     """
     Calculate and analyze the likelihood around the maximum
 
@@ -301,11 +300,28 @@ def analyze_likelihood(m, b_perp, m_grid, b_perp_grid, logL):
     area: [[min_m, max_m], [min_b_perp, max_b_perp]]
         Area around m, b_perp in which to calculate the likelihood
         function. Calculation is on a cartesian grid.
+
+    Returns
+    -------
+    random_m, random_b: array, array
+        random samples of m and b_perp, drawn from exp(logL_grid)
+
     """
-    return None
+    L_grid = np.exp(logL_grid)
+    L_grid /= np.sum(L_grid)
+    mm, bb = np.meshgrid(m_grid, b_perp_grid)
+
+    # sample m and b, using L as weight
+    L_flat = L_grid.flatten()
+    m_flat = mm.flatten()
+    b_flat = bb.flatten()
+    random_indices = np.random.choice(range(len(L_flat)), size=1000, p=L_flat)
+    random_m = m_flat[random_indices]
+    random_b = b_flat[random_indices]
+    return random_m, random_b
 
 
-def logL_grid(m_min, m_max, b_perp_min, b_perp_max, xs, ys, covs, res=400):
+def calc_logL_grid(m_min, m_max, b_perp_min, b_perp_max, xs, ys, covs, res=400):
     """
     Calculate logL on a grid.
 
@@ -341,7 +357,7 @@ def plot_solution_neighborhood(
 
     m, bperp: the fit solution
 
-    extra_points: points to be plotted on the image, in addition to m, b
+    extra_points: points [(b, m), ...] to be plotted on the image
 
     what: choose 'logL', 'L'
 
@@ -362,7 +378,7 @@ def plot_solution_neighborhood(
 
     if extra_points is not None:
         for (bi, mi) in extra_points:
-            ax.plot(b_perp, m, "k+")
+            ax.plot(bi, mi, "k+")
 
     if cov_mb is not None:
         ax.add_patch(

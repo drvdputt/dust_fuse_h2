@@ -237,12 +237,12 @@ def plot_results2(
 
     xs, ys, covs = get_xs_ys_covs_new(data[use], xparam, yparam)
 
-    if xparam == "RV" and yparam == "NH_AV":
-        # WIP: check if these are similar (they aren't, but I think the
-        # old implementation is incorrect).
-        old_xs, old_ys, old_covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
-        print("old covs", old_covs)
-        print("new covs", covs)
+    # if xparam == "RV" and yparam == "NH_AV":
+    #     # WIP: check if these are similar (they aren't, but I think the
+    #     # old implementation is incorrect).
+    #     old_xs, old_ys, old_covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
+    #     print("old covs", old_covs)
+    #     print("new covs", covs)
 
     covariance.plot_scatter_with_ellipses(
         ax, xs, ys, covs, 1, color=MAIN_COLOR, alpha=alpha, marker="x"
@@ -272,20 +272,28 @@ def plot_results2(
         xs, ys, covs, ax, sigma_hess=True
     )
     b = linear_ortho_fit.b_perp_to_b(m, b_perp)
+
     boot_cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs, ys, covs)
     boot_sm, boot_sb = np.sqrt(np.diag(boot_cov_mb))
+
     a = 2
-    grid_m, grid_b, grid_logL = linear_ortho_fit.logL_grid(
+    m_grid, b_perp_grid, logL_grid = linear_ortho_fit.calc_logL_grid(
         m - a * sm, m + a * sm, b_perp - a * sb_perp, b_perp + a * sb_perp, xs, ys, covs
     )
+    random_m, random_b_perp = linear_ortho_fit.sample_likelihood(
+        m, b_perp, m_grid, b_perp_grid, logL_grid
+    )
+    sampled_cov_mb = np.cov(random_m, random_b_perp)
+
     linear_ortho_fit.plot_solution_neighborhood(
         ax2,
-        grid_logL,
-        [min(grid_b), max(grid_b), min(grid_m), max(grid_m)],
+        logL_grid,
+        [min(b_perp_grid), max(b_perp_grid), min(m_grid), max(m_grid)],
         m,
         b_perp,
-        cov_mb=boot_cov_mb,
+        cov_mb=sampled_cov_mb,
         what="L",
+        extra_points=zip(random_b_perp, random_m),
     )
 
     # plot the fitted line
@@ -294,9 +302,9 @@ def plot_results2(
     yp = m * xp + b
     ax.plot(xp, yp, color=FIT_COLOR, linewidth=2)
 
-    # plot 100 sampled lines
+    # plot sampled lines
     linear_ortho_fit.plot_solution_linescatter(
-        ax, m, b, boot_cov_mb, 100, color=FIT_COLOR, alpha=0.05
+        ax, random_m, random_b_perp, color=FIT_COLOR, alpha=5 / len(random_m)
     )
 
     # compare to naive regression

@@ -89,9 +89,10 @@ def hess_logL(m, b, xy, covs):
     # https://pages.mtu.edu/~msgocken/ma5630spring2003/lectures/diff/diff/node6.html
     """
     # displacements used
+    eps = 1e-5
     em = np.array([1, 0])
     eb = np.array([0, 1])
-    h = [m * 1e-6, b * 1e-6]
+    h = [m * eps, b * eps]
     d = [em * h[0], eb * h[1]]
 
     # 2d function
@@ -108,7 +109,7 @@ def hess_logL(m, b, xy, covs):
 
 
 def linear_ortho_maxlh(
-    data_x, data_y, cov_xy, ax=None, basic_print=True, debug_print=False
+        data_x, data_y, cov_xy, ax=None, basic_print=True, debug_print=False, sigma_hess=False
 ):
     """Do a linear fit based on orthogonal distance, to data where each
     point can have a different covariance between x and y. Uses the
@@ -162,7 +163,6 @@ def linear_ortho_maxlh(
     fitted_model_weights = fit(
         line_init, xy[:, 0], xy[:, 1], weights=1.0 / np.sqrt(covs[:, 1, 1])
     )
-
     initial_guess = np.array(
         [fitted_model_weights.slope.value, fitted_model_weights.intercept.value,]
     )
@@ -175,6 +175,7 @@ def linear_ortho_maxlh(
         print("initial guess: ", initial_guess)
         print("grad approx", grad_approx, "grad exact", grad_exact)
 
+    # find maximum
     gtol = np.linalg.norm(jac(initial_guess)) * 1e-6
     res = optimize.minimize(
         to_minimize,
@@ -203,34 +204,38 @@ down {}
         )
         print(string)
 
-    # some attempts at estimating the covariance using the hessian
-    # not all minimize methods compute the inverse hessian
-    # if hasattr(res, "hess_inv"):
-    #     hess_inv = res.hess_inv
-    # else:
-    #     hess = -hess_logL(m, b_perp, xy, covs)
-    #     hess_inv = np.linalg.inv(hess)
-
-    # sigma_m, sigma_b_perp = np.sqrt(np.diag(hess_inv))
-    # rho_mb_perp = hess_inv[0, 1] / (sigma_m * sigma_b_perp)
-
+    # undo the scale factors to get the m and b for the real data
     b = b_perp_to_b(m, b_perp)
+    m_real, b_real = unscale_mb(m, b, factor_x, factor_y)
+    b_perp_real = b_to_b_perp(m_real, b_real)
+
     if debug_print:
         print("Scaled solution")
         print("m, b_perp:", m, b_perp)
         print("m, b:", m, b)
-
-    # undo the scale factors to get the m and b for the real data
-    m_real, b_real = unscale_mb(m, b, factor_x, factor_y)
-    b_perp_real = b_real / np.sqrt(1 + m_real * m_real)
-
     if basic_print:
-        print("De-scaled solution")
+        print("Solution")
         print("m, b_perp:", m_real, b_perp_real)
         print("m, b:", m_real, b_real)
 
-    return m_real, b_perp_real
+    if sigma_hess:
+        # estimate error using hessian. Useful for choosing area around max
+        # likelihood.
+        hess_inv = res.hess_inv
+        sigma_m, sigma_b_perp = np.sqrt(np.diag(hess_inv))
+        rho_mb_perp = hess_inv[0, 1] / (sigma_m * sigma_b_perp)
+        if debug_print:
+            print("Scaled solution:")
+            print(f"Hess: sm = {sigma_m} ; sb = {sigma_b_perp}")
+            print(f"Hess: corr(m, b) = {rho_mb_perp}")
 
+        # remove scaling factor
+        sigma_b = b_perp_to_b(m, sigma_b_perp)
+        sigma_m_real, sigma_b_real = unscale_mb(sigma_m, sigma_b, factor_x, factor_y)
+        sigma_b_perp_real = b_to_b_perp(m_real, sigma_b_real)
+        return m_real, b_perp_real, sigma_m_real, sigma_b_perp_real
+    else:
+        return m_real, b_perp_real
 
 def bootstrap_fit_errors(data_x, data_y, cov_xy):
     """
@@ -277,7 +282,7 @@ def plot_solution_linescatter(ax, m, b_perp, cov_mb, num_lines, **plot_kwargs):
 
 
 def plot_solution_neighborhood(
-    ax, m, b, xs, ys, covs, cov_mb=None, area=None, extra_points=None, what="logL"
+    ax, m, b_perp, xs, ys, covs, cov_mb=None, area=None, extra_points=None, what="logL"
 ):
     """
     Color plot of the 2D likelihood function around the given point (m,
@@ -298,8 +303,8 @@ def plot_solution_neighborhood(
         f = 16
         mmin = m - f * abs(m)
         mmax = m + f * abs(m)
-        bmin = b - f * abs(b)
-        bmax = b + f * abs(b)
+        bmin = b_perp - f * abs(b_perp)
+        bmax = b_perp + f * abs(b_perp)
     else:
         mmin, mmax, bmin, bmax = area
 
@@ -324,16 +329,16 @@ def plot_solution_neighborhood(
 
     ax.figure.colorbar(im, ax=ax)
     ax.set_ylabel("m")
-    ax.set_xlabel("b")
-    ax.plot(b, m, "kx")
+    ax.set_xlabel("b$\\perp$")
+    ax.plot(b_perp, m, "kx")
 
     if extra_points is not None:
         for (bi, mi) in extra_points:
-            ax.plot(b, m, "k+")
+            ax.plot(b_perp, m, "k+")
 
     if cov_mb is not None:
         ax.add_patch(
-            cov_ellipse(b, m, cov_mb[::-1, ::-1], facecolor="none", edgecolor="k")
+            cov_ellipse(b_perp, m, cov_mb[::-1, ::-1], facecolor="none", edgecolor="k")
         )
 
 

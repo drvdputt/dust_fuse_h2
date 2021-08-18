@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-import pdb
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -270,24 +268,29 @@ def plot_results2(
     if pyrange is not None:
         ax.set_ylim(pyrange)
 
-    m, b = linear_ortho_fit.linear_ortho_maxlh(xs, ys, covs, ax)
-    cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs, ys, covs)
-    sm, sb = np.sqrt(np.diag(cov_mb))
+    m, b_perp, sm, sb_perp = linear_ortho_fit.linear_ortho_maxlh(
+        xs, ys, covs, ax, sigma_hess=True
+    )
+    b = linear_ortho_fit.b_perp_to_b(m, b_perp)
+    boot_cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs, ys, covs)
+    boot_sm, boot_sb = np.sqrt(np.diag(boot_cov_mb))
     a = 2
-    area = [m - a * sm, m + a * sm, b - a * sb, b + a * sb]
+    area = [m - a * sm, m + a * sm, b_perp - a * sb_perp, b_perp + a * sb_perp]
     linear_ortho_fit.plot_solution_neighborhood(
-        ax2, m, b, xs, ys, covs, cov_mb=cov_mb, area=area, what="L"
+        ax2, m, b_perp, xs, ys, covs,
+        cov_mb=boot_cov_mb,
+        area=area, what="L"
     )
 
     # plot the fitted line
     xlim = ax.get_xlim()
     xp = np.linspace(xlim[0], xlim[1], 3)
-    yp = m * xp + b * np.sqrt(1 + m * m)
+    yp = m * xp + b
     ax.plot(xp, yp, color=FIT_COLOR, linewidth=2)
 
     # plot 100 sampled lines
     linear_ortho_fit.plot_solution_linescatter(
-        ax, m, b, cov_mb, 100, color=FIT_COLOR, alpha=0.05
+        ax, m, b, boot_cov_mb, 100, color=FIT_COLOR, alpha=0.05
     )
 
     # compare to naive regression

@@ -1,5 +1,4 @@
 *.png
-*.txt
 *pycache*
 .ipynb_checkpoints/
 *~

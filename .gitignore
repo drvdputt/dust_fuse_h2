@@ -2,3 +2,4 @@
 *.txt
 *pycache*
 .ipynb_checkpoints/
+*~

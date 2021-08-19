@@ -189,7 +189,7 @@ def get_shull2021():
     ]
 
     shull_colnames = ["Name", "E(B-V)", "logNHI", "logNH2", "logNH", "fH2"]
-    our_colnames = ["name", "ebv", "lognhi", "lognh2", "lognhtot", "fh2"]
+    our_colnames = ["name", "EBV", "lognhi", "lognh2", "lognhtot", "fh2"]
 
     # start with empty table
     data = Table()
@@ -202,6 +202,13 @@ def get_shull2021():
             if shull_colname in t.colnames:
                 data.add_column(t[shull_colname], name=colname)
                 break
+
+    # take exponential if necessary
+    for colname in data.colnames:
+        if "log" in colname:
+            data.add_column(
+                np.power(10, data[colname]), name=colname.replace("log", "")
+            )
 
     return data
 

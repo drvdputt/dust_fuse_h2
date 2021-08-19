@@ -4,11 +4,13 @@ make consistent plots for paper.
 """
 
 from plot_fuse_results import plot_results2
-from get_data import get_merged_table, get_bohlin78
+from get_data import get_merged_table, get_bohlin78, get_shull2021
 from astropy.table import Column
 from pathlib import Path
 from multiprocessing.pool import Pool
 import numpy as np
+
+DEBUG = True
 
 
 def main():
@@ -21,6 +23,7 @@ def main():
     data_comp = get_merged_table(comp=True)
     # bohlin 78 copernicus sightlines
     data_bohlin78 = get_bohlin78()
+    data_shull = get_shull2021()
 
     # Write out data as used, for later reference. Might be useful for
     # thinking about specific points using e.g. highlighting subsets
@@ -63,22 +66,29 @@ def main():
 
     job_args = []
     for (xparam, yparam) in columns_to_correlate:
-        if xparam in data_bohlin78.colnames and yparam in data_bohlin78.colnames:
-            use_bohlin = data_bohlin78
-        else:
-            use_bohlin = None
-        job_args.append((data, xparam, yparam, data_comp, use_bohlin, ignore, out_dir))
+        job_args.append(
+            (
+                data,
+                xparam,
+                yparam,
+                data_comp,
+                data_bohlin78,
+                data_shull,
+                ignore,
+                out_dir,
+            )
+        )
 
-    debug = False
-    if debug:
+    if DEBUG:
         for j in job_args:
             wrapper(j)
     else:
         with Pool(16) as p:
             p.map(wrapper, job_args)
 
+
 def wrapper(args):
-    data, xparam, yparam, data_comp, use_bohlin, ignore, out_dir = args
+    data, xparam, yparam, data_comp, use_bohlin, data_shull, ignore, out_dir = args
 
     xdata_main = data[xparam]
     ydata_main = data[yparam]
@@ -104,8 +114,10 @@ def wrapper(args):
         suitable_range(yparam),
         data_comp=data_comp,
         data_bohlin=use_bohlin,
+        data_shull=data_shull,
         ignore_comments=ignore,
     )
+    fig.legend()
     fig.tight_layout()
     fn = f"{yparam}_vs_{xparam}.pdf"
     fig.savefig(out_dir / fn, bbox_inches="tight")

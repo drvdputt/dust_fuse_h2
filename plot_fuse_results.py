@@ -9,9 +9,10 @@ import covariance
 import linear_ortho_fit
 
 # some easily customizable constants
-BOHLIN_COLOR = "orange"
+BOHLIN_COLOR = "xkcd:magenta"
+SHULL_COLOR = "xkcd:dark yellow"
 COMP_COLOR = "xkcd:sky blue"
-MAIN_COLOR = "b"
+MAIN_COLOR = "xkcd:gray"
 FIT_COLOR = "k"
 BAD_COLOR = "r"
 
@@ -154,32 +155,40 @@ def plot_results2(
     pyrange=None,
     data_comp=None,
     data_bohlin=None,
+    data_shull=None,
     figsize=None,
     alpha=0.5,
     ignore_comments=None,
 ):
-    """
-    Plot the fuse results with specificed x and y axes
+    """Plot the fuse results with specificed x and y axes
 
     Parameters
     ----------
     data: astropy.table
-       Table of the data to plot
+        Table of the data to plot
 
     xparam: str
-       name of column to plot as the x variable
+        name of column to plot as the x variable
 
     yparam: str
-       name of column to plot as the y variable
+        name of column to plot as the y variable
 
     pxrange: float[2]
-       min/max x range to plot
+        min/max x range to plot
 
     pyrange: float[2]
-       min/max y range to plot
+        min/max y range to plot
 
     data_comp: astropy.table
-       Table of the data to plot for the comparision stars
+        Table of the data to plot for the comparision stars
+
+    data_bohlin: astropy.table 
+        Optional, data to plot from Bohlin 1978. Does nothing if xparam
+        and yparam are not present.
+
+    data_shull: astropy.table 
+        Optional, data to plot from Shull et al. 2021. Does nothing if
+        xparam and yparam are not present.
 
     figsize : float[2]
        x,y size of plot
@@ -188,35 +197,41 @@ def plot_results2(
        exclude points for which data['comment'] equals one of the given
        strings from fitting (they will still be plotted in a highlighted
        color)
+
     """
     set_params(lw=1, universal_color="#202026", fontsize=10)
 
     # fig, ax = plt.subplots(figsize=figsize)
     fig, (ax, ax2,) = plt.subplots(figsize=(8, 5), ncols=2)
 
-    # plot bohlin data (not used for fitting)
-    if data_bohlin is not None:
-        if (xparam in data_bohlin.colnames) and (yparam in data_bohlin.colnames):
-            xcol, xcol_unc = get_param_and_unc(xparam, data_bohlin)
-            ycol, ycol_unc = get_param_and_unc(yparam, data_bohlin)
+    # plot bohlin or shull data (not used for fitting)
+    def plot_extra_data(extra, label, color):
+        if extra is not None and xparam in extra.colnames and yparam in extra.colnames:
+            xcol, xcol_unc = get_param_and_unc(xparam, extra)
+            ycol, ycol_unc = get_param_and_unc(yparam, extra)
+            # errorbar() has no problems with xerr and yerr being None,
+            # so don't need to check for uncertainty columns
             ax.errorbar(
                 xcol,
                 ycol,
                 xerr=xcol_unc,
                 yerr=ycol_unc,
-                label="Bohlin (1978)",
-                color=BOHLIN_COLOR,
+                label=label,
+                color=color,
                 linestyle="none",
                 marker=".",
                 alpha=alpha,
             )
+
+    plot_extra_data(data_bohlin, "Bohlin78", BOHLIN_COLOR)
+    plot_extra_data(data_shull, "Shull+21", SHULL_COLOR)
 
     # plot comparison star data (not used for fitting)
     if data_comp is not None:
         # xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
         xs, ys, covs = get_xs_ys_covs_new(data_comp, xparam, yparam)
         covariance.plot_scatter_with_ellipses(
-            ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha
+            ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha, label="compar"
         )
 
     # decide which points to ignore
@@ -245,7 +260,7 @@ def plot_results2(
     #     print("new covs", covs)
 
     covariance.plot_scatter_with_ellipses(
-        ax, xs, ys, covs, 1, color=MAIN_COLOR, alpha=alpha, marker="x"
+        ax, xs, ys, covs, 1, color=MAIN_COLOR, alpha=alpha, marker="x", label="sample"
     )
 
     # plot ignored points in different color
@@ -257,7 +272,15 @@ def plot_results2(
             data[np.logical_not(use)], xparam, yparam
         )
         covariance.plot_scatter_with_ellipses(
-            ax, bad_xs, bad_ys, bad_covs, 1, color=BAD_COLOR, alpha=alpha, marker="x"
+            ax,
+            bad_xs,
+            bad_ys,
+            bad_covs,
+            1,
+            color=BAD_COLOR,
+            alpha=alpha,
+            marker="x",
+            label="ignore",
         )
 
     ax.set_xlabel(format_colname(xparam))

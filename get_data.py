@@ -210,6 +210,9 @@ def get_shull2021():
                 np.power(10, data[colname]), name=colname.replace("log", "")
             )
 
+    # add derived columns
+    data.add_column(data["nhtot"] / data["EBV"], name="NH_EBV")
+
     return data
 
 

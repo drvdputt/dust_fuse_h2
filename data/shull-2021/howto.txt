@@ -1,0 +1,8 @@
+These tables are in the standard ApJ, CDS, ... format. Unsurprisingly, someone has added a
+reader for these to astropy.
+
+This works:
+
+from astropy.table import Table
+
+t = Table.read(filename, format='ascii.cds')

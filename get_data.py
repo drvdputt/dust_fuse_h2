@@ -177,6 +177,35 @@ def get_bohlin78():
     return data
 
 
+def get_shull2021():
+    """
+    Read in the Shull et al. (2021) FUSE-based data.
+    """
+    # read in tables 1 to 4 (saved in CDS ascii format from the
+    # publisher website)
+    tables = [
+        Table.read(f"data/shull-2021/table{n}.txt", format="ascii.cds")
+        for n in range(1, 5)
+    ]
+
+    shull_colnames = ["Name", "E(B-V)", "logNHI", "logNH2", "logNH", "fH2"]
+    our_colnames = ["name", "ebv", "lognhi", "lognh2", "lognhtot", "fh2"]
+
+    # start with empty table
+    data = Table()
+
+    for colname, shull_colname in zip(our_colnames, shull_colnames):
+        # look for the desired column in one of the 4 tables (we don't
+        # use table 3 right now, but later we should watch out 3, as
+        # there can be multiple rows per star in that one)
+        for t in tables:
+            if shull_colname in t.colnames:
+                data.add_column(t[shull_colname], name=colname)
+                break
+
+    return data
+
+
 def get_merged_table(comp=False):
     """
     Read in the different files and merge them

@@ -630,7 +630,8 @@ def run_one(target, compare=None):
 
     fig, [ax_fit, ax_chi2] = plt.subplots(1, 2, figsize=(9, 6))
     ax_p = ax_chi2.twinx()
-    lognhi, fc, filename = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2, ax_p=ax_p)
+    lognhi, fc, info = lya_fit(target, ax_fit=ax_fit, ax_chi2=ax_chi2, ax_p=ax_p)
+    print(f"Fit result: lognhi = {lognhi} ; unc = {info['lognhi_unc']}")
     set_title(ax_fit, target, lognhi)
     if compare is not None:
         lognhic = compare

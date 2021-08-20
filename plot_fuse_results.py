@@ -13,6 +13,8 @@ BOHLIN_COLOR = "xkcd:magenta"
 SHULL_COLOR = "xkcd:dark yellow"
 COMP_COLOR = "xkcd:sky blue"
 MAIN_COLOR = "xkcd:gray"
+MARK_COLOR = "r"
+MARK_MARKER = "s"
 FIT_COLOR = "k"
 BAD_COLOR = "r"
 
@@ -159,6 +161,7 @@ def plot_results2(
     figsize=None,
     alpha=0.5,
     ignore_comments=None,
+    mark_comments=None,
 ):
     """Plot the fuse results with specificed x and y axes
 
@@ -195,8 +198,12 @@ def plot_results2(
 
     ignore_comments : list of str
        exclude points for which data['comment'] equals one of the given
-       strings from fitting (they will still be plotted in a highlighted
+       strings from fitting (they will still be plotted, but in a highlighted
        color)
+
+    mark_comments : list of str
+       highlight points for which data['comment'] equals one of the
+       given comment strings
 
     """
     set_params(lw=1, universal_color="#202026", fontsize=10)
@@ -242,15 +249,19 @@ def plot_results2(
     else:
         use = np.full(len(data), True)
 
-    # choose columns and calculate covariance matrices
-    if yparam[0:3] == "CAV":
-        cparam = "AV"
-    elif yparam[0:1] == "C":
-        cparam = "EBV"
+    # decide which points to highlight
+    if mark_comments is not None:
+        mark = np.logical_or.reduce([c == data["comment"] for c in mark_comments])
     else:
-        cparam = "AV"
+        mark = np.full(len(data), False)
 
-    xs, ys, covs = get_xs_ys_covs_new(data[use], xparam, yparam)
+    # choose columns and calculate covariance matrices
+    # if yparam[0:3] == "CAV":
+    #     cparam = "AV"
+    # elif yparam[0:1] == "C":
+    #     cparam = "EBV"
+    # else:
+    #     cparam = "AV"
 
     # if xparam == "RV" and yparam == "NH_AV":
     #     # WIP: check if these are similar (they aren't, but I think the
@@ -259,9 +270,22 @@ def plot_results2(
     #     print("old covs", old_covs)
     #     print("new covs", covs)
 
+    # get and plot main data
+    xs, ys, covs = get_xs_ys_covs_new(data[use], xparam, yparam)
     covariance.plot_scatter_with_ellipses(
         ax, xs, ys, covs, 1, color=MAIN_COLOR, alpha=alpha, marker="x", label="sample"
     )
+
+    # mark data points, if any
+    if mark.any():
+        xs_mark, ys_mark, _ = get_xs_ys_covs_new(data[mark], xparam, yparam)
+        ax.scatter(
+            xs_mark,
+            ys_mark,
+            facecolors="none",
+            edgecolors=MARK_COLOR,
+            marker=MARK_MARKER,
+        )
 
     # plot ignored points in different color
     if not use.all():

@@ -38,7 +38,8 @@ target_use_which_spectrum = {
     # "HD062542": "data/HD062542/mastDownload/HST/obik01020/obik01020_x1d.fits", # wavelength range
     # "HD062542": "data/HD062542/*.mxhi.gz", # way too noisy
     "HD062542": "data/HD062542/*mxlo_vo.fits",
-    "HD190603": "data/HD190603/*.mxhi.gz",
+    # "HD190603": "data/HD190603/*.mxhi.gz",
+    "HD190603": "data/HD190603/*mxlo_vo.fits",
     # "HD046202": "data/HD046202/swp08845.mxhi.gz",
     # "HD046202": "data/HD046202/mastDownload/HST/ocb6e0030/ocb6e0030_x1d.fits",
     # "HD046202": "data/HD046202/mastDownload/HST/ocb6e1030/ocb6e1030_x1d.fits",

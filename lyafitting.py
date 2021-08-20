@@ -451,12 +451,20 @@ def plot_fit(target, ax, wavs, flux, fc, lognhi, lower_upper=None):
     fcs = fc(wavs)
     ax.plot(wavs, fcs, label="continuum fit", color=cont_color, zorder=30)
 
+    # lya extinction
+    e = extinction_factor(lognhi, wavs)
+
     # lya fit
-    fms = fcs * extinction_factor(lognhi, wavs)
+    fms = fcs * e
     ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
 
     # data
     ax.plot(wavs, flux, label="data", color="k", zorder=10, linewidth=1)
+    # reconstructed continuum
+    rec = flux / e
+    safe = np.isfinite(rec) & (rec <= np.amax(flux))
+    ax.plot(wavs[safe], rec[safe], label="Reconstructed", color="r", alpha=0.5)
+
     used_for_cont = use_for_cont(wavs, flux, target)
     ax.plot(
         wavs[used_for_cont],

@@ -20,7 +20,6 @@ import collections
 # can be manually tweaked. TODO: If the value is a list or contains *, the spectra will be coadded
 target_use_which_spectrum = {
     "HD097471": "data/HD097471/swp19375mxlo_vo.fits",
-    "HD094493": "data/HD094493/mastDownload/HST/o54306010/o54306010_x1d.fits",
     "HD037525": "data/HD037525/swp27579.mxhi.gz",
     "HD093827": "data/HD093827/swp50536.mxhi.gz",
     # "HD093827": "data/HD093827/*mxlo_vo.fits",
@@ -59,6 +58,9 @@ target_use_which_spectrum = {
     ],
     "BD+52d3210": "data/BD+52d3210/swp34153mxlo_vo.fits",
     "BD+56d524": "data/BD+56d524/swp20330mxlo_vo.fits",
+    # data for comparison to existing HI results
+    "HD094493": "data/HD094493/mastDownload/HST/o54306010/o54306010_x1d.fits",
+    "HD045314": "data/HD045314/mastDownload/IUE/**/*mxhi.gz"
 }
 
 

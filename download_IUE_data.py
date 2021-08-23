@@ -31,6 +31,8 @@ targets = [
     "HD235874",
     "HD051013",
     "HD326329",
+    # for comparison
+    "HD045314",
 ]
 
 # load the search results table

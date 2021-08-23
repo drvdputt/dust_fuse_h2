@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def main():
-    with open("list_for_data_lookup.csv", "r") as f:
+    with open("download_data_list.csv", "r") as f:
         star_names = [s.strip(" \n") for s in f.readlines()]
 
     data_found = {}
@@ -12,9 +12,7 @@ def main():
         #     name, radius="0.1 arcmin", dataproduct_type=["spectrum"]
         # )
         results = mast.Observations.query_criteria(
-            objectname=target,
-            radius="0.1 arcmin",
-            dataproduct_type=["spectrum"],
+            objectname=target, radius="0.1 arcmin", dataproduct_type=["spectrum"],
         )
         count = process_mast_results(target, results)
         data_found[target] = count
@@ -51,6 +49,7 @@ def process_mast_results(target, results):
         f = row["filters"]
         print("\t", o, i, f)
 
+        # HST STIS
         if "STIS" in i and (f == "E140H" or f == "E140M"):
             products = mast.Observations.get_product_list(row)
             manifest = mast.Observations.download_products(
@@ -58,8 +57,13 @@ def process_mast_results(target, results):
             )
             count["STIS"] = count.get("STIS", 0) + 1
 
-        # count these but don't download them (I already have them)
+        # IUE
         if "SWP" in i:
+            products = mast.Observations.get_product_list(row)
+            manifest = mast.Observations.download_products(
+                products, productType="SCIENCE", download_dir=str(target_dir)
+            )
+
             if "HIGH" in f:
                 count["IUE H"] = count.get("IUE H", 0) + 1
             if "LOW" in f:

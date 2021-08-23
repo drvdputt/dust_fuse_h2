@@ -191,6 +191,7 @@ def linear_ortho_maxlh(
         options={"disp": False, "gtol": gtol},
     )
     m, b_perp = res.x
+    chi2min = to_minimize(res.x)
 
     if debug_print:
         print(res)
@@ -223,6 +224,7 @@ down {}
         print("Solution")
         print("m, b_perp:", m_real, b_perp_real)
         print("m, b:", m_real, b_real)
+        print(f"chi2min: {chi2min} or {chi2min/(len(xy) - 2)} per DOF")
 
     if sigma_hess:
         # estimate error using hessian. Useful for choosing area around max

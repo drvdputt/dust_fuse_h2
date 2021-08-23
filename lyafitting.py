@@ -87,7 +87,7 @@ target_continuum_wav_ranges = {
         [1270, 1275],
         [1317.5, 1320.5],
     ],
-    "HD096675": [[1254.5, 1258.5], [1281.3, 1291], [1338, 1344]],
+    "HD096675": [[1254.5, 1258.5], [1281.3, 1291], [1314, 1323], [1338, 1344]],
     "HD097471": [[1158, 1165], [1308, 1332], [1350, 1371]],
     "HD099872": [
         [1146, 1157.7],
@@ -645,9 +645,9 @@ def run_all():
 
 
 def run_one(target, compare=None):
-    if target_continuum_wav_ranges[target] is None:
+    if target_continuum_wav_ranges.get(target, None) is None:
         target_continuum_wav_ranges[target] = default_continuum_wav_ranges
-    if target_lya_wav_ranges[target] is None:
+    if target_lya_wav_ranges.get(target, None) is None:
         target_lya_wav_ranges[target] = default_lya_wav_ranges
 
     fig, [ax_fit, ax_chi2] = plt.subplots(1, 2, figsize=(9, 6))

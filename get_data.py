@@ -2,6 +2,18 @@
 
 import numpy as np
 from astropy.table import Table, join
+import pandas
+from itertools import chain
+
+
+def add_lin_column_from_log(logcolname, data):
+    log = data[logcolname]
+    log_unc = data[logcolname + "_unc"]
+    lin = np.power(10.0, log)
+    lin_unc = 0.5 * (np.power(10.0, log + log_unc) - np.power(10.0, log - log_unc))
+    linname = logcolname.replace("log", "")
+    data.add_column(lin, name=linname)
+    data.add_column(lin_unc, name=linname + "_unc")
 
 
 def get_fuse_h1_h2():
@@ -65,6 +77,80 @@ def get_fuse_h1_h2():
     data["nh"] = np.power(10.0, data["lognh"])
 
     return data
+
+
+# def sum_h2_details(h2data):
+#     """Further process the h2 details to sum the separate components"""
+
+
+def get_fuse_h2_details(components=False, comparison=False, stars=None):
+    """Read in the results of the H2 fits (level populations and errors).
+
+    Some sightlines have multiple fits, likely due to velocity
+    components. Therefore the format is a bit different, and this file
+    needs to be loaded separately from the rest (not via
+    get_merged_table).
+
+    Parameters
+    ----------
+    components : bool
+        load the data with multiple entries per star. False just sums
+        everything, so there's only one row per star.
+
+    comparison : bool
+        load the data for the comparison stars instead of the main sample
+    
+    stars : list of stars for which to retrieve data
+
+    """
+    data = Table.from_pandas(
+        pandas.read_csv("data/fuse_h2_details.dat", delim_whitespace=True)
+    )
+
+    # convert log to linear
+    current_columns = [str(c) for c in data.colnames]
+    for c in current_columns:
+        if "log" in c and "_unc" not in c:
+            add_lin_column_from_log(c, data)
+
+    keep = []
+    for s in stars:
+        if s in data["name"]:
+            # determine indices for star
+            idx = np.where(data["name"] == s)[0][0]
+            keep.append(idx)
+            extra_index = idx + 1
+            while data["name"][extra_index] == "idem":
+                keep.append(extra_index)
+                data["name"][extra_index] = data["name"][idx]
+                extra_index += 1
+    result = data[keep]
+    result.write("data/fuse_h2_details_main.dat", format="ascii.commented_header")
+
+    # if the separate components are needed, we can return early
+    if components:
+        return result
+    # if not, continue processing
+
+    # also output summed result per star (only the linear columns to
+    # keep this easy). Watch out for name column.
+    new_colnames = [c for c in result.colnames if "log" not in c and c != "name"]
+    summed_result = Table(names=new_colnames,)
+
+    for s in stars:
+        rows = result[result["name"] == s]
+        vals = []
+        for c in new_colnames:
+            if "_unc" in c:
+                sum_unc = np.sqrt(np.nansum(np.square(rows[c])))
+                vals.append(sum_unc)
+            else:
+                vals.append(np.nansum(rows[c]))
+
+        summed_result.add_row(vals)
+
+    summed_result.add_column(stars, index=0, name="name")
+    return summed_result
 
 
 def get_fuse_ext_details(filename):

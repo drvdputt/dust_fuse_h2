@@ -413,13 +413,21 @@ def get_merged_table(comp=False):
                 + (cav3_unc * D) ** 2
                 + (cav4_unc * F) ** 2
             )
-            return A_unc
+            return np.sqrt(A_unc)
 
         def add_specific_wavelength(w):
             val = f"A{w}_AV"
             unc = val + "_unc"
             merged_table[val] = extinction_curve(w)
             merged_table[unc] = extinction_curve_unc(w)
+
+            # also multiply them by AV
+            absval = val.replace("_AV", "")
+            merged_table[absval] = merged_table[val] * merged_table["AV"]
+            rel_unc2 = (merged_table[unc] / merged_table[val]) ** 2 + (
+                merged_table["AV_unc"] / merged_table["AV"]
+            ) ** 2
+            merged_table[absval + "_unc"] = merged_table[absval] * np.sqrt(rel_unc2)
 
         add_specific_wavelength(880)
         add_specific_wavelength(1000)

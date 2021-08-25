@@ -309,14 +309,6 @@ def plot_results2(
             label="ignore",
         )
 
-    ax.set_xlabel(format_colname(xparam))
-    ax.set_ylabel(format_colname(yparam))
-
-    if pxrange is not None:
-        ax.set_xlim(pxrange)
-    if pyrange is not None:
-        ax.set_ylim(pyrange)
-
     m, b_perp, sm, sb_perp = linear_ortho_fit.linear_ortho_maxlh(
         xs, ys, covs, ax, sigma_hess=True
     )
@@ -345,6 +337,17 @@ def plot_results2(
         extra_points=zip(random_b_perp, random_m),
     )
 
+    if pxrange is not None:
+        ax.set_xlim(pxrange)
+    else:
+        # fix the ranges before plotting fit
+        ax.set_xlim(ax.get_xlim())
+
+    if pyrange is not None:
+        ax.set_ylim(pyrange)
+    else:
+        ax.set_ylim(ax.get_ylim())
+
     # plot the fitted line
     xlim = ax.get_xlim()
     xp = np.linspace(xlim[0], xlim[1], 3)
@@ -358,6 +361,9 @@ def plot_results2(
 
     # compare to naive regression
     plot_naive_regression(ax, xs, ys, covs)
+
+    ax.set_xlabel(format_colname(xparam))
+    ax.set_ylabel(format_colname(yparam))
 
     return fig
 
@@ -380,7 +386,6 @@ def get_param_and_unc(param, data):
     unc_key = param + "_unc"
     unc = data[unc_key] if unc_key in data.colnames else None
     return d, unc
-
 
 def get_xs_ys_covs_new(data, xparam, yparam):
     # ad hoc solution for getting 1/RV

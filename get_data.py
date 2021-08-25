@@ -99,7 +99,7 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
 
     comparison : bool
         load the data for the comparison stars instead of the main sample
-    
+
     stars : list of stars for which to retrieve data
 
     """
@@ -380,6 +380,53 @@ def get_merged_table(comp=False):
             + np.square(merged_table["gamma_unc"] / merged_table["gamma"])
         )
         merged_table["bump_area_unc"] = merged_table["bump_area"] * bump_area_unc
+
+    # add A1000 (within H2 dissociation cross section) and A1300
+    # (outside that range)
+    params_needed = [f"CAV{n}" for n in range(1, 5)] + ["gamma", "x_o"]
+    if all([p in merged_table.colnames for p in params_needed]):
+        cav1, cav2, cav3, cav4, gamma, x0 = [merged_table[p] for p in params_needed]
+        cav1_unc, cav2_unc, cav3_unc, cav4_unc, gamma_unc, x0_unc = [
+            merged_table[p + "_unc"] for p in params_needed
+        ]
+
+        def extinction_curve(w):
+            """w in angstrom"""
+            micron = 10000
+            # x is 1/w in micron
+            x = 1 / (w / micron)
+            # drude
+            D = x ** 2 / ((x ** 2 - x0 ** 2) ** 2 + (x * gamma) ** 2)
+            F = 0.5392 * (x - 5.9) ** 2 + 0.05644 * (x - 5.9) ** 3
+            Aw_AV = cav1 + cav2 * x + cav3 * D + cav4 * F
+            return Aw_AV
+
+        def extinction_curve_unc(w):
+            x = 1 / w
+            # drude
+            D = x ** 2 / ((x ** 2 - x0 ** 2) ** 2 + (x * gamma) ** 2)
+            F = 0.5392 * (x - 5.9) ** 2 + 0.05644 * (x - 5.9) ** 3
+            # revisit later to include D_unc and F_unc
+            A_unc = (
+                cav1_unc ** 2
+                + (cav2_unc * x) ** 2
+                + (cav3_unc * D) ** 2
+                + (cav4_unc * F) ** 2
+            )
+            return A_unc
+
+        def add_specific_wavelength(w):
+            val = f"A{w}_AV"
+            unc = val + "_unc"
+            merged_table[val] = extinction_curve(w)
+            merged_table[unc] = extinction_curve_unc(w)
+
+        add_specific_wavelength(880)
+        add_specific_wavelength(1000)
+        add_specific_wavelength(1100)
+        add_specific_wavelength(1300)
+        add_specific_wavelength(2000)
+        add_specific_wavelength(4000)
 
     return merged_table
 

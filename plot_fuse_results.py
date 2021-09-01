@@ -387,18 +387,9 @@ def get_param_and_unc(param, data):
     unc = data[unc_key] if unc_key in data.colnames else None
     return d, unc
 
-def get_xs_ys_covs_new(data, xparam, yparam):
-    # ad hoc solution for getting 1/RV
-    try:
-        px, px_unc = get_param_and_unc(xparam, data)
-    except:
-        if xparam == "1_RV":
-            # invert rv below
-            px, px_unc = get_param_and_unc("RV", data)
-        else:
-            print("Problem getting parameter")
-            raise
 
+def get_xs_ys_covs_new(data, xparam, yparam):
+    px, px_unc = get_param_and_unc(xparam, data)
     py, py_unc = get_param_and_unc(yparam, data)
 
     if xparam == "AV" and yparam == "NH_AV" or xparam == "EBV" and yparam == "NH_EBV":
@@ -435,17 +426,13 @@ def get_xs_ys_covs_new(data, xparam, yparam):
         ebv, ebv_unc = get_param_and_unc("EBV", data)
         n, n_unc = get_param_and_unc("nhtot", data)
         c = ebv * n * av_unc ** 2 / av ** 4
-        Vrvm1 = px_unc ** 2 / px ** 4
+        Vrvm1 = px_unc ** 2
         Vnh_av = py_unc ** 2
         covs = covariance.make_cov_matrix(Vrvm1, Vnh_av, c)
-        px = 1 / px
     else:
         print(
             "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."
         )
-        if xparam == "1_RV":
-            px_unc = px_unc / px ** 2
-            px = 1 / px
         covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2)
 
     # Check if cauchy schwarz is satisfied. If not, enforce using fudge

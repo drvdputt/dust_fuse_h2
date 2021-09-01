@@ -321,6 +321,10 @@ def get_merged_table(comp=False):
     # merge the tables together
     merged_table = join(h1h2_data, ext_detail_data, keys="Name")
 
+    # add 1/RV and uncertainty
+    merged_table["1_RV"] = 1 / merged_table["RV"]
+    merged_table["1_RV_unc"] = merged_table["RV_unc"] / merged_table["RV"] ** 2
+
     if not comp:
         ext_fm90_data = get_fuse_ext_fm90()
         merged_table1 = join(merged_table, ext_fm90_data, keys="Name")

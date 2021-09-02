@@ -17,7 +17,8 @@ from warnings import warn
 from scipy.interpolate import interp1d
 import collections
 
-# can be manually tweaked. TODO: If the value is a list or contains *, the spectra will be coadded
+# can be manually tweaked. If the value is a list or contains *, the
+# spectra will be coadded
 target_use_which_spectrum = {
     "HD097471": "data/HD097471/swp19375mxlo_vo.fits",
     "HD037525": "data/HD037525/swp27579.mxhi.gz",

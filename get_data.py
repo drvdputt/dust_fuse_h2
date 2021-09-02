@@ -115,14 +115,14 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
 
     keep = []
     for s in stars:
-        if s in data["name"]:
+        if s in data["Name"]:
             # determine indices for star
-            idx = np.where(data["name"] == s)[0][0]
+            idx = np.where(data["Name"] == s)[0][0]
             keep.append(idx)
             extra_index = idx + 1
-            while data["name"][extra_index] == "idem":
+            while data["Name"][extra_index] == "idem":
                 keep.append(extra_index)
-                data["name"][extra_index] = data["name"][idx]
+                data["Name"][extra_index] = data["Name"][idx]
                 extra_index += 1
     result = data[keep]
     result.write("data/fuse_h2_details_main.dat", format="ascii.commented_header")
@@ -134,11 +134,11 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
 
     # also output summed result per star (only the linear columns to
     # keep this easy). Watch out for name column.
-    new_colnames = [c for c in result.colnames if "log" not in c and c != "name"]
+    new_colnames = [c for c in result.colnames if "log" not in c and c != "Name"]
     summed_result = Table(names=new_colnames,)
 
     for s in stars:
-        rows = result[result["name"] == s]
+        rows = result[result["Name"] == s]
         vals = []
         for c in new_colnames:
             if "_unc" in c:
@@ -149,7 +149,7 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
 
         summed_result.add_row(vals)
 
-    summed_result.add_column(stars, index=0, name="name")
+    summed_result.add_column(stars, index=0, name="Name")
     return summed_result
 
 
@@ -273,7 +273,7 @@ def get_shull2021():
     ]
 
     shull_colnames = ["Name", "E(B-V)", "logNHI", "logNH2", "logNH", "fH2"]
-    our_colnames = ["name", "EBV", "lognhi", "lognh2", "lognhtot", "fh2"]
+    our_colnames = ["Name", "EBV", "lognhi", "lognh2", "lognhtot", "fh2"]
 
     # start with empty table
     data = Table()

@@ -16,6 +16,9 @@ from astropy.table import Column
 # change colors like this
 plot_fuse_results.MAIN_COLOR = "k"
 
+# base width for figures. Is equal to the text width over two columns
+base_width = 7.1
+
 
 def set_comment(name, s):
     """Set the comment for a specific star to the string s."""
@@ -65,6 +68,10 @@ xs, ys, covs = plot_results_scatter(
     mark_comments=["lo_h_av"],
 )
 plot_results_fit(xs, ys, covs, ax_ebv_nh)
+ax_ebv_nh.set_ylabel("")
 
-
-plt.show()
+ax_ebv_nh.legend()
+fig_av_ebv_vs_nh.set_size_inches(7.1, 2 / 3 * 7.1)
+fig_av_ebv_vs_nh.tight_layout()
+fig_av_ebv_vs_nh.subplots_adjust(wspace=0.03)
+fig_av_ebv_vs_nh.savefig("paper-plots/av_ebv_vs_nh.pdf")

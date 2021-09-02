@@ -297,6 +297,17 @@ def get_shull2021():
     # add derived columns
     data.add_column(data["nhtot"] / data["EBV"], name="NH_EBV")
 
+    def edit_shull_name(s):
+        if "HD" in s:
+            number = s.split(" ")[-1]
+            newname = "HD" + f"{number:0>6}"
+        elif "BD" in s:
+            newname = s.replace(" ", "").replace("deg", "d")
+        else:
+            newname = s
+        return newname
+
+    data["Name"] = [edit_shull_name(s) for s in data["Name"]]
     return data
 
 

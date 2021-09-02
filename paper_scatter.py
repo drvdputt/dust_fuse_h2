@@ -8,9 +8,13 @@ Some of them are grouped using subplots
 """
 
 from get_data import get_merged_table, get_bohlin78, get_shull2021
+import plot_fuse_results
 from plot_fuse_results import plot_results_scatter, plot_results_fit
 from matplotlib import pyplot as plt
 from astropy.table import Column
+
+# change colors like this
+plot_fuse_results.MAIN_COLOR = "k"
 
 
 def set_comment(name, s):
@@ -36,6 +40,7 @@ shull = get_shull2021()
 
 fig_av_ebv_vs_nh, (ax_av_nh, ax_ebv_nh) = plt.subplots(1, 2, sharey=True)
 
+print("NH vs AV")
 xs, ys, covs = plot_results_scatter(
     ax_av_nh,
     data,
@@ -46,5 +51,20 @@ xs, ys, covs = plot_results_scatter(
     ignore_comments=["lo_h_av", "hi_h_av"],
 )
 plot_results_fit(xs, ys, covs, ax_av_nh)
+
+print("NH vs EBV")
+xs, ys, covs = plot_results_scatter(
+    ax_ebv_nh,
+    data,
+    "EBV",
+    "nhtot",
+    data_comp=comp,
+    data_bohlin=bohlin,
+    data_shull=shull,
+    ignore_comments=["hi_h_av"],
+    mark_comments=["lo_h_av"],
+)
+plot_results_fit(xs, ys, covs, ax_ebv_nh)
+
 
 plt.show()

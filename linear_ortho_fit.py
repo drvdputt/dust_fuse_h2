@@ -314,7 +314,7 @@ def sample_likelihood(m, b_perp, m_grid, b_perp_grid, logL_grid):
 
     # sample m and b, using L as weight
     L_flat = L_grid.flatten()
-    random_flat_i = np.random.default_rng().choice(len(L_flat), size=1000, p=L_flat)
+    random_flat_i = np.random.default_rng().choice(len(L_flat), size=333, p=L_flat)
     # translate from flat indices, to 0th and 1st indices
     random_m_i, random_b_i = np.unravel_index(random_flat_i, L_grid.shape)
     random_m = m_grid[random_m_i]

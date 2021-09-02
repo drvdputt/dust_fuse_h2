@@ -175,12 +175,32 @@ def plot_results_scatter(
     """
 
     # plot bohlin or shull data (not used for fitting)
-    def plot_extra_data(extra, label, color):
+    def plot_extra_data(extra, label, color, find_dups=False):
         if extra is not None and xparam in extra.colnames and yparam in extra.colnames:
-            xcol, xcol_unc = get_param_and_unc(xparam, extra)
-            ycol, ycol_unc = get_param_and_unc(yparam, extra)
             # errorbar() has no problems with xerr and yerr being None,
             # so don't need to check for uncertainty columns
+            xcol, xcol_unc = get_param_and_unc(xparam, extra)
+            ycol, ycol_unc = get_param_and_unc(yparam, extra)
+            # avoid duplicates (some stars in shull are also in our sample)
+            if find_dups:
+                dup = np.isin(extra["Name"], data["Name"])
+                not_dup = np.logical_not(dup)
+                # plot duplicates as "+"
+                if dup.any():
+                    ax.scatter(
+                        xcol[dup],
+                        ycol[dup],
+                        label=label,
+                        color=color,
+                        marker="+",
+                        alpha=alpha,
+                    )
+                # discard duplicates
+                xcol = xcol[not_dup]
+                ycol = ycol[not_dup]
+                xcol_unc = None if xcol_unc is None else xcol_unc[not_dup]
+                ycol_unc = None if ycol_unc is None else ycol_unc[not_dup]
+
             ax.errorbar(
                 xcol,
                 ycol,
@@ -194,7 +214,7 @@ def plot_results_scatter(
             )
 
     plot_extra_data(data_bohlin, "Bohlin78", BOHLIN_COLOR)
-    plot_extra_data(data_shull, "Shull+21", SHULL_COLOR)
+    plot_extra_data(data_shull, "Shull+21", SHULL_COLOR, find_dups=True)
 
     # plot comparison star data (not used for fitting)
     if data_comp is not None:
@@ -236,7 +256,16 @@ def plot_results_scatter(
     # get and plot main data
     xs, ys, covs = get_xs_ys_covs_new(data[use], xparam, yparam)
     covariance.plot_scatter_with_ellipses(
-        ax, xs, ys, covs, 1, color=MAIN_COLOR, alpha=alpha, marker="x", label="sample"
+        ax,
+        xs,
+        ys,
+        covs,
+        1,
+        color=MAIN_COLOR,
+        alpha=alpha,
+        marker="x",
+        label="sample",
+        zorder=10,
     )
 
     # mark data points, if any
@@ -312,7 +341,16 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
         m, b_perp, m_grid, b_perp_grid, logL_grid
     )
     sampled_cov_mb = np.cov(random_m, random_b_perp)
+    m_unc = np.sqrt(sampled_cov_mb[0,0])
+    b_unc = np.sqrt(sampled_cov_mb[1,1])
+    mb_corr = sampled_cov_mb[0,1] / (m_unc * b_unc)
 
+    # print out results here
+    print("*** FIT RESULT ***")
+    print(f"m = {m:.2e} pm {m_unc:.2e}")
+    print(f"b = {b:.2e} pm {b_unc:.2e}")
+    print(f"correlation  = {mb_corr:.2f}")
+    print("------------------")
     if lh_ax is not None:
         linear_ortho_fit.plot_solution_neighborhood(
             lh_ax,

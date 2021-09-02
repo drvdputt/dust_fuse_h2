@@ -151,7 +151,8 @@ def format_colname(name):
     return out_name
 
 
-def plot_results2(
+def plot_results_scatter(
+    ax,
     data,
     xparam,
     yparam,
@@ -165,53 +166,13 @@ def plot_results2(
     ignore_comments=None,
     mark_comments=None,
 ):
-    """Plot the fuse results with specificed x and y axes
+    """Do only the scatter plot of plot_results2, not the fit
 
-    Parameters
-    ----------
-    data: astropy.table
-        Table of the data to plot
-
-    xparam: str
-        name of column to plot as the x variable
-
-    yparam: str
-        name of column to plot as the y variable
-
-    pxrange: float[2]
-        min/max x range to plot
-
-    pyrange: float[2]
-        min/max y range to plot
-
-    data_comp: astropy.table
-        Table of the data to plot for the comparision stars
-
-    data_bohlin: astropy.table 
-        Optional, data to plot from Bohlin 1978. Does nothing if xparam
-        and yparam are not present.
-
-    data_shull: astropy.table 
-        Optional, data to plot from Shull et al. 2021. Does nothing if
-        xparam and yparam are not present.
-
-    figsize : float[2]
-       x,y size of plot
-
-    ignore_comments : list of str
-       exclude points for which data['comment'] equals one of the given
-       strings from fitting (they will still be plotted, but in a highlighted
-       color)
-
-    mark_comments : list of str
-       highlight points for which data['comment'] equals one of the
-       given comment strings
-
+    Returns
+    -------
+    xs, ys, covs: 1D array, 1D array, 3D array with shape (len(data), 2, 2)
+        Main data to be used for fitting
     """
-    set_params(lw=1, universal_color="#202026", fontsize=10)
-
-    # fig, ax = plt.subplots(figsize=figsize)
-    fig, (ax, ax2,) = plt.subplots(figsize=(8, 5), ncols=2)
 
     # plot bohlin or shull data (not used for fitting)
     def plot_extra_data(extra, label, color):
@@ -309,8 +270,33 @@ def plot_results2(
             label="ignore",
         )
 
+    ax.set_xlabel(format_colname(xparam))
+    ax.set_ylabel(format_colname(yparam))
+    if pxrange is not None:
+        ax.set_xlim(pxrange)
+    if pyrange is not None:
+        ax.set_ylim(pyrange)
+
+    return xs, ys, covs
+
+def plot_results_fit(line_ax, lh_ax, xs, ys, covs):
+    """Do the fit and plot the result.
+    
+    Parameters
+    ----------
+    sc_ax : axes to plot the best fit line
+
+    lh_ax : axes to plot the likelihood function
+
+    xs, ys, covs: the data to use (see return value of plot_results_scatter)
+
+"""
+    # fix ranges before plotting the fit
+    line_ax.set_xlim(line_ax.get_xlim())
+    line_ax.set_ylim(line_ax.get_ylim())
+
     m, b_perp, sm, sb_perp = linear_ortho_fit.linear_ortho_maxlh(
-        xs, ys, covs, ax, sigma_hess=True
+        xs, ys, covs, line_ax, sigma_hess=True
     )
     b = linear_ortho_fit.b_perp_to_b(m, b_perp)
 
@@ -327,7 +313,7 @@ def plot_results2(
     sampled_cov_mb = np.cov(random_m, random_b_perp)
 
     linear_ortho_fit.plot_solution_neighborhood(
-        ax2,
+        lh_ax,
         logL_grid,
         [min(b_perp_grid), max(b_perp_grid), min(m_grid), max(m_grid)],
         m,
@@ -337,34 +323,97 @@ def plot_results2(
         extra_points=zip(random_b_perp, random_m),
     )
 
-    if pxrange is not None:
-        ax.set_xlim(pxrange)
-    else:
-        # fix the ranges before plotting fit
-        ax.set_xlim(ax.get_xlim())
-
-    if pyrange is not None:
-        ax.set_ylim(pyrange)
-    else:
-        ax.set_ylim(ax.get_ylim())
-
     # plot the fitted line
-    xlim = ax.get_xlim()
+    xlim = line_ax.get_xlim()
     xp = np.linspace(xlim[0], xlim[1], 3)
     yp = m * xp + b
-    ax.plot(xp, yp, color=FIT_COLOR, linewidth=2)
+    line_ax.plot(xp, yp, color=FIT_COLOR, linewidth=2)
 
     # plot sampled lines
     linear_ortho_fit.plot_solution_linescatter(
-        ax, random_m, random_b_perp, color=FIT_COLOR, alpha=5 / len(random_m)
+        line_ax, random_m, random_b_perp, color=FIT_COLOR, alpha=5 / len(random_m)
     )
 
-    # compare to naive regression
+
+def plot_results2(
+    data,
+    xparam,
+    yparam,
+    pxrange=None,
+    pyrange=None,
+    data_comp=None,
+    data_bohlin=None,
+    data_shull=None,
+    figsize=None,
+    alpha=0.5,
+    ignore_comments=None,
+    mark_comments=None,
+):
+    """Plot the fuse results with specificed x and y axes and do the linear fit.
+
+    Parameters
+    ----------
+    data: astropy.table
+        Table of the data to plot
+
+    xparam: str
+        name of column to plot as the x variable
+
+    yparam: str
+        name of column to plot as the y variable
+
+    pxrange: float[2]
+        min/max x range to plot
+
+    pyrange: float[2]
+        min/max y range to plot
+
+    data_comp: astropy.table
+        Table of the data to plot for the comparision stars
+
+    data_bohlin: astropy.table 
+        Optional, data to plot from Bohlin 1978. Does nothing if xparam
+        and yparam are not present.
+
+    data_shull: astropy.table 
+        Optional, data to plot from Shull et al. 2021. Does nothing if
+        xparam and yparam are not present.
+
+    figsize : float[2]
+        x,y size of plot
+
+    ignore_comments : list of str
+        exclude points for which data['comment'] equals one of the given
+        strings from fitting (they will still be plotted, but in a highlighted
+        color)
+
+    mark_comments : list of str
+        highlight points for which data['comment'] equals one of the
+        given comment strings
+
+    """
+    set_params(lw=1, universal_color="#202026", fontsize=10)
+
+    # fig, ax = plt.subplots(figsize=figsize)
+    fig, (ax, lh_ax,) = plt.subplots(figsize=(8, 5), ncols=2)
+
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        xparam,
+        yparam,
+        pxrange,
+        pyrange,
+        data_comp,
+        data_bohlin,
+        data_shull,
+        figsize,
+        alpha,
+        ignore_comments,
+        mark_comments,
+    )
+    plot_results_fit(ax, lh_ax, xs, ys, covs)
     plot_naive_regression(ax, xs, ys, covs)
-
-    ax.set_xlabel(format_colname(xparam))
-    ax.set_ylabel(format_colname(yparam))
-
     return fig
 
 

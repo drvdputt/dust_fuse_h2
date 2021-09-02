@@ -279,7 +279,8 @@ def plot_results_scatter(
 
     return xs, ys, covs
 
-def plot_results_fit(line_ax, lh_ax, xs, ys, covs):
+
+def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
     """Do the fit and plot the result.
     
     Parameters
@@ -312,16 +313,17 @@ def plot_results_fit(line_ax, lh_ax, xs, ys, covs):
     )
     sampled_cov_mb = np.cov(random_m, random_b_perp)
 
-    linear_ortho_fit.plot_solution_neighborhood(
-        lh_ax,
-        logL_grid,
-        [min(b_perp_grid), max(b_perp_grid), min(m_grid), max(m_grid)],
-        m,
-        b_perp,
-        cov_mb=sampled_cov_mb,
-        what="L",
-        extra_points=zip(random_b_perp, random_m),
-    )
+    if lh_ax is not None:
+        linear_ortho_fit.plot_solution_neighborhood(
+            lh_ax,
+            logL_grid,
+            [min(b_perp_grid), max(b_perp_grid), min(m_grid), max(m_grid)],
+            m,
+            b_perp,
+            cov_mb=sampled_cov_mb,
+            what="L",
+            extra_points=zip(random_b_perp, random_m),
+        )
 
     # plot the fitted line
     xlim = line_ax.get_xlim()

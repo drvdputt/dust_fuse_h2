@@ -414,7 +414,7 @@ def plot_results2(
         ignore_comments,
         mark_comments,
     )
-    plot_results_fit(ax, lh_ax, xs, ys, covs)
+    plot_results_fit(xs, ys, covs, ax, lh_ax)
     plot_naive_regression(ax, xs, ys, covs)
     return fig
 

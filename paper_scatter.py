@@ -37,6 +37,8 @@ for name in ["HD200775", "HD164906", "HD045314", "HD206773"]:
 bohlin = get_bohlin78()
 shull = get_shull2021()
 
+###############################################################################
+# PLOT 1 
 # the first plot shows nh vs av and nh vs ebv. The main goal is showing
 # that there are some outliers in AV, which are not necessarily outliers
 # in EBV, and determining the main nh vs av trend in the sample
@@ -75,3 +77,21 @@ fig_av_ebv_vs_nh.set_size_inches(7.1, 2 / 3 * 7.1)
 fig_av_ebv_vs_nh.tight_layout()
 fig_av_ebv_vs_nh.subplots_adjust(wspace=0.03)
 fig_av_ebv_vs_nh.savefig("paper-plots/av_ebv_vs_nh.pdf")
+
+###############################################################################
+
+fig_av_nhav, ax_av_nhav = plt.subplots()
+print("NH/AV vs AV")
+xs, ys, covs = plot_results_scatter(
+    ax_av_nhav,
+    data,
+    "AV",
+    "NH_AV",
+    pyrange=[0, 1.6e22],
+    data_comp=comp,
+    data_bohlin=bohlin,
+    ignore_comments=["lo_h_av", "hi_h_av"],
+)
+fig_av_nhav.set_size_inches(base_width / 2, base_width * 2/3)
+fig_av_nhav.tight_layout()
+fig_av_nhav.savefig("paper-plots/nhav_vs_av.pdf")

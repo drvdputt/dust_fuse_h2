@@ -37,13 +37,23 @@ for name in ["HD200775", "HD164906", "HD045314", "HD206773"]:
 bohlin = get_bohlin78()
 shull = get_shull2021()
 
+def finalize_single(filename):
+    pass
+
+def finalize_double(fig, filename):
+    fig.set_size_inches(base_width, 2 / 3 * base_width)
+    fig.tight_layout()
+    fig.subplots_adjust(wspace=0.03)
+    fig.savefig("paper-plots" + filename)
+    
+
 ###############################################################################
 # PLOT 1 
 # the first plot shows nh vs av and nh vs ebv. The main goal is showing
 # that there are some outliers in AV, which are not necessarily outliers
 # in EBV, and determining the main nh vs av trend in the sample
 
-fig_av_ebv_vs_nh, (ax_av_nh, ax_ebv_nh) = plt.subplots(1, 2, sharey=True)
+fig, (ax_av_nh, ax_ebv_nh) = plt.subplots(1, 2, sharey=True)
 
 print("NH vs AV")
 xs, ys, covs = plot_results_scatter(
@@ -73,25 +83,44 @@ plot_results_fit(xs, ys, covs, ax_ebv_nh)
 ax_ebv_nh.set_ylabel("")
 
 ax_ebv_nh.legend()
-fig_av_ebv_vs_nh.set_size_inches(7.1, 2 / 3 * 7.1)
-fig_av_ebv_vs_nh.tight_layout()
-fig_av_ebv_vs_nh.subplots_adjust(wspace=0.03)
-fig_av_ebv_vs_nh.savefig("paper-plots/av_ebv_vs_nh.pdf")
+finalize_double(fig, "av_ebv_vs_nh.pdf")
 
 ###############################################################################
 
-fig_av_nhav, ax_av_nhav = plt.subplots()
+fig, (ax_av_nhav, ax_rvi_nhav) = plt.subplots(1, 2, sharey=True)
 print("NH/AV vs AV")
 xs, ys, covs = plot_results_scatter(
     ax_av_nhav,
     data,
     "AV",
     "NH_AV",
-    pyrange=[0, 1.6e22],
+    pyrange=[0, 1.0e22],
     data_comp=comp,
     data_bohlin=bohlin,
-    ignore_comments=["lo_h_av", "hi_h_av"],
+    mark_comments=["lo_h_av", "hi_h_av"],
 )
-fig_av_nhav.set_size_inches(base_width / 2, base_width * 2/3)
-fig_av_nhav.tight_layout()
-fig_av_nhav.savefig("paper-plots/nhav_vs_av.pdf")
+print("NH_AV vs 1/RV")
+xs, ys, covs = plot_results_scatter(
+    ax_rvi_nhav,
+    data,
+    "1_RV",
+    "NH_AV",
+    # pyrange=[0, 1.6e22],
+    data_comp=comp,
+    ignore_comments=["lo_h_av", "hi_h_av"])
+plot_results_fit(xs, ys, covs, ax_rvi_nhav)
+ax_rvi_nhav.set_ylabel("")
+finalize_double(fig, "nhav_vs_av.pdf")
+
+# redo the same thing, but with the outliers. Just need it for the numbers
+print("NH_AV vs 1/RV (with outliers)")
+xs, ys, covs = plot_results_scatter(
+    ax_rvi_nhav,
+    data,
+    "1_RV",
+    "NH_AV",
+    # pyrange=[0, 1.6e22],
+    data_comp=comp,
+    ignore_comments=["hi_h_av"],
+    mark_comments=["lo_h_av"])
+plot_results_fit(xs, ys, covs, ax_rvi_nhav)

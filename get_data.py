@@ -261,9 +261,14 @@ def get_bohlin78():
     return data
 
 
-def get_shull2021():
+def get_shull2021(drop_duplicates=False):
     """
     Read in the Shull et al. (2021) FUSE-based data.
+
+    Parameters
+    ----------
+    drop_duplicates : bool
+        Remove stars that are already in our sample
     """
     # read in tables 1 to 4 (saved in CDS ascii format from the
     # publisher website)
@@ -421,14 +426,20 @@ def get_merged_table(comp=False):
             # drude
             D = x ** 2 / ((x ** 2 - x0 ** 2) ** 2 + (x * gamma) ** 2)
             F = 0.5392 * (x - 5.9) ** 2 + 0.05644 * (x - 5.9) ** 3
-            # revisit later to include D_unc and F_unc
-            A_unc = (
-                cav1_unc ** 2
-                + (cav2_unc * x) ** 2
-                + (cav3_unc * D) ** 2
-                + (cav4_unc * F) ** 2
-            )
-            return np.sqrt(A_unc)
+
+            # dD / dg = -2gx^4 / (g^2 x^2 + (x0^2 + x^2)^2)^2
+            # dD / dx0 = -4mx^2(m^2+x^2)/(g^2x^2+(m^2+x^2)^2)^2
+            D_denom = (x ** 2 - x0 ** 2) ** 2 + (x * gamma) ** 2
+            # multivariate error propagation
+            D_unc_gamma = 2 * gamma * x ** 4 / D_denom ** 2 * gamma_unc
+            D_unc_x0 = 4 * x0 * x ** 2 * (x0 ** 2 + x ** 2) / D_denom ** 2 * x0_unc
+            VD_rel = (D_unc_gamma ** 2 + D_unc_x0 ** 2) / D**2
+            # sum of relative variances
+            Vcav3_rel = (cav3_unc/cav3)**2
+            Vterm3 = (cav3 * D)**2 * (Vcav3_rel + VD_rel)
+
+            VA = cav1_unc ** 2 + (cav2_unc * x) ** 2 + Vterm3 + (cav4_unc * F) ** 2
+            return np.sqrt(VA)
 
         def add_specific_wavelength(w):
             val = f"A{w}_AV"

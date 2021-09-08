@@ -18,6 +18,7 @@ plot_fuse_results.MAIN_COLOR = "k"
 
 # base width for figures. Is equal to the text width over two columns
 base_width = 7.1
+base_height = 9.3
 
 
 def set_comment(name, s):
@@ -38,17 +39,21 @@ bohlin = get_bohlin78()
 shull = get_shull2021()
 
 
-def finalize_single(filename):
-    pass
-
+def finalize_single(fig, filename):
+    fig.set_size_inches(base_width / 2, 2 / 3 * base_width)
+    save(fig, filename)
 
 def finalize_double(fig, filename):
     for ax in fig.axes[1:]:
         ax.set_ylabel("")
     fig.set_size_inches(base_width, 2 / 3 * base_width)
+    save(fig, filename)
+
+def save(fig, filename):
     fig.tight_layout()
     fig.subplots_adjust(wspace=0.03)
     fig.savefig("paper-plots/" + filename)
+
 
 
 def plot1():
@@ -170,4 +175,35 @@ def plot3():
     finalize_double(fig, "fh2_vs_ext.pdf")
 
 
-plot3()
+def plot4():
+    """Some of the parameters describing the extinction curve vs fh2.
+
+    Two imporant results: fh2 vs 1/RV and fh2 vs CAV4.
+
+    C3 and bump size.
+
+    """
+    fig, axs = plt.subplots(3, 2, sharey=True)
+    _ = plot_results_scatter(axs[0, 0], data, "CAV1", "fh2", mark_comments=["lo_h_av"],)
+    _ = plot_results_scatter(axs[0, 1], data, "CAV2", "fh2", mark_comments=["lo_h_av"],)
+    _ = plot_results_scatter(axs[1, 0], data, "CAV3", "fh2", mark_comments=["lo_h_av"],)
+    _ = plot_results_scatter(axs[1, 1], data, "CAV4", "fh2", mark_comments=["lo_h_av"],)
+    _ = plot_results_scatter(
+        axs[2, 0], data, "bump_area", "fh2", mark_comments=["lo_h_av"],
+    )
+    xs, ys, covs = plot_results_scatter(
+        axs[2, 1],
+        data,
+        "1_RV",
+        "fh2",
+        data_comp=comp,
+        # data_bohlin=bohlin,
+        # data_shull=shull,
+        ignore_comments=["lo_h_av"],
+    )
+    plot_results_fit(xs, ys, covs, axs[2, 1])
+    fig.set_size_inches(base_width, base_height)
+    for (ax_l, ax_r) in axs:
+        ax_r.set_ylabel("")
+    fig.tight_layout()
+    save(fig, "fh2_vs_fm90.pdf")

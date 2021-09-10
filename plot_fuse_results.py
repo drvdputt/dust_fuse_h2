@@ -240,7 +240,8 @@ def plot_results_scatter(
         1,
         color=MAIN_COLOR,
         alpha=alpha,
-        marker="x",
+        marker=".",
+        s=1,
         label="sample",
         zorder=10,
     )

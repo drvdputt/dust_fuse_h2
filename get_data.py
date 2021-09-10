@@ -4,6 +4,7 @@ import numpy as np
 from astropy.table import Table, join
 import pandas
 from itertools import chain
+from astropy import units as u
 
 
 def add_lin_column_from_log(logcolname, data):
@@ -135,7 +136,9 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
     # also output summed result per star (only the linear columns to
     # keep this easy). Watch out for name column.
     new_colnames = [c for c in result.colnames if "log" not in c and c != "Name"]
-    summed_result = Table(names=new_colnames,)
+    summed_result = Table(
+        names=new_colnames,
+    )
 
     for s in stars:
         rows = result[result["Name"] == s]
@@ -316,6 +319,25 @@ def get_shull2021(drop_duplicates=False):
     return data
 
 
+def get_distance():
+    """Read in parallaxes from file created by Gaia query script."""
+    t = Table.read("data/gaia/merged.dat", format="ascii.commented_header")
+    plx = t["parallax"]
+    plx_unc = t["parallax_error"]
+
+    def p_to_d(p):
+        # return p.to(u.parsec, equivalencies=u.parallax())
+        return 1 / p
+
+    d = p_to_d(plx)
+    dplus = p_to_d(plx - plx_unc)
+    dmin = p_to_d(plx + plx_unc)
+    d_unc = 0.5 * (dplus - dmin)
+
+    t["d"] = d
+    t["d_unc"] = d_unc
+    return t
+
 def get_merged_table(comp=False):
     """
     Read in the different files and merge them
@@ -342,6 +364,9 @@ def get_merged_table(comp=False):
     merged_table["1_RV_unc"] = merged_table["RV_unc"] / merged_table["RV"] ** 2
 
     if not comp:
+        distances = get_distance()
+        merged_table = join(merged_table, distances, keys="Name")
+
         ext_fm90_data = get_fuse_ext_fm90()
         merged_table1 = join(merged_table, ext_fm90_data, keys="Name")
         merged_table = merged_table1
@@ -433,10 +458,10 @@ def get_merged_table(comp=False):
             # multivariate error propagation
             D_unc_gamma = 2 * gamma * x ** 4 / D_denom ** 2 * gamma_unc
             D_unc_x0 = 4 * x0 * x ** 2 * (x0 ** 2 + x ** 2) / D_denom ** 2 * x0_unc
-            VD_rel = (D_unc_gamma ** 2 + D_unc_x0 ** 2) / D**2
+            VD_rel = (D_unc_gamma ** 2 + D_unc_x0 ** 2) / D ** 2
             # sum of relative variances
-            Vcav3_rel = (cav3_unc/cav3)**2
-            Vterm3 = (cav3 * D)**2 * (Vcav3_rel + VD_rel)
+            Vcav3_rel = (cav3_unc / cav3) ** 2
+            Vterm3 = (cav3 * D) ** 2 * (Vcav3_rel + VD_rel)
 
             VA = cav1_unc ** 2 + (cav2_unc * x) ** 2 + Vterm3 + (cav4_unc * F) ** 2
             return np.sqrt(VA)

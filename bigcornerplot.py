@@ -28,11 +28,13 @@ qnames = [
     "AV",
     "EBV",
     "A1000",
+    "A1000_AV",
     "1_RV",
     "CAV3",
     "CAV4",
-    "C3",
-    "C4",
+    "bump_amp",
+    # "C3",
+    # "C4",
 ]
 nq = len(qnames)
 
@@ -49,7 +51,7 @@ for yi, xi in itertools.combinations_with_replacement(range(nq), 2):
 
     xparam = qnames[xi]
     yparam = qnames[yi]
-    plot_results_scatter(ax, data, xparam, yparam, alpha=1)
+    plot_results_scatter(ax, data, xparam, yparam, alpha=1, mark_comments=["lo_h_av"])
 
     if ypos < nq - 1:
         ax.set_xticklabels([])
@@ -61,5 +63,5 @@ for yi, xi in itertools.combinations_with_replacement(range(nq), 2):
 
 
 # plt.tight_layout(w_pad=0, h_pad=0)
-plt.subplots_adjust(wspace=0, hspace=0, right=1, top=1, left=.05, bottom=.05)
+plt.subplots_adjust(wspace=0, hspace=0, right=1, top=1, left=0.05, bottom=0.05)
 plt.show()

@@ -419,12 +419,17 @@ def get_merged_table(comp=False):
         #                                / merged_table['RV']))
         C3 = merged_table["CAV3"]
         C3_unc = merged_table["CAV3_unc"]
+        gamma = merged_table['gamma']
+        gamma_unc = merged_table['gamma_unc']
         merged_table["bump_area"] = np.pi * C3 / (2.0 * merged_table["gamma"])
         bump_area_unc = np.sqrt(
             np.square(C3_unc / C3)
             + np.square(merged_table["gamma_unc"] / merged_table["gamma"])
         )
         merged_table["bump_area_unc"] = merged_table["bump_area"] * bump_area_unc
+        merged_table["bump_amp"] = C3 / gamma**2
+        bump_amp_unc = np.sqrt((C3_unc / gamma**2)**2 + (gamma_unc * C3 * -2 / gamma**3)**2)
+        merged_table["bump_amp_unc"] = bump_amp_unc
 
     # add A1000 (within H2 dissociation cross section) and A1300
     # (outside that range)

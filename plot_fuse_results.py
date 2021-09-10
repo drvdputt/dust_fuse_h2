@@ -150,6 +150,7 @@ def plot_results_scatter(
     xs, ys, covs: 1D array, 1D array, 3D array with shape (len(data), 2, 2)
         Main data to be used for fitting
     """
+    print(f"{xparam} vs {yparam}")
 
     # plot bohlin or shull data (not used for fitting)
     def plot_extra_data(extra, label, color, find_dups=False):
@@ -289,7 +290,7 @@ def plot_results_scatter(
 
 def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
     """Do the fit and plot the result.
-    
+
     Parameters
     ----------
     sc_ax : axes to plot the best fit line
@@ -297,8 +298,7 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
     lh_ax : axes to plot the likelihood function
 
     xs, ys, covs: the data to use (see return value of plot_results_scatter)
-
-"""
+    """
     # fix ranges before plotting the fit
     line_ax.set_xlim(line_ax.get_xlim())
     line_ax.set_ylim(line_ax.get_ylim())
@@ -319,9 +319,9 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
         m, b_perp, m_grid, b_perp_grid, logL_grid
     )
     sampled_cov_mb = np.cov(random_m, random_b_perp)
-    m_unc = np.sqrt(sampled_cov_mb[0,0])
-    b_unc = np.sqrt(sampled_cov_mb[1,1])
-    mb_corr = sampled_cov_mb[0,1] / (m_unc * b_unc)
+    m_unc = np.sqrt(sampled_cov_mb[0, 0])
+    b_unc = np.sqrt(sampled_cov_mb[1, 1])
+    mb_corr = sampled_cov_mb[0, 1] / (m_unc * b_unc)
 
     # print out results here
     print("*** FIT RESULT ***")
@@ -389,11 +389,11 @@ def plot_results2(
     data_comp: astropy.table
         Table of the data to plot for the comparision stars
 
-    data_bohlin: astropy.table 
+    data_bohlin: astropy.table
         Optional, data to plot from Bohlin 1978. Does nothing if xparam
         and yparam are not present.
 
-    data_shull: astropy.table 
+    data_shull: astropy.table
         Optional, data to plot from Shull et al. 2021. Does nothing if
         xparam and yparam are not present.
 
@@ -413,7 +413,10 @@ def plot_results2(
     set_params(lw=1, universal_color="#202026", fontsize=10)
 
     # fig, ax = plt.subplots(figsize=figsize)
-    fig, (ax, lh_ax,) = plt.subplots(figsize=(8, 5), ncols=2)
+    fig, (
+        ax,
+        lh_ax,
+    ) = plt.subplots(figsize=(8, 5), ncols=2)
 
     xs, ys, covs = plot_results_scatter(
         ax,

@@ -459,39 +459,76 @@ def get_param_and_unc(param, data):
 
 
 def get_xs_ys_covs_new(data, xparam, yparam):
-    px, px_unc = get_param_and_unc(xparam, data)
-    py, py_unc = get_param_and_unc(yparam, data)
+    # make this function work when x and y are flipped, too. See this
+    # block, and the return statements at the end.
+    requested_pair = (xparam, yparam)
+    implemented_pairs = [
+        ("AV", "NH_AV"),
+        ("EBV", "NH_EBV"),
+        ("nhtot", "NH_AV"),
+        ("nhtot", "NH_EBV"),
+        ("nhi", "NH_AV"),
+        ("fh2", "NH_AV"),
+        ("fh2", "NH_EBV"),
+        ("fh2", "nhtot"),
+        ("RV", "NH_AV"),
+        ("1_RV", "NH_AV"),
+    ]
+    if requested_pair in implemented_pairs:
+        pair = requested_pair
+        implementation = "normal"
+    elif requested_pair[::-1] in implemented_pairs:
+        pair = requested_pair[::-1]
+        implementation = "flipped"
+    else:
+        pair = requested_pair
+        implementation = "none"
 
-    if xparam == "AV" and yparam == "NH_AV" or xparam == "EBV" and yparam == "NH_EBV":
+    px, px_unc = get_param_and_unc(pair[0], data)
+    py, py_unc = get_param_and_unc(pair[1], data)
+
+    if pair in (("AV", "NH_AV"), ("EBV", "NH_EBV")):
         covs = covariance.get_cov_x_ydx(px, py, px_unc, py_unc)
-    elif xparam == "nhtot" and (yparam == "NH_AV" or yparam == "NH_EBV"):
+    elif pair in (("nhtot", "NH_AV"), ("nhtot", "NH_EBV")):
         covs = covariance.get_cov_x_xdy(px, py, px_unc, py_unc)
-    elif xparam == "fh2" and (
-        yparam == "NH_AV" or yparam == "NH_EBV" or yparam == "nhtot"
-    ):
+    elif pair == ("nhi", "NH_AV"):
+        nhi, nhi_unc = px, px_unc
+        nh2, nh2_unc = get_param_and_unc("nh2", data)
+        av, av_unc = get_param_and_unc("AV", data)
+        cov_nhi_nhi = covariance.make_cov_matrix(
+            nhi_unc ** 2, nhi_unc ** 2, nhi_unc ** 2
+        )
+        # add variance due to nh2
+        cov_nhi_nhtot = cov_nhi_nhi + np.diag([nh2_unc, nh2_unc]) ** 2
+        cov_nhi_nhav = covariance.new_cov_when_divide_y(
+            cov_nhi_nhtot, nhi + nh2, av, av_unc
+        )
+        covs = cov_nhi_nhav
+    elif pair in (("fh2", "NH_AV"), ("fh2", "NH_EBV"), ("fh2", "nhtot")):
         x1, x1_unc = get_param_and_unc("nhi", data)
         x2, x2_unc = get_param_and_unc("nh2", data)
         C_fh2_htot = covariance.get_cov_fh2_htot(x1, x2, x1_unc, x2_unc)
         # in case of NH, no extra factor is needed
-        if yparam == "NH_AV":
+        if pair[1] == "nhtot":
+            covs = C_fh2_htot
+        if pair[1] == "NH_AV":
             av, av_unc = get_param_and_unc("AV", data)
             covs = covariance.new_cov_when_divide_y(
                 C_fh2_htot, data["nhtot"], av, av_unc
             )
-        elif yparam == "NH_EBV":
+        elif pair[1] == "NH_EBV":
             ebv, ebv_unc = get_param_and_unc("EBV", data)
             covs = covariance.new_cov_when_divide_y(
                 C_fh2_htot, data["nhtot"], ebv, ebv_unc
             )
-
-    elif xparam == "RV" and yparam == "NH_AV":
+    elif pair == ("RV", "NH_AV"):
         # first, get the covariance of AV and NH_AV
         av, av_unc = get_param_and_unc("AV", data)
         C_av_nhav = covariance.get_cov_x_ydx(av, py, av_unc, py_unc)
         # RV = AV / EBV, so adjust x for division by EBV
         ebv, ebv_unc = get_param_and_unc("EBV", data)
         covs = covariance.new_cov_when_divide_x(C_av_nhav, av, ebv, ebv_unc)
-    elif xparam == "1_RV" and yparam == "NH_AV":
+    elif pair == ("1_RV", "NH_AV"):
         av, av_unc = get_param_and_unc("AV", data)
         ebv, ebv_unc = get_param_and_unc("EBV", data)
         n, n_unc = get_param_and_unc("nhtot", data)
@@ -518,10 +555,15 @@ def get_xs_ys_covs_new(data, xparam, yparam):
         )
         covs[bad_cov, 1, 0] = covs[bad_cov, 0, 1]
 
-    return px, py, covs
+    # return the values in the correct order
+    if implementation in ("normal", "none"):
+        return px, py, covs
+    if implementation == "flipped":
+        return py, px, np.flip(covs)
 
 
 def get_xs_ys_covs(data, xparam, yparam, cparam):
+
     """
     Return arrays of x, y, and cov(x,y) for a pair of parameters
 

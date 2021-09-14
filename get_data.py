@@ -3,8 +3,6 @@
 import numpy as np
 from astropy.table import Table, join
 import pandas
-from itertools import chain
-from astropy import units as u
 
 
 def add_lin_column_from_log(logcolname, data):
@@ -80,10 +78,6 @@ def get_fuse_h1_h2():
     return data
 
 
-# def sum_h2_details(h2data):
-#     """Further process the h2 details to sum the separate components"""
-
-
 def get_fuse_h2_details(components=False, comparison=False, stars=None):
     """Read in the results of the H2 fits (level populations and errors).
 
@@ -153,6 +147,37 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
         summed_result.add_row(vals)
 
     summed_result.add_column(stars, index=0, name="Name")
+
+    # some rotational temperatures
+    def gi(J):
+        grot = 2 * J + 1
+        if J % 2 == 0:
+            return grot
+        else:
+            return 3 * grot
+
+    def trot(lo, hi):
+        return 1 / np.log(
+            summed_result[f"nj{lo}"] / gi(lo) * gi(hi) / summed_result[f"nj{hi}"]
+        )
+
+    def trot_unc(lo, hi):
+        nlo = summed_result[f"nj{lo}"]
+        nhi = summed_result[f"nj{hi}"]
+        nlo_unc = summed_result[f"nj{lo}_unc"]
+        nhi_unc = summed_result[f"nj{hi}_unc"]
+        log2_factor = np.square(np.log(nlo / nhi * gi(hi) / gi(lo)))
+        return np.sqrt(
+            (nlo_unc / nlo / log2_factor) ** 2 + (nhi_unc / nhi / log2_factor) ** 2
+        )
+
+    dE01 = 170.48
+    t01 = dE01 * trot(0, 1)
+    t01_unc = dE01 * trot_unc(0, 1)
+
+    summed_result.add_column(t01, index=0, name="T01")
+    summed_result.add_column(t01_unc, index=0, name="T01_unc")
+
     return summed_result
 
 
@@ -338,6 +363,7 @@ def get_distance():
     t["d_unc"] = d_unc
     return t
 
+
 def get_merged_table(comp=False):
     """
     Read in the different files and merge them
@@ -364,6 +390,9 @@ def get_merged_table(comp=False):
     merged_table["1_RV_unc"] = merged_table["RV_unc"] / merged_table["RV"] ** 2
 
     if not comp:
+        h2details = get_fuse_h2_details(stars=merged_table["Name"])
+        merged_table = join(merged_table, h2details, keys="Name")
+
         distances = get_distance()
         merged_table = join(merged_table, distances, keys="Name")
 
@@ -419,16 +448,18 @@ def get_merged_table(comp=False):
         #                                / merged_table['RV']))
         C3 = merged_table["CAV3"]
         C3_unc = merged_table["CAV3_unc"]
-        gamma = merged_table['gamma']
-        gamma_unc = merged_table['gamma_unc']
+        gamma = merged_table["gamma"]
+        gamma_unc = merged_table["gamma_unc"]
         merged_table["bump_area"] = np.pi * C3 / (2.0 * merged_table["gamma"])
         bump_area_unc = np.sqrt(
             np.square(C3_unc / C3)
             + np.square(merged_table["gamma_unc"] / merged_table["gamma"])
         )
         merged_table["bump_area_unc"] = merged_table["bump_area"] * bump_area_unc
-        merged_table["bump_amp"] = C3 / gamma**2
-        bump_amp_unc = np.sqrt((C3_unc / gamma**2)**2 + (gamma_unc * C3 * -2 / gamma**3)**2)
+        merged_table["bump_amp"] = C3 / gamma ** 2
+        bump_amp_unc = np.sqrt(
+            (C3_unc / gamma ** 2) ** 2 + (gamma_unc * C3 * -2 / gamma ** 3) ** 2
+        )
         merged_table["bump_amp_unc"] = bump_amp_unc
 
     # add A1000 (within H2 dissociation cross section) and A1300

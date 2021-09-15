@@ -94,8 +94,12 @@ def format_colname(name):
     """
     Convert the column name to a better formatted name
     """
+    cmcol = " [cm$^{-2}$]"
+    mag = " [mag]"
+    col_mag = " [cm$^{-2}$ mag$^{-1}$]"
+
     dic_pairs = {
-        "AV": "$A(V)$",
+        "AV": "$A(V)$" + mag,
         "RV": "$R(V)$",
         "EBV": "$E(B-V)$",
         "CAV1": "$C^{A(V)}_1$",
@@ -111,12 +115,13 @@ def format_colname(name):
         "bump_area": r"$\pi C^{A(V)}_3 / 2 \gamma$",
         "bump_amp": r"$C^{A(V)}_3 / 2 \gamma^2$",
         "fh2": "$f(H_2)$",
-        "nhtot": "$N(H)$",
-        "nh2": "$N(H_2)$",
-        "nhi": "$N(HI)$",
-        "NH_AV": "$N(H)/A(V)$",
-        "NH_EBV": "$N(H)/E(B-V)$",
-        "1_RV": "1/R(V)",
+        "nhtot": "$N(H)$" + cmcol,
+        "nh2": "$N(H_2)$" + cmcol,
+        "nhi": "$N(HI)$" + cmcol,
+        "NH_AV": "$N(H)/A(V)$" + col_mag,
+        "NH_EBV": "$N(H)/E(B-V)$" + col_mag,
+        "1_RV": "$1/R(V)$",
+        "A1000": "$A(1000)$" + mag,
     }
 
     out_name = name

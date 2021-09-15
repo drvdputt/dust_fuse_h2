@@ -43,32 +43,51 @@ def finalize_single(fig, filename):
     fig.set_size_inches(base_width / 2, 2 / 3 * base_width)
     save(fig, filename)
 
+
 def finalize_double(fig, filename):
     for ax in fig.axes[1:]:
         ax.set_ylabel("")
     fig.set_size_inches(base_width, 2 / 3 * base_width)
     save(fig, filename)
 
+
+def finalize_double_grid(fig, axs, filename):
+    # turn off xlabel for everything but last row
+    for ax in axs[:-1].flatten():
+        ax.set_xlabel("")
+    # turn off ylabel for everything but last column
+    for ax in axs[:, 1:].flatten():
+        ax.set_ylabel("")
+    fig.set_size_inches(base_width, 4/3 * base_width)
+    save(fig, filename)
+
+
 def save(fig, filename):
+    fig.subplots_adjust(wspace=0.02)
+    fig.subplots_adjust(hspace=0.02)
     fig.tight_layout()
-    fig.subplots_adjust(wspace=0.03)
     fig.savefig("paper-plots/" + filename)
 
 
-
 def plot1():
-    """The first plot shows nh vs av and nh vs ebv.
+    """The first plot shows gas columns vs dust columns.
 
-    The main goal is showing that there are some outliers in AV, which
-    are not necessarily outliers in EBV, and determining the main nh vs
-    av trend in the sample
+    Main things to show:
+    - outliers in AV relation
+    - not outliers in EBV
+    - A1000 is very correlated with NH2, and not with AV
+    - NHI and NHTOT are correlated with AV, but less with A1000
+    - Also show NHtot
     """
 
-    fig, (ax_av_nh, ax_ebv_nh) = plt.subplots(1, 2, sharey=True)
+    fig, axs = plt.subplots(3, 2, sharey="row", sharex="col")
 
-    print("NH vs AV")
+    # do not use loop or other abstractions here, so we can manually
+    # adust each plot as needed
+
+    ax = axs[0, 0]
     xs, ys, covs = plot_results_scatter(
-        ax_av_nh,
+        ax,
         data,
         "AV",
         "nhtot",
@@ -76,25 +95,64 @@ def plot1():
         data_bohlin=bohlin,
         ignore_comments=["lo_h_av", "hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax_av_nh)
+    plot_results_fit(xs, ys, covs, ax)
 
-    print("NH vs EBV")
+    ax = axs[1, 0]
     xs, ys, covs = plot_results_scatter(
-        ax_ebv_nh,
+        ax,
         data,
-        "EBV",
-        "nhtot",
+        "AV",
+        "nhi",
         data_comp=comp,
         data_bohlin=bohlin,
-        data_shull=shull,
-        ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av"],
+        mark_comments=["lo_h_av", "hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax_ebv_nh)
-    ax_ebv_nh.set_ylabel("")
 
-    ax_ebv_nh.legend()
-    finalize_double(fig, "av_ebv_vs_nh.pdf")
+    ax = axs[2, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "AV",
+        "nh2",
+        data_comp=comp,
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+
+    ax = axs[0, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000",
+        "nhtot",
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av"],
+        ignore_comments=["hi_h_av"],
+    )
+    plot_results_fit(xs, ys, covs, ax)
+
+    ax = axs[1, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000",
+        "nhi",
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+
+    ax = axs[2, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000",
+        "nh2",
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+    plot_results_fit(xs, ys, covs, ax)
+    fig.tight_layout()
+    finalize_double_grid(fig, axs, "column_vs_column.pdf")
 
 
 def plot2():
@@ -184,12 +242,40 @@ def plot4():
 
     """
     fig, axs = plt.subplots(3, 2, sharey=True)
-    _ = plot_results_scatter(axs[0, 0], data, "CAV1", "fh2", mark_comments=["lo_h_av"],)
-    _ = plot_results_scatter(axs[0, 1], data, "CAV2", "fh2", mark_comments=["lo_h_av"],)
-    _ = plot_results_scatter(axs[1, 0], data, "CAV3", "fh2", mark_comments=["lo_h_av"],)
-    _ = plot_results_scatter(axs[1, 1], data, "CAV4", "fh2", mark_comments=["lo_h_av"],)
     _ = plot_results_scatter(
-        axs[2, 0], data, "bump_area", "fh2", mark_comments=["lo_h_av"],
+        axs[0, 0],
+        data,
+        "CAV1",
+        "fh2",
+        mark_comments=["lo_h_av"],
+    )
+    _ = plot_results_scatter(
+        axs[0, 1],
+        data,
+        "CAV2",
+        "fh2",
+        mark_comments=["lo_h_av"],
+    )
+    _ = plot_results_scatter(
+        axs[1, 0],
+        data,
+        "CAV3",
+        "fh2",
+        mark_comments=["lo_h_av"],
+    )
+    _ = plot_results_scatter(
+        axs[1, 1],
+        data,
+        "CAV4",
+        "fh2",
+        mark_comments=["lo_h_av"],
+    )
+    _ = plot_results_scatter(
+        axs[2, 0],
+        data,
+        "bump_area",
+        "fh2",
+        mark_comments=["lo_h_av"],
     )
     xs, ys, covs = plot_results_scatter(
         axs[2, 1],
@@ -207,3 +293,6 @@ def plot4():
         ax_r.set_ylabel("")
     fig.tight_layout()
     save(fig, "fh2_vs_fm90.pdf")
+
+
+plot1()

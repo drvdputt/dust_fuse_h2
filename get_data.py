@@ -516,12 +516,8 @@ def get_merged_table(comp=False):
             ) ** 2
             merged_table[absval + "_unc"] = merged_table[absval] * np.sqrt(rel_unc2)
 
-        add_specific_wavelength(880)
         add_specific_wavelength(1000)
-        add_specific_wavelength(1100)
-        add_specific_wavelength(1300)
-        add_specific_wavelength(2000)
-        add_specific_wavelength(4000)
+        add_specific_wavelength(2175)
 
     return merged_table
 

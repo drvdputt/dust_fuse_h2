@@ -122,6 +122,7 @@ def format_colname(name):
         "NH_EBV": "$N(H)/E(B-V)$" + col_mag,
         "1_RV": "$1/R(V)$",
         "A1000": "$A(1000)$" + mag,
+        "A1000_AV": "$A(1000)/A(V)$",
     }
 
     out_name = name

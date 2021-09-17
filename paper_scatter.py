@@ -58,7 +58,6 @@ def finalize_double_grid(fig, axs, filename):
     # turn off ylabel for everything but last column
     for ax in axs[:, 1:].flatten():
         ax.set_ylabel("")
-    fig.set_size_inches(base_width, 4/3 * base_width)
     save(fig, filename)
 
 
@@ -81,6 +80,7 @@ def plot1():
     """
 
     fig, axs = plt.subplots(3, 2, sharey="row", sharex="col")
+    fig.set_size_inches(base_width, 4 / 3 * base_width)
 
     # do not use loop or other abstractions here, so we can manually
     # adust each plot as needed
@@ -151,51 +151,72 @@ def plot1():
         mark_comments=["lo_h_av", "hi_h_av"],
     )
     plot_results_fit(xs, ys, covs, ax)
+
+    for ax in axs[1:, 0]:
+        ax.yaxis.offsetText.set_visible(False)
+
+    plot_results_fit(xs, ys, covs, ax)
     fig.tight_layout()
     finalize_double_grid(fig, axs, "column_vs_column.pdf")
 
 
 def plot2():
-    """Gas to dust ratio main trend."""
-    fig, (ax_av_nhav, ax_rvi_nhav) = plt.subplots(1, 2, sharey=True)
-    print("NH/AV vs AV")
+    """Ratio vs ratio.
+
+    x: RV and maybe A1000/AV (extinction ratios)
+    y: NH/AV and fh2 (column ratios)
+
+    """
+    fig, axs = plt.subplots(2, 2, sharex='col', sharey='row')
+    fig.set_size_inches(base_width, base_width)
+
+    ax = axs[0, 0]
     xs, ys, covs = plot_results_scatter(
-        ax_av_nhav,
+        ax,
         data,
-        "AV",
+        "1_RV",
         "NH_AV",
         pyrange=[0, 1.0e22],
+        data_comp=comp,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+    plot_results_fit(xs, ys, covs, ax)
+
+    ax = axs[1, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "1_RV",
+        "fh2",
         data_comp=comp,
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
-    print("NH_AV vs 1/RV")
-    xs, ys, covs = plot_results_scatter(
-        ax_rvi_nhav,
-        data,
-        "1_RV",
-        "NH_AV",
-        # pyrange=[0, 1.6e22],
-        data_comp=comp,
-        ignore_comments=["lo_h_av", "hi_h_av"],
-    )
-    plot_results_fit(xs, ys, covs, ax_rvi_nhav)
-    finalize_double(fig, "nhav_vs_av.pdf")
+    plot_results_fit(xs, ys, covs, ax)
 
-    # redo the same thing, but with the outliers. Just need it for the numbers
-    print("NH_AV vs 1/RV (with outliers)")
+    ax = axs[0, 1]
     xs, ys, covs = plot_results_scatter(
-        ax_rvi_nhav,
+        ax,
         data,
-        "1_RV",
+        "A1000_AV",
         "NH_AV",
-        # pyrange=[0, 1.6e22],
-        data_comp=comp,
-        ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av"],
+        pyrange=[0, 1.0e22],
+        # data_comp=comp,
+        mark_comments=["lo_h_av", "hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax_rvi_nhav)
+    plot_results_fit(xs, ys, covs, ax)
 
+    ax = axs[1, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000_AV",
+        "fh2",
+        # data_comp=comp,
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+    finalize_double_grid(fig, axs, "rv_trends.pdf")
 
 def plot3():
     """fh2 vs extinction."""
@@ -295,4 +316,5 @@ def plot4():
     save(fig, "fh2_vs_fm90.pdf")
 
 
-plot1()
+# plot1()
+plot2()

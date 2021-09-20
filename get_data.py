@@ -346,7 +346,7 @@ def edit_shull_name(s):
     return newname
 
 
-def get_distance():
+def get_distance(comp=False):
     """Read or calculate distances from various sources.
 
     Parallaxes from file created by get_gaia script.
@@ -354,7 +354,8 @@ def get_distance():
     Also, distances from Table 1 of Shull+21 if available.
 
     """
-    t = Table.read("data/gaia/merged.dat", format="ascii.commented_header")
+    fn = "data/gaia/merged{}.dat".format("_comp" if comp else "")
+    t = Table.read(fn, format="ascii.commented_header")
     # gaia parallaxes often need offset. Most commonly used value is 0.03 e.g. in Shull & Danforth 2019
     offset = 0.03
     plx = t["parallax"] + offset
@@ -374,27 +375,29 @@ def get_distance():
 
     # Read Shull+21 data. If available, overwrite our value.
     count = 0
-    sh = Table.read("data/shull-2021/table1.txt",format='ascii.cds')
-    for i, name in enumerate(sh['Name']):
+    sh = Table.read("data/shull-2021/table1.txt", format="ascii.cds")
+    for i, name in enumerate(sh["Name"]):
         our_format = edit_shull_name(name)
-        if our_format in t['Name']:
-            our_index = np.where(our_format == t['Name'])[0][0]
+        if our_format in t["Name"]:
+            our_index = np.where(our_format == t["Name"])[0][0]
             t[our_index]["d"] = sh[i]["Dphot"]
-            t[our_index]["d_unc"] = t[our_index]["d"] * 0.1 # hack for now
+            t[our_index]["d_unc"] = t[our_index]["d"] * 0.1  # hack for now
             count += 1
     print(f"Took {count} distances from Shull+21")
 
     return t
 
+
 def add_photometric_distance(table):
-    v = table['V']
-    av = table['AV']
-    mv = get_abs_magnitudes(table['SpType'])
-    
+    v = table["V"]
+    av = table["AV"]
+    mv = get_abs_magnitudes(table["SpType"])
+
     # distance in parsec according to magnitude equation
     d = 10 * np.power(10, (v - av - mv) / 5)
 
-    table.add_column(d, name='dphot')
+    table.add_column(d, name="dphot")
+
 
 def get_abs_magnitudes(sptype):
     """
@@ -419,13 +422,14 @@ def get_abs_magnitudes(sptype):
         match = re.match("[OB][0-9](\.[0-9])?", s)
         print(match[0])
         # luminosity class (e.g. IV)
-        col = s[match.end():].lower()
+        col = s[match.end() :].lower()
         # retrieve from table
-        index = np.where(t['type'] == match[0])[0][0]
+        index = np.where(t["type"] == match[0])[0][0]
         mv[i] = t[col][index]
 
     return mv
-    
+
+
 def get_merged_table(comp=False):
     """
     Read in the different files and merge them
@@ -449,6 +453,22 @@ def get_merged_table(comp=False):
 
     # add calculated photometric distances
     # add_photometric_distance(merged_table)
+    distances = get_distance(comp)
+    merged_table = join(merged_table, distances, keys="Name")
+
+    def add_den_column(colname):
+        # add 3d densities
+        newname = colname.replace("nh", "denh")
+        merged_table[newname] = merged_table[colname] / merged_table["d"]
+        frac = np.sqrt(
+            (merged_table[colname + "_unc"] / merged_table[colname]) ** 2
+            + (merged_table["d_unc"] / merged_table["d"]) ** 2
+        )
+        merged_table[newname + "_unc"] = merged_table[newname] * frac
+
+    add_den_column("nhtot")
+    add_den_column("nh2")
+    add_den_column("nhi")
 
     # add 1/RV and uncertainty
     merged_table["1_RV"] = 1 / merged_table["RV"]
@@ -457,9 +477,6 @@ def get_merged_table(comp=False):
     if not comp:
         h2details = get_fuse_h2_details(stars=merged_table["Name"])
         merged_table = join(merged_table, h2details, keys="Name")
-
-        distances = get_distance()
-        merged_table = join(merged_table, distances, keys="Name")
 
         ext_fm90_data = get_fuse_ext_fm90()
         merged_table1 = join(merged_table, ext_fm90_data, keys="Name")

@@ -3,6 +3,7 @@
 import numpy as np
 from astropy.table import Table, join
 import pandas
+import re
 
 
 def add_lin_column_from_log(logcolname, data):
@@ -330,24 +331,33 @@ def get_shull2021(drop_duplicates=False):
     # add derived columns
     data.add_column(data["nhtot"] / data["EBV"], name="NH_EBV")
 
-    def edit_shull_name(s):
-        if "HD" in s:
-            number = s.split(" ")[-1]
-            newname = "HD" + f"{number:0>6}"
-        elif "BD" in s:
-            newname = s.replace(" ", "").replace("deg", "d")
-        else:
-            newname = s
-        return newname
-
     data["Name"] = [edit_shull_name(s) for s in data["Name"]]
     return data
 
 
+def edit_shull_name(s):
+    if "HD" in s:
+        number = s.split(" ")[-1]
+        newname = "HD" + f"{number:0>6}"
+    elif "BD" in s:
+        newname = s.replace(" ", "").replace("deg", "d")
+    else:
+        newname = s
+    return newname
+
+
 def get_distance():
-    """Read in parallaxes from file created by Gaia query script."""
+    """Read or calculate distances from various sources.
+
+    Parallaxes from file created by get_gaia script.
+
+    Also, distances from Table 1 of Shull+21 if available.
+
+    """
     t = Table.read("data/gaia/merged.dat", format="ascii.commented_header")
-    plx = t["parallax"]
+    # gaia parallaxes often need offset. Most commonly used value is 0.03 e.g. in Shull & Danforth 2019
+    offset = 0.03
+    plx = t["parallax"] + offset
     plx_unc = t["parallax_error"]
 
     def p_to_d(p):
@@ -361,9 +371,61 @@ def get_distance():
 
     t["d"] = d
     t["d_unc"] = d_unc
+
+    # Read Shull+21 data. If available, overwrite our value.
+    count = 0
+    sh = Table.read("data/shull-2021/table1.txt",format='ascii.cds')
+    for i, name in enumerate(sh['Name']):
+        our_format = edit_shull_name(name)
+        if our_format in t['Name']:
+            our_index = np.where(our_format == t['Name'])[0][0]
+            t[our_index]["d"] = sh[i]["Dphot"]
+            t[our_index]["d_unc"] = t[our_index]["d"] * 0.1 # hack for now
+            count += 1
+    print(f"Took {count} distances from Shull+21")
+
     return t
 
+def add_photometric_distance(table):
+    v = table['V']
+    av = table['AV']
+    mv = get_abs_magnitudes(table['SpType'])
+    
+    # distance in parsec according to magnitude equation
+    d = 10 * np.power(10, (v - av - mv) / 5)
 
+    table.add_column(d, name='dphot')
+
+def get_abs_magnitudes(sptype):
+    """
+    Use given spectral type column and ob_mags file to find absolute magnitude.
+
+    Uses table from appendix 3B of Bowen et al. 2008.
+
+    Parameters
+    ----------
+    sptype : spectral type column from main table
+
+    Returns
+    -------
+    MV : absolute magnitude for each star
+
+    """
+    # this works nicely
+    t = Table.read("data/ob_mags.dat", format="ascii.commented_header")
+    mv = np.zeros(len(sptype))
+    for i, s in enumerate(sptype):
+        # spectral type (e.g. B0.5)
+        match = re.match("[OB][0-9](\.[0-9])?", s)
+        print(match[0])
+        # luminosity class (e.g. IV)
+        col = s[match.end():].lower()
+        # retrieve from table
+        index = np.where(t['type'] == match[0])[0][0]
+        mv[i] = t[col][index]
+
+    return mv
+    
 def get_merged_table(comp=False):
     """
     Read in the different files and merge them
@@ -384,6 +446,9 @@ def get_merged_table(comp=False):
 
     # merge the tables together
     merged_table = join(h1h2_data, ext_detail_data, keys="Name")
+
+    # add calculated photometric distances
+    # add_photometric_distance(merged_table)
 
     # add 1/RV and uncertainty
     merged_table["1_RV"] = 1 / merged_table["RV"]

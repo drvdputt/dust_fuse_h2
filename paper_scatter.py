@@ -167,7 +167,7 @@ def plot2():
     y: NH/AV and fh2 (column ratios)
 
     """
-    fig, axs = plt.subplots(2, 2, sharex='col', sharey='row')
+    fig, axs = plt.subplots(2, 2, sharex="col", sharey="row")
     fig.set_size_inches(base_width, base_width)
 
     ax = axs[0, 0]
@@ -218,50 +218,9 @@ def plot2():
     )
     finalize_double_grid(fig, axs, "rv_trends.pdf")
 
+
 def plot3():
-    """fh2 vs extinction."""
-    fig, (ax_l, ax_m, ax_r) = plt.subplots(1, 3, sharey=True)
-    _ = plot_results_scatter(
-        ax_l,
-        data,
-        "EBV",
-        "fh2",
-        data_comp=comp,
-        data_bohlin=bohlin,
-        data_shull=shull,
-        mark_comments=["lo_h_av"],
-    )
-    _ = plot_results_scatter(
-        ax_m,
-        data,
-        "AV",
-        "fh2",
-        data_comp=comp,
-        data_bohlin=bohlin,
-        # data_shull=shull,
-        mark_comments=["lo_h_av"],
-    )
-    _ = plot_results_scatter(
-        ax_r,
-        data,
-        "A1000",
-        "fh2",
-        # data_comp=comp,
-        # data_bohlin=bohlin,
-        # data_shull=shull,
-        mark_comments=["lo_h_av"],
-    )
-    finalize_double(fig, "fh2_vs_ext.pdf")
-
-
-def plot4():
-    """Some of the parameters describing the extinction curve vs fh2.
-
-    Two imporant results: fh2 vs 1/RV and fh2 vs CAV4.
-
-    C3 and bump size.
-
-    """
+    """Some more advanced quantities describing the extinction curve vs fh2."""
     fig, axs = plt.subplots(3, 2, sharey=True)
     _ = plot_results_scatter(
         axs[0, 0],
@@ -298,17 +257,14 @@ def plot4():
         "fh2",
         mark_comments=["lo_h_av"],
     )
-    xs, ys, covs = plot_results_scatter(
+    _ = plot_results_scatter(
         axs[2, 1],
         data,
-        "1_RV",
+        "A2175_AV",
         "fh2",
-        data_comp=comp,
-        # data_bohlin=bohlin,
-        # data_shull=shull,
-        ignore_comments=["lo_h_av"],
+        mark_comments=["lo_h_av"],
     )
-    plot_results_fit(xs, ys, covs, axs[2, 1])
+
     fig.set_size_inches(base_width, base_height)
     for (ax_l, ax_r) in axs:
         ax_r.set_ylabel("")
@@ -316,5 +272,10 @@ def plot4():
     save(fig, "fh2_vs_fm90.pdf")
 
 
+# plot4: extinction parameter corner plot?
+
+# plot5: something with T01?
+    
 # plot1()
-plot2()
+# plot2()
+plot3()

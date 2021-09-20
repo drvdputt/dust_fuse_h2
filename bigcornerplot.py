@@ -10,7 +10,6 @@ data = get_merged_table()
 data.add_column(Column(["no"] * len(data), dtype="<U16", name="comment"))
 
 
-
 def set_comment(name, s):
     data["comment"][data["Name"] == name] = s
 
@@ -21,10 +20,13 @@ for name in ["HD200775", "HD164906", "HD045314", "HD206773"]:
 set_comment("HD096675", "hi_h_av")
 
 qnames = [
-    "T01",
+    # "T01",
     "nhtot",
+    # "denhtot",
     "nhi",
+    # "denhi",
     "nh2",
+    # "denh2",
     "fh2",
     "NH_AV",
     "AV",
@@ -34,7 +36,8 @@ qnames = [
     "1_RV",
     "CAV3",
     "CAV4",
-    "A2175"
+    "A2175_AV",
+    "gamma",
     # "bump_amp",
     # "C3",
     # "C4",
@@ -70,4 +73,3 @@ plt.subplots_adjust(wspace=0, hspace=0, right=1, top=1, left=0.05, bottom=0.05)
 plt.show()
 plt.set_size_inches(17, 17)
 plt.savefig("bigcorner.pdf")
-

@@ -5,6 +5,8 @@ from get_data import get_merged_table
 from astropy.table import Column
 from plot_fuse_results import plot_results_scatter
 
+plt.rcParams.update({'font.size': 10})
+
 data = get_merged_table()
 # add comments for certain stars here
 data.add_column(Column(["no"] * len(data), dtype="<U16", name="comment"))

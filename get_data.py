@@ -346,7 +346,7 @@ def edit_shull_name(s):
     return newname
 
 
-def get_distance(comp=False):
+def add_distance(table, comp=False):
     """Read or calculate distances from various sources.
 
     Parallaxes from file created by get_gaia script.
@@ -354,12 +354,14 @@ def get_distance(comp=False):
     Also, distances from Table 1 of Shull+21 if available.
 
     """
+    ### GAIA
+
     fn = "data/gaia/merged{}.dat".format("_comp" if comp else "")
-    t = Table.read(fn, format="ascii.commented_header")
+    gaia = Table.read(fn, format="ascii.commented_header")
     # gaia parallaxes often need offset. Most commonly used value is 0.03 e.g. in Shull & Danforth 2019
     offset = 0.03
-    plx = t["parallax"] + offset
-    plx_unc = t["parallax_error"]
+    plx = gaia["parallax"] + offset
+    plx_unc = gaia["parallax_error"]
 
     def p_to_d(p):
         # return p.to(u.parsec, equivalencies=u.parallax())
@@ -370,33 +372,44 @@ def get_distance(comp=False):
     dmin = p_to_d(plx + plx_unc)
     d_unc = 0.5 * (dplus - dmin)
 
-    t["d"] = d
-    t["d_unc"] = d_unc
+    # make containing names and distance, to join with main table and to
+    # make the names match
+    gaia_dist = Table([gaia["Name"], d, d_unc], names=["Name", "d_gaia", "d_gaia_unc"])
+    table_edit = join(table, gaia_dist, keys="Name")
+    table_edit["d"] = table_edit["d_gaia"]
+    table_edit["d_unc"] = table_edit["d_gaia_unc"]
 
-    # Read Shull+21 data. If available, overwrite our value.
+    ### photometric
+
+    # distance in parsec according to magnitude equation
+    v = table_edit["V"]
+    av = table_edit["AV"]
+    mv = get_abs_magnitudes(table_edit["SpType"])
+    d = np.where(np.isnan(mv), np.nan, 10 * np.power(10, (v - av - mv) / 5))
+    # hack for now. Should have real uncertainties here when doing
+    # something serious with distance
+    d_unc = 0.1 * d
+    table_edit.add_column(d, name="dphot")
+
+    # replace the main distance measurement where possible
+    replace = np.isfinite(table_edit["dphot"])
+    table_edit["d"][replace] = d[replace]
+    table_edit["d_unc"][replace] = d_unc[replace]
+
+    ### Shull+21 data. If available, overwrite our value.
     count = 0
     sh = Table.read("data/shull-2021/table1.txt", format="ascii.cds")
-    for i, name in enumerate(sh["Name"]):
+    our_names = table_edit["Name"]
+    for dphot, name in zip(sh["Dphot"], sh["Name"]):
         our_format = edit_shull_name(name)
-        if our_format in t["Name"]:
-            our_index = np.where(our_format == t["Name"])[0][0]
-            t[our_index]["d"] = sh[i]["Dphot"]
-            t[our_index]["d_unc"] = t[our_index]["d"] * 0.1  # hack for now
+        if our_format in our_names:
+            our_index = np.where(our_format == table_edit["Name"])[0][0]
+            table_edit["d"][our_index] = dphot
+            table_edit["d_unc"][our_index] = dphot * 0.1
             count += 1
     print(f"Took {count} distances from Shull+21")
 
-    return t
-
-
-def add_photometric_distance(table):
-    v = table["V"]
-    av = table["AV"]
-    mv = get_abs_magnitudes(table["SpType"])
-
-    # distance in parsec according to magnitude equation
-    d = 10 * np.power(10, (v - av - mv) / 5)
-
-    table.add_column(d, name="dphot")
+    return table_edit
 
 
 def get_abs_magnitudes(sptype):
@@ -420,12 +433,16 @@ def get_abs_magnitudes(sptype):
     for i, s in enumerate(sptype):
         # spectral type (e.g. B0.5)
         match = re.match("[OB][0-9](\.[0-9])?", s)
-        print(match[0])
+        # print(match[0])
         # luminosity class (e.g. IV)
         col = s[match.end() :].lower()
         # retrieve from table
-        index = np.where(t["type"] == match[0])[0][0]
-        mv[i] = t[col][index]
+        if match[0] in t["type"] and col in t.colnames:
+            index = np.where(t["type"] == match[0])[0][0]
+            mv[i] = t[col][index]
+        else:
+            mv[i] = np.nan
+            print(f"Did not find absolute magnitude for {s}")
 
     return mv
 
@@ -451,10 +468,8 @@ def get_merged_table(comp=False):
     # merge the tables together
     merged_table = join(h1h2_data, ext_detail_data, keys="Name")
 
-    # add calculated photometric distances
-    # add_photometric_distance(merged_table)
-    distances = get_distance(comp)
-    merged_table = join(merged_table, distances, keys="Name")
+    # add calculated photometric distances or gaia distances
+    merged_table = add_distance(merged_table, comp)
 
     def add_den_column(colname):
         # add 3d densities

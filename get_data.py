@@ -4,6 +4,7 @@ import numpy as np
 from astropy.table import Table, join
 import pandas
 import re
+import astropy.units as u
 
 
 def add_lin_column_from_log(logcolname, data):
@@ -365,7 +366,7 @@ def add_distance(table, comp=False):
 
     def p_to_d(p):
         # return p.to(u.parsec, equivalencies=u.parallax())
-        return 1 / p
+        return 1 / p # p is in milli arcseconds, so this is kpc
 
     d = p_to_d(plx)
     dplus = p_to_d(plx - plx_unc)
@@ -385,7 +386,8 @@ def add_distance(table, comp=False):
     v = table_edit["V"]
     av = table_edit["AV"]
     mv = get_abs_magnitudes(table_edit["SpType"])
-    d = np.where(np.isnan(mv), np.nan, 10 * np.power(10, (v - av - mv) / 5))
+    # apply magnitude distance equation (divide by 1000 to get kpc)
+    d = np.where(np.isnan(mv), np.nan, 10 * np.power(10, (v - av - mv) / 5) / 1000)
     # hack for now. Should have real uncertainties here when doing
     # something serious with distance
     d_unc = 0.1 * d
@@ -474,12 +476,20 @@ def get_merged_table(comp=False):
     def add_den_column(colname):
         # add 3d densities
         newname = colname.replace("nh", "denh")
+        uncname = newname + "_unc"
         merged_table[newname] = merged_table[colname] / merged_table["d"]
         frac = np.sqrt(
             (merged_table[colname + "_unc"] / merged_table[colname]) ** 2
             + (merged_table["d_unc"] / merged_table["d"]) ** 2
         )
-        merged_table[newname + "_unc"] = merged_table[newname] * frac
+        merged_table[uncname] = merged_table[newname] * frac
+        # convert to cm-3
+        merged_table[newname] = (
+            (merged_table[newname] * u.pc ** -1 * u.cm ** -2).to(u.cm ** -3).value
+        )
+        merged_table[uncname] = (
+            (merged_table[uncname] * u.pc ** -1 * u.cm ** -2).to(u.cm ** -3).value
+        )
 
     add_den_column("nhtot")
     add_den_column("nh2")

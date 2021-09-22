@@ -31,18 +31,23 @@ qnames = [
     # "denh2",
     "fh2",
     "NH_AV",
-    "AV",
-    "EBV",
+    # "AV_d",
+    # "EBV",
     "A1000",
+    "A2175",
+    "AV",
+    # "A1000_d",
     "A1000_AV",
+    "A2175_AV",
     "1_RV",
     "CAV3",
     "CAV4",
-    "A2175_AV",
-    "gamma",
+    # "gamma",
+    # "x0",
     # "bump_amp",
     # "C3",
     # "C4",
+    # 'd'
 ]
 nq = len(qnames)
 

@@ -366,7 +366,7 @@ def add_distance(table, comp=False):
 
     def p_to_d(p):
         # return p.to(u.parsec, equivalencies=u.parallax())
-        return 1 / p # p is in milli arcseconds, so this is kpc
+        return 1 / p  # p is in milli arcseconds, so this is kpc
 
     d = p_to_d(plx)
     dplus = p_to_d(plx - plx_unc)
@@ -473,9 +473,13 @@ def get_merged_table(comp=False):
     # add calculated photometric distances or gaia distances
     merged_table = add_distance(merged_table, comp)
 
-    def add_den_column(colname):
+    def add_den_column(colname, customname=None):
         # add 3d densities
-        newname = colname.replace("nh", "denh")
+        if customname is None:
+            newname = colname.replace("nh", "denh")
+        else:
+            newname = customname
+
         uncname = newname + "_unc"
         merged_table[newname] = merged_table[colname] / merged_table["d"]
         frac = np.sqrt(
@@ -485,15 +489,16 @@ def get_merged_table(comp=False):
         merged_table[uncname] = merged_table[newname] * frac
         # convert to cm-3
         merged_table[newname] = (
-            (merged_table[newname] * u.pc ** -1 * u.cm ** -2).to(u.cm ** -3).value
+            (merged_table[newname] * u.kpc ** -1 * u.cm ** -2).to(u.cm ** -3).value
         )
         merged_table[uncname] = (
-            (merged_table[uncname] * u.pc ** -1 * u.cm ** -2).to(u.cm ** -3).value
+            (merged_table[uncname] * u.kpc ** -1 * u.cm ** -2).to(u.cm ** -3).value
         )
 
     add_den_column("nhtot")
     add_den_column("nh2")
     add_den_column("nhi")
+    add_den_column("AV", "AV_d")
 
     # add 1/RV and uncertainty
     merged_table["1_RV"] = 1 / merged_table["RV"]
@@ -624,6 +629,7 @@ def get_merged_table(comp=False):
             merged_table[absval + "_unc"] = merged_table[absval] * np.sqrt(rel_unc2)
 
         add_specific_wavelength(1000)
+        add_den_column("A1000", "A1000_d")
         add_specific_wavelength(2175)
 
     return merged_table

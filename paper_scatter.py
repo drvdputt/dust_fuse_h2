@@ -155,7 +155,6 @@ def plot1():
     for ax in axs[1:, 0]:
         ax.yaxis.offsetText.set_visible(False)
 
-    plot_results_fit(xs, ys, covs, ax)
     fig.tight_layout()
     finalize_double_grid(fig, axs, "column_vs_column.pdf")
 

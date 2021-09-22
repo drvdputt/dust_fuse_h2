@@ -276,12 +276,26 @@ def plot3():
     _ = plot_results_scatter(
         axs[2, 0],
         data,
-        "bump_area",
+        "gamma",
         "fh2",
         mark_comments=["lo_h_av"],
     )
     _ = plot_results_scatter(
         axs[2, 1],
+        data,
+        "x_o",
+        "fh2",
+        mark_comments=["lo_h_av"],
+    )
+    _ = plot_results_scatter(
+        axs[3, 0],
+        data,
+        "bump_amp",
+        "fh2",
+        mark_comments=["lo_h_av"],
+    )
+    _ = plot_results_scatter(
+        axs[3, 1],
         data,
         "A2175_AV",
         "fh2",
@@ -292,13 +306,14 @@ def plot3():
     for (ax_l, ax_r) in axs:
         ax_r.set_ylabel("")
     fig.tight_layout()
+    fig.subplots_adjust(wspace=0.03, right=0.99, left=0.1, bottom=0.05, top=0.99)
     save(fig, "fh2_vs_fm90.pdf")
 
 
 # plot4: extinction parameter corner plot?
 
 # plot5: something with T01?
-    
-# plot1()
-# plot2()
+
+plot1()
+plot2()
 plot3()

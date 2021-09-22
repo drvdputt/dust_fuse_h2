@@ -66,7 +66,6 @@ def finalize_double_grid(fig, axs, filename):
 def save(fig, filename):
     fig.subplots_adjust(wspace=0.02)
     fig.subplots_adjust(hspace=0.02)
-    fig.tight_layout()
     fig.savefig("paper-plots/" + filename)
 
 
@@ -131,7 +130,6 @@ def plot1():
         mark_comments=["lo_h_av"],
         ignore_comments=["hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
 
     ax = axs[1, 1]
     xs, ys, covs = plot_results_scatter(
@@ -169,7 +167,7 @@ def plot2():
     y: NH/AV and fh2 (column ratios)
 
     """
-    fig, axs = plt.subplots(2, 2, sharex="col", sharey="row")
+    fig, axs = plt.subplots(2, 3, sharex="col", sharey="row")
     fig.set_size_inches(base_width, base_width)
 
     ax = axs[0, 0]
@@ -218,12 +216,35 @@ def plot2():
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
+
+    ax = axs[0, 2]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A2175_AV",
+        "NH_AV",
+        pyrange=[0, 1.0e22],
+        # data_comp=comp,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+    plot_results_fit(xs, ys, covs, ax)
+
+    ax = axs[1, 2]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A2175_AV",
+        "fh2",
+        # data_comp=comp,
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
     finalize_double_grid(fig, axs, "rv_trends.pdf")
 
 
 def plot3():
-    """Some more advanced quantities describing the extinction curve vs fh2."""
-    fig, axs = plt.subplots(3, 2, sharey=True)
+    """FM90 vs fh2."""
+    fig, axs = plt.subplots(4, 2, sharey=True)
     _ = plot_results_scatter(
         axs[0, 0],
         data,

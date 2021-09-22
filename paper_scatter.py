@@ -13,6 +13,8 @@ from plot_fuse_results import plot_results_scatter, plot_results_fit
 from matplotlib import pyplot as plt
 from astropy.table import Column
 
+plt.rcParams.update({"font.family": "times"})
+
 # change colors like this
 plot_fuse_results.MAIN_COLOR = "k"
 

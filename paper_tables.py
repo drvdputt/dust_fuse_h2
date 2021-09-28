@@ -67,7 +67,8 @@ def header():
         r"""}
 \startdata"""
     )
-    return [l + '\n' for l in lines]
+    return [l + "\n" for l in lines]
+
 
 def footer():
     return r"""
@@ -96,13 +97,14 @@ def footer():
 \end{deluxetable*}"""
 
 
-
 def divider_message(s):
     return f"\\multicolumn{{{num_columns}}}{{c}}{{{s}}} \\\\ \\hline \n"
 
+
 def data_lines(comp):
     data = get_data.get_merged_table(comp)
-    return [format_row(data, i) + '\n' for i in range(len(data))]
+    return [format_row(data, i) + "\n" for i in range(len(data))]
+
 
 def main():
     lines = header()
@@ -112,8 +114,5 @@ def main():
     lines += data_lines(True)
     lines += footer()
 
-    with open('test.tex', 'w') as f:
+    with open("test.tex", "w") as f:
         f.writelines(lines)
-
-    
-    

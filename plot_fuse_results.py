@@ -123,6 +123,8 @@ def format_colname(name):
         "1_RV": "$1/R(V)$",
         "A1000": "$A(1000)$" + mag,
         "A1000_AV": "$A(1000)/A(V)$",
+        "A2175": "$A(2175)$" + mag,
+        "A2175_AV": "$A(2175)/A(V)$",
     }
 
     out_name = name

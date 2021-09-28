@@ -9,7 +9,7 @@ The results are used to determine NH2
 More recently, Lyman alpha absorption fitting was done to determine NHI.
 For this, IUE and HST STIS data were used.
 
-The rest of the analysis compares the extinction results from Gordon et al. (2009) with the newly obtained H2 and HI results
+The rest of the analysis compares the extinction results from Gordon+2009 with the newly obtained H2 and HI results
 
 Below follows a quick overview of the available scripts and modules.
 Some might no longer be used, but have been kept for reference.
@@ -59,6 +59,118 @@ This way, the shape of the uncertainty ellipse of each point is taken into accou
 
 ``plot_fuse_results.py`` makes use of the above modules to do the analysis and make the desired plots
 
+Workflow
+========
+
+The following is a reminder on how to do the analysis from start to finish, using the available scripts.
+
+Starting point
+--------------
+
+The following work and data files were already done by one or more co-authors, when I took over the project:
+
+* H2 fitting to FUSE data. Results in ``data/fuse_h2_details.dat``.
+* Gathering results from earlier work into files
+
+  * ``bohlin78_copernicus.dat``
+  * ``fuse_ext_details.dat`` and ``fuse_ext_fm90.dat`` from Gordon+2009
+
+* Collection of HI data from the literature; see ``hiref`` column in ``data/fuse_h1_h2.dat``, and reference numbers in paper.
+
+
+HI data and fitting
+-------------------
+
+The HI data needed to be improved, since some of these data were based purely on the HI-extinction relation.
+The data were replaced by new values in several ways, with priority as numbered below.
+
+1. Use values from Jenkins+2019, table 5.
+   Download table 5 from this paper ``jenkins2019_hi_h2.fits`` using::
+
+     cd data
+     curl "https://cdsarc.unistra.fr/viz-bin/nph-Cat/fits?J/ApJ/872/55/table5.dat" -o jenkins2019_hi_h2.fits
+
+   Then go back to the root directory, and run::
+     python update_data_with_jenkins2019.py
+
+   which will create ``data/fuse_h1_h2_update.dat``
+
+2. Lyman alpha fitting.
+   The stars that did not have sufficiently accurate HI data are listed in ``download_data_list.csv``
+   
+   a. Download IUE and HST STIS UV spectroscopy using::
+        python download_HST_data.py
+
+      The results are stored in ``data/<star name>
+
+   b. Choose which spectra to use by editing the dict ``target_use_which_spectrum`` at the top of ``get_spectrum.py``
+      This script will co-add data if multiple files are listed using an asterisk wildcard.
+
+   c. Choose which wavelength ranges to use for the continuum fit and the line profile fit by editing
+      ``target_continuum_wav_ranges`` and ``target_lya_wav_ranges`` at the top of ``lyafitting.py``.
+
+      * To run for one star and inspect the fitting ranges and result interactively::
+          python lyafitting.py --target <name>
+
+      * To run for all stars and write the results into the main table::
+          python lyafitting.py --target all --update_catalog data/fuse_h1_h2_update.dat
+        The results will be saved to ``data/fuse_h1_h2_with_lyafitting.dat``
+
+Distances
+---------
+
+To calculate the average number density along each line of sight, the distance of each star is required.
+
+1. First I downloaded data from Gaia DR2 using ``python get_gaia.py``
+This data is saved at ``data/gaia/``, one file per star, and is merged into ``data/gaia/merged.dat``.
+
+2. Since Gaia parallaxes are known to be inaccurate for OB stars, we instead use photometric distances with the following priority
+
+   a. From Shull+2021 (about half the sample)
+
+   b. Using AV and spectral types from Gordon+2009, combined with absolute magnitudes for those spectral types from Bowen+2008, appendix 3B, and Wegner+2007, Table 8.
+      These tables were copied into ``data/ob_mags.dat``
+      The equation is simply ``d = 1 pc * 10 ** ((V - AV - MV) / 5)``.
+
+Merged data and derived columns
+-------------------------------
+
+The data in the files mentioned above is loaded in the ``get_data`` module.
+Derived columns, such as linear (instead of log) densities, uncertainties, calculated photometric distances, are added.
+The main function to retrieve everything is `get_merged_table()`.
+Some functions to load data from other works are also available.
+
+A more complex part of the code is where the covariances are calculated.
+
+Scatter plots and fits
+----------------------
+
+In ``covariance.py``, a function was implemented to draw scatter plots where every point is an ellipse representing the covariance between x and y.
+
+In ``linear_ortho_fit.py``, a line fitting method based on Hogg+2010 was implemented, which takes uses the perpendicular distance to calculate chi2.
+It properly takes into account the uncertainty ellipse (with xy covariance) of each data point).
+
+The main drawing and fitting calls are in ``plot_fuse_results.py``.
+The typical workflow for making a plot and fitting the data (with covariance) for that plot is::
+
+  from plot_fuse_results import plot_results_scatter, plot_results_fit
+  ax = axs[0, 0]
+  xs, ys, covs = plot_results_scatter(
+      ax,
+      data,
+      "AV",
+      "nhtot",
+      data_comp=comp,
+      data_bohlin=bohlin,
+      ignore_comments=["lo_h_av", "hi_h_av"],
+  )
+  plot_results_fit(xs, ys, covs, ax)
+
+
+Paper plots
+-----------
+
+One function per plot in ``paper_scatter.py``.
 
 In Development
 ==============

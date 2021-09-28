@@ -35,8 +35,10 @@ The function ``processed()`` automatically chooses the right functions to load t
 
 ``lyafitting.py``: performs the HI fitting.
 Wavelength ranges used to fit the continuum and the Lyman alpha line are individually chosen per star, using two manually filled-in dictionaries at the top of the file.
-    ``--target``: specify a single star and interactively look at the plot.
-    ``--update_catalog``: replace the HI values in the given file (one of the data files in ``data/*hi_h2*``), so that they can be used for the rest of the analysis (next section)
+
+``--target``: specify a single star and interactively look at the plot.
+
+``--update_catalog``: replace the HI values in the given file (one of the data files in ``data/*hi_h2*``), so that they can be used for the rest of the analysis (next section)
 
 Sample analysis
 ---------------
@@ -91,17 +93,19 @@ The data were replaced by new values in several ways, with priority as numbered 
      curl "https://cdsarc.unistra.fr/viz-bin/nph-Cat/fits?J/ApJ/872/55/table5.dat" -o jenkins2019_hi_h2.fits
 
    Then go back to the root directory, and run::
+
      python update_data_with_jenkins2019.py
 
    which will create ``data/fuse_h1_h2_update.dat``
 
 2. Lyman alpha fitting.
    The stars that did not have sufficiently accurate HI data are listed in ``download_data_list.csv``
-   
+
    a. Download IUE and HST STIS UV spectroscopy using::
+
         python download_HST_data.py
 
-      The results are stored in ``data/<star name>
+      The results are stored in ``data/<star name>``
 
    b. Choose which spectra to use by editing the dict ``target_use_which_spectrum`` at the top of ``get_spectrum.py``
       This script will co-add data if multiple files are listed using an asterisk wildcard.
@@ -110,10 +114,13 @@ The data were replaced by new values in several ways, with priority as numbered 
       ``target_continuum_wav_ranges`` and ``target_lya_wav_ranges`` at the top of ``lyafitting.py``.
 
       * To run for one star and inspect the fitting ranges and result interactively::
+
           python lyafitting.py --target <name>
 
       * To run for all stars and write the results into the main table::
+
           python lyafitting.py --target all --update_catalog data/fuse_h1_h2_update.dat
+
         The results will be saved to ``data/fuse_h1_h2_with_lyafitting.dat``
 
 Distances
@@ -188,4 +195,3 @@ License
 
 This code is licensed under a 3-clause BSD style license (see the
 ``LICENSE`` file).
-

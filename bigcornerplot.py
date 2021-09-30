@@ -22,9 +22,9 @@ for name in ["HD200775", "HD164906", "HD045314", "HD206773"]:
 set_comment("HD096675", "hi_h_av")
 
 qnames = [
-    # "T01",
+    "T01",
     "nhtot",
-    # "denhtot",
+    "denhtot",
     "nhi",
     # "denhi",
     "nh2",
@@ -32,7 +32,7 @@ qnames = [
     "fh2",
     "NH_AV",
     # "AV_d",
-    # "EBV",
+    "EBV",
     "A1000",
     "A2175",
     "AV",
@@ -40,11 +40,11 @@ qnames = [
     "A1000_AV",
     "A2175_AV",
     "1_RV",
-    "CAV3",
+    # "CAV3",
     "CAV4",
     # "gamma",
     # "x0",
-    # "bump_amp",
+    "bump_amp",
     # "C3",
     # "C4",
     # 'd'

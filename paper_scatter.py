@@ -308,11 +308,23 @@ def plot3():
     fig.subplots_adjust(wspace=0.03, right=0.99, left=0.1, bottom=0.05, top=0.99)
     save(fig, "fh2_vs_fm90.pdf")
 
+def plot4():
+    """
+    This should show some extra things I discovered in my big corner
+    plot. Most important ones: When CAV4 is high, T01 is low and denhtot
+    is high! Let's do those first, and then take another look at the
+    corner plot.
+    
+    x values: CAV4
+    y values: T01 and denhtot
+    """
+    pass
 
-# plot4: extinction parameter corner plot?
+# plot4: extinction parameter corner plot? (correlations might be a lot
+# of work)
 
-# plot5: something with T01?
 
-plot1()
-plot2()
-plot3()
+
+# plot1()
+# plot2()
+# plot3()

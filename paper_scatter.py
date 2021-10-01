@@ -12,6 +12,7 @@ import plot_fuse_results
 from plot_fuse_results import plot_results_scatter, plot_results_fit
 from matplotlib import pyplot as plt
 from astropy.table import Column
+import math
 
 plt.rcParams.update({"font.family": "times"})
 
@@ -136,7 +137,7 @@ def plot1():
         mark_comments=["lo_h_av"],
         ignore_comments=["hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)    
+    plot_results_fit(xs, ys, covs, ax)
     ax = choose_ax("EBV", "nhi")
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -202,7 +203,7 @@ def plot2():
 
     """
     fig, axs = plt.subplots(2, 3, sharex="col", sharey="row")
-    fig.set_size_inches(base_width, base_width)
+    fig.set_size_inches(base_width, base_width * 2 / 3)
 
     ax = axs[0, 0]
     xs, ys, covs = plot_results_scatter(
@@ -259,7 +260,7 @@ def plot2():
         "NH_AV",
         pyrange=[0, 1.0e22],
         ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
     plot_results_fit(xs, ys, covs, ax)
 
@@ -273,6 +274,18 @@ def plot2():
         mark_comments=["lo_h_av", "hi_h_av"],
     )
     finalize_double_grid(fig, axs, "rv_trends.pdf")
+
+    # there is a number that goes with this plot: the fit evaluated at RV = 3.1 or 1/RV = 0.32.
+
+    # fit result from RVI vs NHAV
+    m = 1.02e22
+    sm = 8.53e20
+    b = -1.27e21
+    sb = 1.47e20
+    x = 0.32
+    nhav_eval = m * x + b
+    nhav_err = math.sqrt((sm * x) ** 2 + sb ** 2)
+    print("NH_AV evaluated at Galactic average 1_RV=0.32:", nhav_eval, " pm ", nhav_err)
 
 
 def plot3():

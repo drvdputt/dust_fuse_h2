@@ -369,9 +369,39 @@ def plot4():
     x values: CAV4
     y values: T01 and denhtot
     """
-    pass
+    fig, axs = plt.subplots(2, 2, sharey='row', sharex='col')
+    ax = axs[1,0]
+    _ = plot_results_scatter(
+        ax,
+        data,
+        "CAV4",
+        "T01",
+        mark_comments=["lo_h_av"],
+    )
+
+    ax = axs[0,0]
+    _ = plot_results_scatter(
+        ax,
+        data,
+        "CAV4",
+        "denhtot",
+        mark_comments=["lo_h_av"],
+    )
+    ax.set_yscale('log')
+
+    ax = axs[1,1]
+    _ = plot_results_scatter(
+        ax,
+        data,
+        "denhtot",
+        "T01",
+        mark_comments=["lo_h_av"],
+    )
+    ax.set_xscale('log')
+
+    fig.set_size_inches(base_width, base_height * 2/3)
+    finalize_double_grid(fig, axs, "temp_dens.pdf")
 
 
 # plot4: extinction parameter corner plot? (correlations might be a lot
 # of work)
-

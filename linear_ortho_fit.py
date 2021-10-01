@@ -237,10 +237,14 @@ down {}
             print(f"Hess: sm = {sigma_m} ; sb = {sigma_b_perp}")
             print(f"Hess: corr(m, b) = {rho_mb_perp}")
 
-        # remove scaling factor
-        sigma_b = b_perp_to_b(m, sigma_b_perp)
-        sigma_m_real, sigma_b_real = unscale_mb(sigma_m, sigma_b, factor_x, factor_y)
-        sigma_b_perp_real = b_to_b_perp(m_real, sigma_b_real)
+        # use relative error to unscale
+        sigma_m_frac = sigma_m / m
+        sigma_b_frac = sigma_b_perp / b_perp
+
+        sigma_m_real = sigma_m_frac * m_real
+        sigma_b_perp_real = sigma_b_frac * b_perp_real
+
+        # return values and uncertainties
         return m_real, b_perp_real, sigma_m_real, sigma_b_perp_real
     else:
         return m_real, b_perp_real

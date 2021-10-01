@@ -323,19 +323,22 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
     m_grid, b_perp_grid, logL_grid = linear_ortho_fit.calc_logL_grid(
         m - a * sm, m + a * sm, b_perp - a * sb_perp, b_perp + a * sb_perp, xs, ys, covs
     )
-    random_m, random_b_perp = linear_ortho_fit.sample_likelihood(
+    sampled_m, sampled_b_perp = linear_ortho_fit.sample_likelihood(
         m, b_perp, m_grid, b_perp_grid, logL_grid
     )
-    sampled_cov_mb = np.cov(random_m, random_b_perp)
-    m_unc = np.sqrt(sampled_cov_mb[0, 0])
-    b_unc = np.sqrt(sampled_cov_mb[1, 1])
-    mb_corr = sampled_cov_mb[0, 1] / (m_unc * b_unc)
+    sample_cov_mb = np.cov(sampled_m, sampled_b_perp)
+    m_unc = np.sqrt(sample_cov_mb[0, 0])
+    b_perp_unc = np.sqrt(sample_cov_mb[1, 1])
+    mb_corr = sample_cov_mb[0, 1] / (m_unc * b_perp_unc)
+
+    b_unc_rel = b_perp_unc / b_perp
+    b_unc = b * b_unc_rel
 
     # print out results here
     print("*** FIT RESULT ***")
     print(f"m = {m:.2e} pm {m_unc:.2e}")
     print(f"b = {b:.2e} pm {b_unc:.2e}")
-    print(f"correlation  = {mb_corr:.2f}")
+    print(f"correlation = {mb_corr:.2f}")
     print("------------------")
     if lh_ax is not None:
         linear_ortho_fit.plot_solution_neighborhood(
@@ -344,9 +347,9 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
             [min(b_perp_grid), max(b_perp_grid), min(m_grid), max(m_grid)],
             m,
             b_perp,
-            cov_mb=sampled_cov_mb,
+            cov_mb=sample_cov_mb,
             what="L",
-            extra_points=zip(random_b_perp, random_m),
+            extra_points=zip(sampled_b_perp, sampled_m),
         )
 
     # plot the fitted line
@@ -357,7 +360,7 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
 
     # plot sampled lines
     linear_ortho_fit.plot_solution_linescatter(
-        line_ax, random_m, random_b_perp, color=FIT_COLOR, alpha=5 / len(random_m)
+        line_ax, sampled_m, sampled_b_perp, color=FIT_COLOR, alpha=5 / len(sampled_m)
     )
 
 

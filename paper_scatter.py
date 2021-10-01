@@ -63,9 +63,12 @@ def finalize_double_grid(fig, axs, filename):
     save(fig, filename)
 
 
-def save(fig, filename):
-    fig.subplots_adjust(wspace=0.02)
-    fig.subplots_adjust(hspace=0.02)
+def save(fig, filename, need_hspace=False, need_wspace=False):
+    if not need_hspace:
+        fig.subplots_adjust(hspace=0.02)
+    if not need_wspace:
+        fig.subplots_adjust(wspace=0.02)
+    fig.subplots_adjust(right=0.99)
     fig.savefig("paper-plots/" + filename)
 
 
@@ -80,13 +83,17 @@ def plot1():
     - Also show NHtot
     """
 
-    fig, axs = plt.subplots(3, 2, sharey="row", sharex="col")
-    fig.set_size_inches(base_width, 4 / 3 * base_width)
+    fig, axs = plt.subplots(3, 3, sharey="row", sharex="col")
+    fig.set_size_inches(base_width, base_width)
 
-    # do not use loop or other abstractions here, so we can manually
-    # adust each plot as needed
+    # use these variables, so we can easily swap column and rows around
+    col = {"AV": 0, "EBV": 1, "A1000": 2}
+    row = {"nhtot": 0, "nhi": 1, "nh2": 2}
 
-    ax = axs[0, 0]
+    def choose_ax(x, y):
+        return axs[row[y], col[x]]
+
+    ax = choose_ax("AV", "nhtot")
     xs, ys, covs = plot_results_scatter(
         ax,
         data,
@@ -97,8 +104,7 @@ def plot1():
         ignore_comments=["lo_h_av", "hi_h_av"],
     )
     plot_results_fit(xs, ys, covs, ax)
-
-    ax = axs[1, 0]
+    ax = choose_ax("AV", "nhi")
     xs, ys, covs = plot_results_scatter(
         ax,
         data,
@@ -108,8 +114,7 @@ def plot1():
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
-
-    ax = axs[2, 0]
+    ax = choose_ax("AV", "nh2")
     xs, ys, covs = plot_results_scatter(
         ax,
         data,
@@ -120,18 +125,49 @@ def plot1():
         mark_comments=["lo_h_av", "hi_h_av"],
     )
 
-    ax = axs[0, 1]
+    ax = choose_ax("EBV", "nhtot")
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "EBV",
+        "nhtot",
+        data_comp=comp,
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av"],
+        ignore_comments=["hi_h_av"],
+    )
+    plot_results_fit(xs, ys, covs, ax)    
+    ax = choose_ax("EBV", "nhi")
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "EBV",
+        "nhi",
+        data_comp=comp,
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+    ax = choose_ax("EBV", "nh2")
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "EBV",
+        "nh2",
+        data_comp=comp,
+        data_bohlin=bohlin,
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+
+    ax = choose_ax("A1000", "nhtot")
     xs, ys, covs = plot_results_scatter(
         ax,
         data,
         "A1000",
         "nhtot",
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
-        ignore_comments=["hi_h_av"],
+        mark_comments=["lo_h_av", "hi_h_av"],
     )
-
-    ax = axs[1, 1]
+    ax = choose_ax("A1000", "nhi")
     xs, ys, covs = plot_results_scatter(
         ax,
         data,
@@ -140,8 +176,7 @@ def plot1():
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
-
-    ax = axs[2, 1]
+    ax = choose_ax("A1000", "nh2")
     xs, ys, covs = plot_results_scatter(
         ax,
         data,
@@ -306,7 +341,8 @@ def plot3():
         ax_r.set_ylabel("")
     fig.tight_layout()
     fig.subplots_adjust(wspace=0.03, right=0.99, left=0.1, bottom=0.05, top=0.99)
-    save(fig, "fh2_vs_fm90.pdf")
+    save(fig, "fh2_vs_fm90.pdf", need_hspace=True)
+
 
 def plot4():
     """
@@ -314,17 +350,15 @@ def plot4():
     plot. Most important ones: When CAV4 is high, T01 is low and denhtot
     is high! Let's do those first, and then take another look at the
     corner plot.
-    
+
+    Additional things to show: T01 decreases with log(denhtot)
+
     x values: CAV4
     y values: T01 and denhtot
     """
     pass
 
+
 # plot4: extinction parameter corner plot? (correlations might be a lot
 # of work)
 
-
-
-# plot1()
-# plot2()
-# plot3()

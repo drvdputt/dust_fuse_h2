@@ -340,13 +340,14 @@ def plot3():
         "fh2",
         mark_comments=["lo_h_av"],
     )
-    _ = plot_results_scatter(
-        axs[3, 1],
-        data,
-        "A2175_AV",
-        "fh2",
-        mark_comments=["lo_h_av"],
-    )
+    # this one is already in rv trends plot
+    # _ = plot_results_scatter(
+    #     axs[3, 1],
+    #     data,
+    #     "A2175_AV",
+    #     "fh2",
+    #     mark_comments=["lo_h_av"],
+    # )
 
     fig.set_size_inches(base_width, base_height)
     for (ax_l, ax_r) in axs:

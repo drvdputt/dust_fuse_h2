@@ -212,7 +212,8 @@ def plot2():
         "NH_AV",
         pyrange=[0, 1.0e22],
         data_comp=comp,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        ignore_comments=["hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
     plot_results_fit(xs, ys, covs, ax)
 
@@ -235,8 +236,8 @@ def plot2():
         "A1000_AV",
         "NH_AV",
         pyrange=[0, 1.0e22],
-        # data_comp=comp,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        ignore_comments=["hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
     plot_results_fit(xs, ys, covs, ax)
 
@@ -246,7 +247,6 @@ def plot2():
         data,
         "A1000_AV",
         "fh2",
-        # data_comp=comp,
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
@@ -258,7 +258,7 @@ def plot2():
         "A2175_AV",
         "NH_AV",
         pyrange=[0, 1.0e22],
-        # data_comp=comp,
+        ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av", "hi_h_av"],
     )
     plot_results_fit(xs, ys, covs, ax)
@@ -269,7 +269,6 @@ def plot2():
         data,
         "A2175_AV",
         "fh2",
-        # data_comp=comp,
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )

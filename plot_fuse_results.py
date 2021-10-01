@@ -101,7 +101,7 @@ def format_colname(name):
     dic_pairs = {
         "AV": "$A(V)$" + mag,
         "RV": "$R(V)$",
-        "EBV": "$E(B-V)$",
+        "EBV": "$E(B-V)$" + mag,
         "CAV1": "$C^{A(V)}_1$",
         "CAV2": "$C^{A(V)}_2$",
         "CAV3": "$C^{A(V)}_3$",

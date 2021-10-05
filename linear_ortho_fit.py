@@ -108,6 +108,21 @@ def hess_logL(m, b, xy, covs):
     return np.array([[d2_d1d2(0, 0), d2_d1d2(0, 1)], [d2_d1d2(0, 1), d2_d1d2(1, 1)]])
 
 
+def find_outliers(xy, covs, m, b_perp):
+    """Given a best fit line (m, b_perp), return a set {} of indices
+    indicating the outliers in the given data.
+
+    """
+    D = deltas(xy, m, b_perp)
+    S = np.sqrt(sigma2s(covs, m))
+    devs = D / S
+    print("devs", devs)
+    devrms = np.sqrt(np.average(np.square(devs)))
+    devwidth = np.std(devs)
+    print("deviations of the order", devrms, devwidth)
+    return {i for i in np.where(np.abs(devs) > 2 * devwidth)[0]}
+
+
 def linear_ortho_maxlh(
     data_x,
     data_y,
@@ -116,6 +131,7 @@ def linear_ortho_maxlh(
     basic_print=True,
     debug_print=False,
     sigma_hess=False,
+    auto_outliers=False,
 ):
     """Do a linear fit based on orthogonal distance, to data where each
     point can have a different covariance between x and y. Uses the
@@ -139,6 +155,12 @@ def linear_ortho_maxlh(
     V(Delta.perp) = cos^2(theta) V(Delta.x) + sin^2(theta) V(Delta.y),
     with theta the angle between the normal and the y-eigenvector.
 
+    Parameters
+    ----------
+    auto_outliers: bool
+        mark outliers and rerun the fitting step iteratively until no
+        new outliers are found
+
     Returns
     -------
     m: slope
@@ -146,6 +168,7 @@ def linear_ortho_maxlh(
     sigma_m: estimate of error on slop
     sigma_b: estimate of error on intercept
     rho_mb: estimate of pearson coefficient between m and b
+    outliers: {set of indices of outliers}
 
     """
     xy = np.column_stack((data_x, data_y))
@@ -155,13 +178,19 @@ def linear_ortho_maxlh(
     factor_y = 1 / np.std(data_y)
     xy, covs = rescale_data(xy, cov_xy, factor_x, factor_y)
 
+    # start with empty set of outliers
+    outliers = {}
+
+    def no_outliers(data):
+        return np.delete(data, list(outliers), axis=0)
+
     def to_minimize(v):
         m, b_perp = v
-        return -logL(m, b_perp, xy, covs)
+        return -logL(m, b_perp, no_outliers(xy), no_outliers(covs))
 
     def jac(v):
         m, b_perp = v
-        return -grad_logL(m, b_perp, xy, covs)
+        return -grad_logL(m, b_perp, no_outliers(xy), no_outliers(covs))
 
     # use naive result as initial guess
     line_init = models.Linear1D()
@@ -170,7 +199,10 @@ def linear_ortho_maxlh(
         line_init, xy[:, 0], xy[:, 1], weights=1.0 / np.sqrt(covs[:, 1, 1])
     )
     initial_guess = np.array(
-        [fitted_model_weights.slope.value, fitted_model_weights.intercept.value,]
+        [
+            fitted_model_weights.slope.value,
+            fitted_model_weights.intercept.value,
+        ]
     )
     initial_guess[1] = b_to_b_perp(*initial_guess)
 
@@ -181,17 +213,33 @@ def linear_ortho_maxlh(
         print("initial guess: ", initial_guess)
         print("grad approx", grad_approx, "grad exact", grad_exact)
 
-    # find maximum
-    gtol = np.linalg.norm(jac(initial_guess)) * 1e-6
-    res = optimize.minimize(
-        to_minimize,
-        initial_guess,
-        method="BFGS",
-        jac=jac,
-        options={"disp": False, "gtol": gtol},
-    )
-    m, b_perp = res.x
-    chi2min = to_minimize(res.x)
+    iter_done = False
+    counter = 0
+    while not iter_done:
+        # find maximum, and loop
+        gtol = np.linalg.norm(jac(initial_guess)) * 1e-6
+        res = optimize.minimize(
+            to_minimize,
+            initial_guess,
+            method="BFGS",
+            jac=jac,
+            options={"disp": False, "gtol": gtol},
+        )
+        m, b_perp = res.x
+        chi2min = to_minimize(res.x)
+
+        if auto_outliers:
+            # add new outliers to set if found
+            new_outliers = find_outliers(xy, covs, m, b_perp)
+            outliers = outliers or new_outliers
+            counter += 1
+            print("outlier iteration ", counter)
+            if outliers == new_outliers:
+                iter_done = True
+        else:
+            iter_done = True
+
+    outlier_output = sorted(list(outliers))
 
     if debug_print:
         print(res)
@@ -245,9 +293,9 @@ down {}
         sigma_b_perp_real = sigma_b_frac * b_perp_real
 
         # return values and uncertainties
-        return m_real, b_perp_real, sigma_m_real, sigma_b_perp_real
+        return m_real, b_perp_real, sigma_m_real, sigma_b_perp_real, outlier_output
     else:
-        return m_real, b_perp_real
+        return m_real, b_perp_real, outlier_output
 
 
 def bootstrap_fit_errors(data_x, data_y, cov_xy):
@@ -271,7 +319,9 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
         boot_x = data_x[idxs]
         boot_y = data_y[idxs]
         boot_cov = cov_xy[idxs]
-        (ms[m], bs[m]) = linear_ortho_maxlh(boot_x, boot_y, boot_cov, basic_print=False)
+        ms[m], bs[m], _ = linear_ortho_maxlh(
+            boot_x, boot_y, boot_cov, basic_print=False
+        )
 
     print("Bootstrap: m = {} ; b = {}".format(np.average(ms), np.average(bs)))
     print("Bootstrap: sm = {} ; sb = {}".format(np.std(ms), np.std(bs)))

@@ -13,6 +13,7 @@ from plot_fuse_results import plot_results_scatter, plot_results_fit
 from matplotlib import pyplot as plt
 from astropy.table import Column
 import math
+import numpy as np
 
 plt.rcParams.update({"font.family": "times"})
 
@@ -217,6 +218,7 @@ def plot2():
         mark_comments=["lo_h_av"],
     )
     plot_results_fit(xs, ys, covs, ax)
+    print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
 
     ax = axs[1, 0]
     xs, ys, covs = plot_results_scatter(
@@ -369,8 +371,8 @@ def plot4():
     x values: CAV4
     y values: T01 and denhtot
     """
-    fig, axs = plt.subplots(2, 2, sharey='row', sharex='col')
-    ax = axs[1,0]
+    fig, axs = plt.subplots(2, 2, sharey="row", sharex="col")
+    ax = axs[1, 0]
     _ = plot_results_scatter(
         ax,
         data,
@@ -379,7 +381,7 @@ def plot4():
         mark_comments=["lo_h_av"],
     )
 
-    ax = axs[0,0]
+    ax = axs[0, 0]
     _ = plot_results_scatter(
         ax,
         data,
@@ -387,9 +389,9 @@ def plot4():
         "denhtot",
         mark_comments=["lo_h_av"],
     )
-    ax.set_yscale('log')
+    ax.set_yscale("log")
 
-    ax = axs[1,1]
+    ax = axs[1, 1]
     _ = plot_results_scatter(
         ax,
         data,
@@ -397,9 +399,9 @@ def plot4():
         "T01",
         mark_comments=["lo_h_av"],
     )
-    ax.set_xscale('log')
+    ax.set_xscale("log")
 
-    fig.set_size_inches(base_width, base_height * 2/3)
+    fig.set_size_inches(base_width, base_height * 2 / 3)
     finalize_double_grid(fig, axs, "temp_dens.pdf")
 
 

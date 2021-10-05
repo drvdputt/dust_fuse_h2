@@ -126,8 +126,8 @@ def linear_ortho_maxlh(
 
     IMPORTANT NOTE: the chi2 analog used is not the typical Delta.T *
     C-1 * Delta, with Delta being the distance between the model point
-    and the observed point. In fact, the measurment could come from any
-    point on the line. Instead, a 1D model is used, which treats the
+    and the observed point. In fact, the measurement could come from any
+    point on the line. Instead, a 1D model is used which treats the
     orthogonal displacement from the line as the random variable.
 
     The equation used here is Delta.perp^2 / (v^T * C * v), where

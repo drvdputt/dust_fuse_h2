@@ -298,7 +298,7 @@ def plot_results_scatter(
     return xs, ys, covs
 
 
-def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
+def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None, outliers=False):
     """Do the fit and plot the result.
 
     Parameters
@@ -308,13 +308,16 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
     lh_ax : axes to plot the likelihood function
 
     xs, ys, covs: the data to use (see return value of plot_results_scatter)
+
+    outliers : use auto outlier detection in linear_ortho_maxlh, and
+        mark outliers on plot (line ax)
     """
     # fix ranges before plotting the fit
     line_ax.set_xlim(line_ax.get_xlim())
     line_ax.set_ylim(line_ax.get_ylim())
 
-    m, b_perp, sm, sb_perp = linear_ortho_fit.linear_ortho_maxlh(
-        xs, ys, covs, line_ax, sigma_hess=True
+    m, b_perp, sm, sb_perp, outlier_idxs = linear_ortho_fit.linear_ortho_maxlh(
+        xs, ys, covs, line_ax, sigma_hess=True, auto_outliers=outliers
     )
     b = linear_ortho_fit.b_perp_to_b(m, b_perp)
 
@@ -364,6 +367,10 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None):
     linear_ortho_fit.plot_solution_linescatter(
         line_ax, sampled_m, sampled_b_perp, color=FIT_COLOR, alpha=5 / len(sampled_m)
     )
+
+    # if outliers, mark them
+    if len(outlier_idxs) > 0:
+        line_ax.scatter(xs[outlier_idxs], ys[outlier_idxs], marker="x", color="y")
 
 
 def plot_results2(
@@ -446,7 +453,7 @@ def plot_results2(
         ignore_comments,
         mark_comments,
     )
-    plot_results_fit(xs, ys, covs, ax, lh_ax)
+    plot_results_fit(xs, ys, covs, ax, lh_ax, outliers=True)
     plot_naive_regression(ax, xs, ys, covs)
     return fig
 

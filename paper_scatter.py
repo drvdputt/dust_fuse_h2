@@ -138,7 +138,7 @@ def plot1():
         mark_comments=["lo_h_av"],
         ignore_comments=["hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
+    plot_results_fit(xs, ys, covs, ax, outliers=True)
     ax = choose_ax("EBV", "nhi")
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -217,7 +217,7 @@ def plot2():
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
+    plot_results_fit(xs, ys, covs, ax, outliers=True)
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
 
     ax = axs[1, 0]
@@ -230,7 +230,7 @@ def plot2():
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
+    plot_results_fit(xs, ys, covs, ax, outliers=True)
 
     ax = axs[0, 1]
     xs, ys, covs = plot_results_scatter(
@@ -242,7 +242,7 @@ def plot2():
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
+    plot_results_fit(xs, ys, covs, ax, outliers=True)
 
     ax = axs[1, 1]
     xs, ys, covs = plot_results_scatter(
@@ -264,7 +264,7 @@ def plot2():
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
+    plot_results_fit(xs, ys, covs, ax, outliers=True)
 
     ax = axs[1, 2]
     xs, ys, covs = plot_results_scatter(
@@ -342,6 +342,14 @@ def plot3():
         "fh2",
         mark_comments=["lo_h_av"],
     )
+    _ = plot_results_scatter(
+        axs[3, 1],
+        data,
+        "bump_area",
+        "fh2",
+        mark_comments=["lo_h_av"],
+    )
+
     # this one is already in rv trends plot
     # _ = plot_results_scatter(
     #     axs[3, 1],
@@ -407,3 +415,9 @@ def plot4():
 
 # plot4: extinction parameter corner plot? (correlations might be a lot
 # of work)
+
+if __name__ == "__main__":
+    plot1()
+    plot2()
+    plot3()
+    plot4()

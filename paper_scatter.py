@@ -54,6 +54,11 @@ def finalize_double(fig, filename):
     fig.set_size_inches(base_width, 2 / 3 * base_width)
     save(fig, filename)
 
+def finalize_vertical(fig, filename):
+    for ax in fig.axs[:-1]:
+        ax.set_xlabel("")
+    fig.set_size_inches(base_width / 2, base_width)
+    save(fig,filename)
 
 def finalize_double_grid(fig, axs, filename):
     # turn off xlabel for everything but last row
@@ -379,8 +384,8 @@ def plot4():
     x values: CAV4
     y values: T01 and denhtot
     """
-    fig, axs = plt.subplots(2, 2, sharey="row", sharex="col")
-    ax = axs[1, 0]
+    fig, axs = plt.subplots(2, 2, sharex="col")
+    ax = axs[0, 0]
     _ = plot_results_scatter(
         ax,
         data,
@@ -389,7 +394,7 @@ def plot4():
         mark_comments=["lo_h_av"],
     )
 
-    ax = axs[0, 0]
+    ax = axs[1, 0]
     _ = plot_results_scatter(
         ax,
         data,
@@ -403,21 +408,30 @@ def plot4():
     _ = plot_results_scatter(
         ax,
         data,
-        "denhtot",
         "T01",
+        "denhtot",
+        data_comp=comp,
         mark_comments=["lo_h_av"],
     )
-    ax.set_xscale("log")
+    ax.set_yscale('log')
+    ax = axs[0, 1]
+    _ = plot_results_scatter(
+        ax,
+        data,
+        "T01",
+        "fh2",
+        data_comp=comp,
+        mark_comments=["lo_h_av"],
+    )
+    ax.set_xlim(40, 140)
 
     fig.set_size_inches(base_width, base_height * 2 / 3)
-    finalize_double_grid(fig, axs, "temp_dens.pdf")
+    fig.subplots_adjust(wspace=0.3)
+    save(fig, "temp_dens.pdf", need_wspace=True)
 
-
-# plot4: extinction parameter corner plot? (correlations might be a lot
-# of work)
 
 if __name__ == "__main__":
-    plot1()
-    plot2()
-    plot3()
+    # plot1()
+    # plot2()
+    # plot3()
     plot4()

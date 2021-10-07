@@ -100,9 +100,10 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
     stars : list of stars for which to retrieve data
 
     """
-    data = Table.from_pandas(
-        pandas.read_csv("data/fuse_h2_details.dat", delim_whitespace=True)
-    )
+    fn = "data/fuse_h2_details.dat"
+    if comparison:
+        fn = fn.replace(".dat", "_comp.dat")
+    data = Table.from_pandas(pandas.read_csv(fn, delim_whitespace=True))
 
     # convert log to linear
     current_columns = [str(c) for c in data.colnames]
@@ -117,12 +118,12 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
             idx = np.where(data["Name"] == s)[0][0]
             keep.append(idx)
             extra_index = idx + 1
-            while data["Name"][extra_index] == "idem":
+            while extra_index < len(data) and data["Name"][extra_index] == "idem":
                 keep.append(extra_index)
                 data["Name"][extra_index] = data["Name"][idx]
                 extra_index += 1
     result = data[keep]
-    result.write("data/fuse_h2_details_main.dat", format="ascii.commented_header")
+    result.write(fn.replace(".dat", "_kept.dat"), format="ascii.commented_header")
 
     # if the separate components are needed, we can return early
     if components:
@@ -176,6 +177,9 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
     dE01 = 170.48
     t01 = dE01 * trot(0, 1)
     t01_unc = dE01 * trot_unc(0, 1)
+
+    # one of the comparison stars has a very nasty error bar
+    t01_unc[t01_unc > t01] = 0
 
     summed_result.add_column(t01, index=0, name="T01")
     summed_result.add_column(t01_unc, index=0, name="T01_unc")
@@ -504,10 +508,11 @@ def get_merged_table(comp=False):
     merged_table["1_RV"] = 1 / merged_table["RV"]
     merged_table["1_RV_unc"] = merged_table["RV_unc"] / merged_table["RV"] ** 2
 
-    if not comp:
-        h2details = get_fuse_h2_details(stars=merged_table["Name"])
-        merged_table = join(merged_table, h2details, keys="Name")
+    # add h2 details
+    h2details = get_fuse_h2_details(stars=merged_table["Name"])
+    merged_table = join(merged_table, h2details, keys="Name")
 
+    if not comp:
         ext_fm90_data = get_fuse_ext_fm90()
         merged_table1 = join(merged_table, ext_fm90_data, keys="Name")
         merged_table = merged_table1

@@ -116,7 +116,7 @@ def find_outliers(xy, covs, m, b_perp):
     D = deltas(xy, m, b_perp)
     S = np.sqrt(sigma2s(covs, m))
     devs = D / S
-    print("devs", devs)
+    # print("devs", devs)
     return {i for i in np.where(np.abs(devs) > 3)[0]}
     # devwidth = np.std(devs)
     # devrms = np.sqrt(np.average(np.square(devs)))

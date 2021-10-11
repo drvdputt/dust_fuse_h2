@@ -21,7 +21,7 @@ def pearson_mc(xs, ys, covs):
     # col0 = all resamplings of x0
     # -> each row is a different realization of our 75 sightlines
     N = len(xs)  # number of sightlines
-    M = 100  # number of resamples
+    M = 2000  # number of resamples
     x_samples = np.zeros((M, N))
     y_samples = np.zeros((M, N))
     for i in range(N):

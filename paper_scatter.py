@@ -14,7 +14,6 @@ from matplotlib import pyplot as plt
 from astropy.table import Column
 import math
 import numpy as np
-import pearson
 
 plt.rcParams.update({"font.family": "times"})
 
@@ -225,8 +224,6 @@ def plot2():
     )
     plot_results_fit(xs, ys, covs, ax, outliers=True)
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
-    print("Resampling 1_RV vs NH_AV")
-    pearson.pearson_mc(xs, ys, covs)
 
     ax = axs[1, 0]
     xs, ys, covs = plot_results_scatter(

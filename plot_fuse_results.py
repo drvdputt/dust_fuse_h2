@@ -299,6 +299,9 @@ def plot_results_scatter(
     if pyrange is not None:
         ax.set_ylim(pyrange)
 
+    # Report pearson coefficient (without outlier removal)
+    print("VVV-no outlier removal-VVV")
+    pearson.pearson_mc(xs, ys, covs)
     return xs, ys, covs
 
 
@@ -567,9 +570,9 @@ def get_xs_ys_covs_new(data, xparam, yparam):
         Vnh_av = py_unc ** 2
         covs = covariance.make_cov_matrix(Vrvm1, Vnh_av, c)
     else:
-        print(
-            "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."
-        )
+        # print(
+        #     "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."
+        # )
         covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2)
 
     # Check if cauchy schwarz is satisfied. If not, enforce using fudge

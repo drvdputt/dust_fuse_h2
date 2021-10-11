@@ -36,5 +36,5 @@ def pearson_mc(xs, ys, covs):
     avg = np.average(rhos)
     std = np.std(rhos)
     rho_naive = np.corrcoef(xs, ys)[0, 1]
-    sigmas = std / rho_naive
+    sigmas = rho_naive / std
     print(f"+++ MC pearson result +++\n rho = {rho_naive:.2f} +- {std:.2f} ({sigmas:.2f} sigma)")

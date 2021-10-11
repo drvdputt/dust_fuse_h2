@@ -7,6 +7,7 @@ from astropy.modeling import models, fitting
 from get_data import get_merged_table, get_bohlin78
 import covariance
 import linear_ortho_fit
+import pearson
 
 # some easily customizable constants
 BOHLIN_COLOR = "xkcd:magenta"
@@ -160,7 +161,10 @@ def plot_results_scatter(
     xs, ys, covs: 1D array, 1D array, 3D array with shape (len(data), 2, 2)
         Main data to be used for fitting
     """
+    
+    print('-' * 72)
     print(f"{xparam} vs {yparam}")
+    print('-' * 72)
 
     # plot bohlin or shull data (not used for fitting)
     def plot_extra_data(extra, label, color, find_dups=False):
@@ -344,7 +348,6 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None, outliers=False):
     print(f"m = {m:.2e} pm {m_unc:.2e}")
     print(f"b = {b:.2e} pm {b_unc:.2e}")
     print(f"correlation = {mb_corr:.2f}")
-    print("------------------")
     if lh_ax is not None:
         linear_ortho_fit.plot_solution_neighborhood(
             lh_ax,
@@ -356,6 +359,13 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None, outliers=False):
             what="L",
             extra_points=zip(sampled_b_perp, sampled_m),
         )
+    # pearson coefficient without outliers (gives us an idea of how
+    # reasonable the trend is)
+    pearson.pearson_mc(
+        np.delete(xs, outlier_idxs, axis=0),
+        np.delete(ys, outlier_idxs, axis=0),
+        np.delete(covs, outlier_idxs, axis=0),
+    )
 
     # plot the fitted line
     xlim = line_ax.get_xlim()

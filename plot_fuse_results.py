@@ -139,6 +139,20 @@ def format_colname(name):
     return out_name
 
 
+def plot_rho_box(ax, xs, ys, covs):
+    """Draw box with correlation coefficient for given data on given ax."""
+    rho, srho = pearson.pearson_mc(xs, ys, covs)
+    ax.text(
+        0.9,
+        0.9,
+        f"$\\rho = {rho:.2f}\n\\{srho/rho:.1f}\\sigma$",
+        transform=ax.transAxes,
+        horizontalalignment="right",
+        bbox=dict(facecolor="white", edgecolor=(0, 0, 0, 0.1), alpha=0.5),
+        verticalalignment="top",
+    )
+
+
 def plot_results_scatter(
     ax,
     data,
@@ -153,18 +167,23 @@ def plot_results_scatter(
     alpha=0.5,
     ignore_comments=None,
     mark_comments=None,
+    report_rho=True,
 ):
     """Do only the scatter plot of plot_results2, not the fit
+
+    report_rho : bool
+        Draw a box with the correlation coefficient BEFORE outlier removal
 
     Returns
     -------
     xs, ys, covs: 1D array, 1D array, 3D array with shape (len(data), 2, 2)
         Main data to be used for fitting
+
     """
-    
-    print('-' * 72)
+
+    print("-" * 72)
     print(f"{xparam} vs {yparam}")
-    print('-' * 72)
+    print("-" * 72)
 
     # plot bohlin or shull data (not used for fitting)
     def plot_extra_data(extra, label, color, find_dups=False):
@@ -299,13 +318,16 @@ def plot_results_scatter(
     if pyrange is not None:
         ax.set_ylim(pyrange)
 
-    # Report pearson coefficient (without outlier removal)
-    print("VVV-no outlier removal-VVV")
-    pearson.pearson_mc(xs, ys, covs)
+    if report_rho:
+        print("VVV-no outlier removal-VVV")
+        plot_rho_box(ax, xs, ys, covs)
+
     return xs, ys, covs
 
 
-def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None, outliers=False):
+def plot_results_fit(
+    xs, ys, covs, line_ax, lh_ax=None, outliers=False, report_rho=False
+):
     """Do the fit and plot the result.
 
     Parameters
@@ -318,6 +340,8 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None, outliers=False):
 
     outliers : use auto outlier detection in linear_ortho_maxlh, and
         mark outliers on plot (line ax)
+
+    report_rho: draw a box with the correlation coefficient AFTER outlier removal
     """
     # fix ranges before plotting the fit
     line_ax.set_xlim(line_ax.get_xlim())
@@ -364,11 +388,13 @@ def plot_results_fit(xs, ys, covs, line_ax, lh_ax=None, outliers=False):
         )
     # pearson coefficient without outliers (gives us an idea of how
     # reasonable the trend is)
-    pearson.pearson_mc(
-        np.delete(xs, outlier_idxs, axis=0),
-        np.delete(ys, outlier_idxs, axis=0),
-        np.delete(covs, outlier_idxs, axis=0),
-    )
+    if report_rho:
+        plot_rho_box(
+            line_ax,
+            np.delete(xs, outlier_idxs, axis=0),
+            np.delete(ys, outlier_idxs, axis=0),
+            np.delete(covs, outlier_idxs, axis=0),
+        )
 
     # plot the fitted line
     xlim = line_ax.get_xlim()

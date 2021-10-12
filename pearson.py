@@ -15,7 +15,14 @@ import numpy as np
 def pearson_mc(xs, ys, covs):
     """Calculate Pearson correlation coefficient and uncertainty on it in a MC way.
 
-    Repeatedly resample xs, ys using 2D gaussian described by covs."""
+    Repeatedly resample xs, ys using 2D gaussian described by covs.
+
+    Returns
+    -------
+    rho : correlation coefficient
+
+    std : standard deviation of the rho samples
+    """
 
     # store the samples as follows
     # col0 = all resamplings of x0
@@ -33,8 +40,17 @@ def pearson_mc(xs, ys, covs):
 
     corrcoefs = np.array([np.corrcoef(x_samples[j], y_samples[j]) for j in range(M)])
     rhos = corrcoefs[:, 0, 1]
-    avg = np.average(rhos)
     std = np.std(rhos)
+
+    def rho_sigma_message(rho):
+        sigmas = rho / std
+        return f"rho = {rho:.2f} +- {std:.2f} ({sigmas:.2f} sigma)"
+
+    print("+++ MC pearson result +++")
     rho_naive = np.corrcoef(xs, ys)[0, 1]
-    sigmas = rho_naive / std
-    print(f"+++ MC pearson result +++\n rho = {rho_naive:.2f} +- {std:.2f} ({sigmas:.2f} sigma)")
+    print("data: ", rho_sigma_message(rho_naive))
+    avg = np.average(rhos)
+    print("avg: ", rho_sigma_message(avg))
+    # med = np.median(rhos)
+    # print("median: ", rho_sigma_message(med))
+    return rho_naive, std

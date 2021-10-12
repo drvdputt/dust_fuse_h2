@@ -211,13 +211,15 @@ def plot2():
     fig, axs = plt.subplots(2, 3, sharex="col", sharey="row")
     fig.set_size_inches(base_width, base_width * 2 / 3)
 
+    max_nh_av = 5e21
+
     ax = axs[0, 0]
     xs, ys, covs = plot_results_scatter(
         ax,
         data,
         "1_RV",
         "NH_AV",
-        pyrange=[0, 1.0e22],
+        pyrange=[0, max_nh_av],
         data_comp=comp,
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
@@ -233,7 +235,7 @@ def plot2():
         "fh2",
         data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
     plot_results_fit(xs, ys, covs, ax, outliers=True)
 
@@ -243,7 +245,7 @@ def plot2():
         data,
         "A1000_AV",
         "NH_AV",
-        pyrange=[0, 1.0e22],
+        pyrange=[0, max_nh_av],
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
     )
@@ -265,7 +267,7 @@ def plot2():
         data,
         "A2175_AV",
         "NH_AV",
-        pyrange=[0, 1.0e22],
+        pyrange=[0, max_nh_av],
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
     )

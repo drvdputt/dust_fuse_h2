@@ -73,13 +73,8 @@ def header():
 def footer():
     return r"""
 \enddata
-\tablenotetext{a}{Where estimated by reddening, the $N$(\ion{H}{1}) uncertainty
-    is derived from adopting a 0.15 dex error allowance in $N$(H), including the
-    30\% scatter noted by \citet{1978ApJ...224..132B} in the linear relationship between
-    $N$(H$_{\rm total}$) and $E$($\bv$) and a small margin for $E$($\bv$)
-    uncertainty, and the $N$(H$_2$) error allowance.}
 \tablerefs{
-    (1) This paper, either measured or by $N$(\ion{H}{1}) = 5.8$\times$10$^{21}
+    (1) This paper
     E$($\bv$)$ - 2N$(H$_2$);
     (2) \citet{2006ApJ...641..327C};
     (3) \citet{1994ApJ...427..274D};

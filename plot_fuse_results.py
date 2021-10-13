@@ -320,7 +320,7 @@ def plot_results_scatter(
 
     if report_rho:
         print("VVV-no outlier removal-VVV")
-        plot_rho_box(ax, xs, ys, covs)
+        plot_rho_box(ax, xs, ys, covs, save_hist=f"{xparam}-{yparam}.pdf")
 
     return xs, ys, covs
 

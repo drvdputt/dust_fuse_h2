@@ -388,6 +388,7 @@ def plot_results_fit(
         )
     # pearson coefficient without outliers (gives us an idea of how
     # reasonable the trend is)
+    print("VVV-with outlier removal-VVV")
     if report_rho:
         plot_rho_box(
             line_ax,

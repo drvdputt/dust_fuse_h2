@@ -693,7 +693,7 @@ def update_catalog(overview_table, original_file):
         old_index = np.where(old_data["name"].data == row["target"])[0][0]
 
         if old_data[old_index]["hiref"] != jenkins2019_index:
-            old_data[old_index]["hiref"] = 0
+            old_data[old_index]["hiref"] = 1
             old_data[old_index]["lognhi"] = row["lognhi"]
             old_data[old_index]["lognhi_unc"] = row["lognhi_unc"]
 

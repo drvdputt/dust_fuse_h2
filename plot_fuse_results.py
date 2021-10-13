@@ -139,13 +139,13 @@ def format_colname(name):
     return out_name
 
 
-def plot_rho_box(ax, xs, ys, covs):
+def plot_rho_box(ax, xs, ys, covs, save_hist=None):
     """Draw box with correlation coefficient for given data on given ax."""
-    rho, srho = pearson.pearson_mc(xs, ys, covs)
+    rho, srho = pearson.pearson_mc(xs, ys, covs, save_hist)
     ax.text(
         0.9,
         0.9,
-        f"$\\rho = {rho:.2f}\n\\{srho/rho:.1f}\\sigma$",
+        f"$\\rho = {rho:.2f}$\n${rho/srho:.1f}\\sigma$",
         transform=ax.transAxes,
         horizontalalignment="right",
         bbox=dict(facecolor="white", edgecolor=(0, 0, 0, 0.1), alpha=0.5),

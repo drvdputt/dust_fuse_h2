@@ -153,6 +153,31 @@ def plot_rho_box(ax, xs, ys, covs, save_hist=None):
     )
 
 
+def match_comments(data, comments):
+    """
+    Return mask which is True where data["comment"] equals any of the given comments.
+
+    Parameters
+    ----------
+
+    data : astropy Table
+        data set with "comment" column
+
+    comments : list of str
+        one string per comment
+
+    Returns
+    -------
+    match : np.array of booleans
+        True at index i if data["comment"][i] == c for any c in comments
+    """
+    if comments is None:
+        match = np.full(len(data), False)
+    else:
+        match = np.logical_or.reduce([c == data["comment"] for c in comments])
+    return match
+
+
 def plot_results_scatter(
     ax,
     data,
@@ -235,42 +260,19 @@ def plot_results_scatter(
             ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha, label="compar"
         )
 
-    # decide which points to ignore
-    if ignore_comments is not None:
-        # only use points for which the comment does not match any of
-        # the ignore flags
-        use = np.logical_and.reduce([c != data["comment"] for c in ignore_comments])
-    else:
-        use = np.full(len(data), True)
+    # decide which points to highlight as ignored
+    ignore = match_comments(data, ignore_comments)
+    not_ignored = np.logical_not(ignore)
+    # decide which points to highlight with generic mark
+    mark = match_comments(data, mark_comments)
 
-    # decide which points to highlight
-    if mark_comments is not None:
-        mark = np.logical_or.reduce([c == data["comment"] for c in mark_comments])
-    else:
-        mark = np.full(len(data), False)
-
-    # choose columns and calculate covariance matrices
-    # if yparam[0:3] == "CAV":
-    #     cparam = "AV"
-    # elif yparam[0:1] == "C":
-    #     cparam = "EBV"
-    # else:
-    #     cparam = "AV"
-
-    # if xparam == "RV" and yparam == "NH_AV":
-    #     # WIP: check if these are similar (they aren't, but I think the
-    #     # old implementation is incorrect).
-    #     old_xs, old_ys, old_covs = get_xs_ys_covs(data[use], xparam, yparam, cparam)
-    #     print("old covs", old_covs)
-    #     print("new covs", covs)
-
-    # get and plot main data
-    xs, ys, covs = get_xs_ys_covs_new(data[use], xparam, yparam)
+    # get all data, and plot everything except ignored
+    xs, ys, covs = get_xs_ys_covs_new(data, xparam, yparam)
     covariance.plot_scatter_with_ellipses(
         ax,
-        xs,
-        ys,
-        covs,
+        xs[not_ignored],
+        ys[not_ignored],
+        covs[not_ignored],
         1,
         color=MAIN_COLOR,
         alpha=alpha,
@@ -292,13 +294,8 @@ def plot_results_scatter(
         )
 
     # plot ignored points in different color
-    if not use.all():
-        # bad_xs, bad_ys, bad_covs = get_xs_ys_covs(
-        #     data[np.logical_not(use)], xparam, yparam, cparam
-        # )
-        bad_xs, bad_ys, bad_covs = get_xs_ys_covs_new(
-            data[np.logical_not(use)], xparam, yparam
-        )
+    if ignore.any():
+        bad_xs, bad_ys, bad_covs = get_xs_ys_covs_new(data[ignore], xparam, yparam)
         covariance.plot_scatter_with_ellipses(
             ax,
             bad_xs,
@@ -322,11 +319,19 @@ def plot_results_scatter(
         print("VVV-no outlier removal-VVV")
         plot_rho_box(ax, xs, ys, covs, save_hist=f"{xparam}-{yparam}.pdf")
 
+    # return all data, for use in fitting
     return xs, ys, covs
 
 
 def plot_results_fit(
-    xs, ys, covs, line_ax, lh_ax=None, outliers=False, report_rho=False
+    xs,
+    ys,
+    covs,
+    line_ax,
+    lh_ax=None,
+    outliers=None,
+    auto_outliers=False,
+    report_rho=False,
 ):
     """Do the fit and plot the result.
 
@@ -338,8 +343,19 @@ def plot_results_fit(
 
     xs, ys, covs: the data to use (see return value of plot_results_scatter)
 
-    outliers : use auto outlier detection in linear_ortho_maxlh, and
-        mark outliers on plot (line ax)
+    outliers : list of int
+        list of indices for which data will be ignored in the fitting.
+        If auto_outliers is True, then this data will only be ignored
+        for the first iteration. The manual outlier choice positions the
+        fit where were we want it. Then, these points are added back in,
+        and ideally, the automatic outlier rejection will reject them in
+        an objective way. This is to make sure that we are not guilty of
+        cherry picking.
+
+    auto_outliers : bool
+        Use auto outlier detection in linear_ortho_maxlh, and mark
+        outliers on plot (line ax). See outlier detection function for
+        criterion.
 
     report_rho: draw a box with the correlation coefficient AFTER outlier removal
     """
@@ -348,7 +364,13 @@ def plot_results_fit(
     line_ax.set_ylim(line_ax.get_ylim())
 
     m, b_perp, sm, sb_perp, outlier_idxs = linear_ortho_fit.linear_ortho_maxlh(
-        xs, ys, covs, line_ax, sigma_hess=True, auto_outliers=outliers
+        xs,
+        ys,
+        covs,
+        line_ax,
+        sigma_hess=True,
+        manual_outliers=outliers,
+        auto_outliers=auto_outliers,
     )
     b = linear_ortho_fit.b_perp_to_b(m, b_perp)
 

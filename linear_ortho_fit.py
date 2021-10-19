@@ -132,6 +132,7 @@ def linear_ortho_maxlh(
     basic_print=True,
     debug_print=False,
     sigma_hess=False,
+    manual_outliers=None,
     auto_outliers=False,
 ):
     """Do a linear fit based on orthogonal distance, to data where each
@@ -158,7 +159,11 @@ def linear_ortho_maxlh(
 
     Parameters
     ----------
-    auto_outliers: bool
+    manual_outliers : list of int
+        manually marked outliers for the first outlier detection
+        iteration. Default is None, which just follows auto_outliers.
+
+    auto_outliers : bool
         mark outliers and rerun the fitting step iteratively until no
         new outliers are found
 
@@ -179,8 +184,12 @@ def linear_ortho_maxlh(
     factor_y = 1 / np.std(data_y)
     xy, covs = rescale_data(xy, cov_xy, factor_x, factor_y)
 
-    # start with empty set of outliers
-    outliers = {}
+    # if manual outliers, add them here. Will be deleted after first
+    # iteration
+    if manual_outliers is not None:
+        outliers = {i for i in manual_outliers}
+    else:
+        outliers = set()
 
     def no_outliers(data):
         return np.delete(data, list(outliers), axis=0)
@@ -196,13 +205,11 @@ def linear_ortho_maxlh(
     # use naive result as initial guess
     line_init = models.Linear1D()
     fit = fitting.LinearLSQFitter()
-    fitted_model_weights = fit(
-        line_init, xy[:, 0], xy[:, 1], weights=1.0 / np.sqrt(covs[:, 1, 1])
-    )
+    naive_fit = fit(line_init, xy[:, 0], xy[:, 1], weights=1.0 / np.sqrt(covs[:, 1, 1]))
     initial_guess = np.array(
         [
-            fitted_model_weights.slope.value,
-            fitted_model_weights.intercept.value,
+            naive_fit.slope.value,
+            naive_fit.intercept.value,
         ]
     )
     initial_guess[1] = b_to_b_perp(*initial_guess)
@@ -230,15 +237,22 @@ def linear_ortho_maxlh(
         chi2min = to_minimize(res.x)
 
         if auto_outliers:
-            # add new outliers to set if found
-            new_outliers = find_outliers(xy, covs, m, b_perp)
-            outliers = outliers or new_outliers
-            counter += 1
             print("outlier iteration ", counter)
+            # clear any manual outliers
+            if counter == 0:
+                outliers.clear()
+            # new outliers is previous + current
+            new_outliers = outliers or find_outliers(xy, covs, m, b_perp)
+            # if new set = old set, we're done
             if outliers == new_outliers:
                 iter_done = True
+            # update outlier set declared at top of this function
+            outliers = new_outliers
         else:
+            # if we're not doing auto_outliers, 1 iteration is enough
             iter_done = True
+
+        counter += 1
 
     outlier_output = sorted(list(outliers))
 

@@ -9,7 +9,7 @@ Some of them are grouped using subplots
 
 from get_data import get_merged_table, get_bohlin78, get_shull2021
 import plot_fuse_results
-from plot_fuse_results import plot_results_scatter, plot_results_fit
+from plot_fuse_results import plot_results_scatter, plot_results_fit, match_comments
 from matplotlib import pyplot as plt
 from astropy.table import Column
 import math
@@ -111,7 +111,9 @@ def plot1():
         ignore_comments=["lo_h_av", "hi_h_av"],
         report_rho=False
     )
-    plot_results_fit(xs, ys, covs, ax, report_rho=True)
+    out = np.where(match_comments(data, ["lo_h_av", "hi_h_av"]))[0]
+    plot_results_fit(xs, ys, covs, ax, report_rho=True, outliers=out)
+
     ax = choose_ax("AV", "nhi")
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -142,10 +144,11 @@ def plot1():
         data_comp=comp,
         data_bohlin=bohlin,
         mark_comments=["lo_h_av"],
-        ignore_comments=["hi_h_av"],
+        # ignore_comments=["hi_h_av"],
         report_rho=False,
     )
-    plot_results_fit(xs, ys, covs, ax, outliers=True, report_rho=True)
+    plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
+
     ax = choose_ax("EBV", "nhi")
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -156,6 +159,7 @@ def plot1():
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
+
     ax = choose_ax("EBV", "nh2")
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -227,7 +231,7 @@ def plot2():
         mark_comments=["lo_h_av"],
         report_rho=False
     )
-    plot_results_fit(xs, ys, covs, ax, outliers=True, report_rho=True)
+    plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
 
     ax = axs[1, 0]
@@ -241,7 +245,7 @@ def plot2():
         mark_comments=["lo_h_av"],
         report_rho=False
     )
-    plot_results_fit(xs, ys, covs, ax, outliers=True, report_rho=True)
+    plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
 
     ax = axs[0, 1]
     xs, ys, covs = plot_results_scatter(
@@ -438,6 +442,6 @@ def plot4():
 
 if __name__ == "__main__":
     plot1()
-    plot2()
-    plot3()
-    plot4()
+    # plot2()
+    # plot3()
+    # plot4()

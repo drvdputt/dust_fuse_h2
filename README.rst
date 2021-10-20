@@ -40,26 +40,41 @@ Wavelength ranges used to fit the continuum and the Lyman alpha line are individ
 
 ``--update_catalog``: replace the HI values in the given file (one of the data files in ``data/*hi_h2*``), so that they can be used for the rest of the analysis (next section)
 
-Sample analysis
----------------
-
-Most of the analysis consists of scatter plots, sometimes with a line fit through them.
+Correlation and slope analysis
+------------------------------
 
 The uncertainties in x and y are both significant, and some of the chosen quantities are inherently correlated because they have a common factor.
 For example, NH/AV and AV are anti-correlated because of the common AV factor.
 We visualize the errors and covariance between x and y for each point as an ellipse.
 
-The chi2 function that is minimized to perform the linear fits is one presented in Hogg et al. (2010).
-It uses the orthogonal distance to the line as the deviation, and the orthogonally projected covariance as the standard deviation.
-This way, the shape of the uncertainty ellipse of each point is taken into account when estimating the slope of the scatter plot.
-
-``linear_ortho_fit.py`` contains functions to perform the fitting described above
-
 ``covariance.py`` contains the function that draws the scatter plot and the covariance ellipses, as well as helper functions to calculate the covariance between certain quantities
 
-``get_data.py`` contains functions to retrieve the data and uncertainties for all the sightlines, and calculate some derived quantities
+``get_data.py`` contains functions to retrieve the data and uncertainties for all the sightlines, and calculate some derived quantities.
+Some functions to load data from other works are also available.
 
-``plot_fuse_results.py`` makes use of the above modules to do the analysis and make the desired plots
+``linear_ortho_fit.py`` contains the line fitting method.
+The chi2 function that is minimized to perform the linear fits is the one presented in Hogg et al. (2010).
+It uses the perpendicular distance and projected variance to calculate chi2.
+This way, the shape of the uncertainty ellipse of each point (x,y) is taken into account when estimating the slope of one of our scatter plots.
+
+``pearson.py`` contains our method to calculate the pearson correlation coefficient r.
+To take the xy-covariance of each data point into account, we redraw the data set many times in a Monte Carlo way.
+For each realization of the data set, each of the 75 data points is redrawn according to the bivariate normal distribution described by its covariance ellipse, and r is calculated for this new data set.
+Taking the average value of r gives us a more conservative estimate for the correlation coefficient, taking the xy correlations and into account.
+
+We want to express the significance of r as a number of sigma, where sigma is the width of the r distribution if the data set was fully uncorrelated (r=0).
+This gives the reader an idea of how likely it is that the measured value of r occurs out of an uncorrelated data set, solely becuase of statistical fluctuations, which is the null hypothesis.
+The typical textbook equations for the standard deviation of r only work when the underlying x and y originate from a bivariate normal distribution.
+Because of the way the sightlines in our sample were chosen, the distribution for the measrued quantities is generally non-normal.
+Therefore, we perform a permutation test instead, to construct a collection of uncorrelated data sets which represent the null hypothesis that r=0.
+To do this, We again resample the data points as described above, but as an added step the x and y are randomly and independently permuted, which makes x and y uncorrelated by construction.
+We calculate the correlation coefficient for each of these uncorrelated realizations of the (x,y) sample, and use the standard deviation on the sample of r-values as our sigma.
+
+The reported significance level is then average(r) / sigma(r0)
+
+``plot_fuse_results.py`` defines functions that make use of the above modules to do the analysis and make the desired plots
+
+``paper_scatter.py`` calls those functions for the various xy pairs of interest.
 
 Workflow
 ========
@@ -139,25 +154,18 @@ This data is saved at ``data/gaia/``, one file per star, and is merged into ``da
       These tables were copied into ``data/ob_mags.dat``
       The equation is simply ``d = 1 pc * 10 ** ((V - AV - MV) / 5)``.
 
-Merged data and derived columns
--------------------------------
-
-The data in the files mentioned above is loaded in the ``get_data`` module.
-Derived columns, such as linear (instead of log) densities, uncertainties, calculated photometric distances, are added.
-The main function to retrieve everything is `get_merged_table()`.
-Some functions to load data from other works are also available.
-
-A more complex part of the code is where the covariances are calculated.
 
 Scatter plots and fits
 ----------------------
 
-In ``covariance.py``, a function was implemented to draw scatter plots where every point is an ellipse representing the covariance between x and y.
+One function per group of plots in ``paper_scatter.py``. It makes use of modules described above.
 
-In ``linear_ortho_fit.py``, a line fitting method based on Hogg+2010 was implemented, which takes uses the perpendicular distance to calculate chi2.
-It properly takes into account the uncertainty ellipse (with xy covariance) of each data point).
+The data in the files mentioned above is loaded function in the ``get_data`` module, and main function to retrieve everything is `get_merged_table()`.
+Derived columns, such as linear (instead of log) densities, uncertainties, calculated photometric distances, are calculated and added while this function is executed.
 
-The main drawing and fitting calls are in ``plot_fuse_results.py``.
+A more complex part of the code is where the covariances are calculated.
+
+The main drawing and fitting functions are defined in ``plot_fuse_results.py``.
 The typical workflow for making a plot and fitting the data (with covariance) for that plot is::
 
   from plot_fuse_results import plot_results_scatter, plot_results_fit
@@ -173,11 +181,6 @@ The typical workflow for making a plot and fitting the data (with covariance) fo
   )
   plot_results_fit(xs, ys, covs, ax)
 
-
-Paper plots
------------
-
-One function per plot in ``paper_scatter.py``.
 
 In Development
 ==============

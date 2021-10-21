@@ -386,26 +386,31 @@ def add_distance(table, comp=False):
 
     ### photometric
     dphot, dphot_unc = photometric_distance.calc_distance(
-        table_edit["SpType"], table_edit["V"], table_edit["AV"]
+        table_edit["SpType"],
+        table_edit["V"],
+        # table_edit["V_unc"], not available, so use zeros instead
+        np.zeros(len(table_edit)),
+        table_edit["AV"],
+        table_edit["AV_unc"],
     )
     table_edit.add_column(dphot, name="dphot")
     table_edit.add_column(dphot_unc, name="dphot_unc")
 
     # replace the main distance measurement where possible
     replace = np.isfinite(table_edit["dphot"])
-    table_edit["d"][replace] = d[replace]
-    table_edit["d_unc"][replace] = d_unc[replace]
+    table_edit["d"][replace] = dphot[replace]
+    table_edit["d_unc"][replace] = dphot_unc[replace]
 
     ### Shull+21 data. If available, overwrite our value.
     count = 0
     sh = Table.read("data/shull-2021/table1.txt", format="ascii.cds")
     our_names = table_edit["Name"]
-    for dphot, name in zip(sh["Dphot"], sh["Name"]):
+    for dphot_shull, name in zip(sh["Dphot"], sh["Name"]):
         our_format = edit_shull_name(name)
         if our_format in our_names:
             our_index = np.where(our_format == table_edit["Name"])[0][0]
-            table_edit["d"][our_index] = dphot
-            table_edit["d_unc"][our_index] = dphot * 0.1
+            table_edit["d"][our_index] = dphot_shull
+            table_edit["d_unc"][our_index] = dphot_shull * 0.1
             count += 1
     print(f"Took {count} distances from Shull+21")
 

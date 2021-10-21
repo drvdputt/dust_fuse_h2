@@ -41,23 +41,24 @@ def pearson_mc(xs, ys, covs, save_hist=None):
     std : standard deviation of the rho samples
     """
 
-    M = 2000  # number of resamples
+    M = 6000  # number of resamples
     # scramble test to create null hypothesis distribution of rho.
     # Technically, only the y samples need to be scrambled, but I'm
     # going to do both just to be sure.
     x_samples, y_samples = draw_points(xs, ys, covs, M)
     x_samples_scrambled, y_samples_scrambled = draw_points(xs, ys, covs, M)
     for i in range(M):
-        np.random.shuffle(x_samples_scrambled[i])
+        # np.random.shuffle(x_samples_scrambled[i])
         np.random.shuffle(y_samples_scrambled[i])
 
     corrcoefs_null = np.array(
         [np.corrcoef(x_samples_scrambled[i], y_samples_scrambled[i]) for i in range(M)]
     )
     rhos_null = corrcoefs_null[:, 0, 1]
-    p16_null = np.percentile(rhos_null, 16)
-    p84_null = np.percentile(rhos_null, 84)
-    std_null = (p84_null - p16_null) / 2
+    # p16_null = np.percentile(rhos_null, 16)
+    # p84_null = np.percentile(rhos_null, 84)
+    # std_null = (p84_null - p16_null) / 2
+    std_null = np.std(rhos_null)
 
     corrcoefs = np.array([np.corrcoef(x_samples[i], y_samples[i]) for i in range(M)])
     rhos = corrcoefs[:, 0, 1]
@@ -75,8 +76,8 @@ def pearson_mc(xs, ys, covs, save_hist=None):
         return f"rho = {rho:.2f} +- {std:.2f} ({num_sigmas:.2f} sigma0)\n sigmas range = {num_sigmas_lo:.2f} - {num_sigmas_hi:.2f}"
 
     print("+++ MC pearson result +++")
-    rho_naive = np.corrcoef(xs, ys)[0, 1]
-    print("data: ", rho_sigma_message(rho_naive))
+    # rho_naive = np.corrcoef(xs, ys)[0, 1]
+    # print("data: ", rho_sigma_message(rho_naive))
     avg = np.average(rhos)
     print("avg: ", rho_sigma_message(avg))
     # med = np.median(rhos)
@@ -89,4 +90,4 @@ def pearson_mc(xs, ys, covs, save_hist=None):
         ax.hist(rhos, bins=50)
         fig.savefig(save_hist)
 
-    return rho_naive, std_null
+    return avg, std_null

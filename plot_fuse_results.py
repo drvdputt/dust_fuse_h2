@@ -145,7 +145,7 @@ def plot_rho_box(ax, xs, ys, covs, save_hist=None):
     ax.text(
         0.9,
         0.9,
-        f"$\\rho = {rho:.2f}$\n${rho/srho:.1f}\\sigma$",
+        f"$\\rho = {rho:.2f}$\n${np.abs(rho/srho):.1f}\\sigma$",
         transform=ax.transAxes,
         horizontalalignment="right",
         bbox=dict(facecolor="white", edgecolor=(0, 0, 0, 0.1), alpha=0.5),
@@ -317,7 +317,18 @@ def plot_results_scatter(
 
     if report_rho:
         print("VVV-no outlier removal-VVV")
-        plot_rho_box(ax, xs, ys, covs, save_hist=f"{xparam}-{yparam}.pdf")
+        if not_ignored.all():
+            plot_rho_box(ax, xs, ys, covs, f"{xparam}-{yparam}.pdf")
+        else:
+            pearson.pearson_mc(xs, ys, covs)
+            print("VVV-manual outlier removal-VVV")
+            plot_rho_box(
+                ax,
+                xs[not_ignored],
+                ys[not_ignored],
+                covs[not_ignored],
+                save_hist=f"{xparam}-{yparam}.pdf",
+            )
 
     # return all data, for use in fitting
     return xs, ys, covs
@@ -358,6 +369,11 @@ def plot_results_fit(
         criterion.
 
     report_rho: draw a box with the correlation coefficient AFTER outlier removal
+
+    Returns
+    -------
+    outlier_idxs : array of int
+        Indices of points treated as outliers
     """
     # fix ranges before plotting the fit
     line_ax.set_xlim(line_ax.get_xlim())
@@ -374,12 +390,26 @@ def plot_results_fit(
     )
     b = linear_ortho_fit.b_perp_to_b(m, b_perp)
 
-    boot_cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs, ys, covs)
-    boot_sm, boot_sb = np.sqrt(np.diag(boot_cov_mb))
+    # The fitting process also indicated some outliers. Do the rest without them.
+    xs_no_out = np.delete(xs, outlier_idxs, axis=0)
+    ys_no_out = np.delete(ys, outlier_idxs, axis=0)
+    covs_no_out = np.delete(covs, outlier_idxs, axis=0)
 
+    # Looking at bootstrap with and without outliers might be interesting.
+    # boot_cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs_no_out, ys_no_out, covs_no_out)
+    # boot_sm, boot_sb = np.sqrt(np.diag(boot_cov_mb))
+
+    # sample the likelihood function to determine statistical properties
+    # of m and b
     a = 2
     m_grid, b_perp_grid, logL_grid = linear_ortho_fit.calc_logL_grid(
-        m - a * sm, m + a * sm, b_perp - a * sb_perp, b_perp + a * sb_perp, xs, ys, covs
+        m - a * sm,
+        m + a * sm,
+        b_perp - a * sb_perp,
+        b_perp + a * sb_perp,
+        xs_no_out,
+        ys_no_out,
+        covs_no_out,
     )
     sampled_m, sampled_b_perp = linear_ortho_fit.sample_likelihood(
         m, b_perp, m_grid, b_perp_grid, logL_grid
@@ -410,13 +440,13 @@ def plot_results_fit(
         )
     # pearson coefficient without outliers (gives us an idea of how
     # reasonable the trend is)
-    print("VVV-with outlier removal-VVV")
+    print("VVV-auto outlier removal-VVV")
     if report_rho:
         plot_rho_box(
             line_ax,
-            np.delete(xs, outlier_idxs, axis=0),
-            np.delete(ys, outlier_idxs, axis=0),
-            np.delete(covs, outlier_idxs, axis=0),
+            xs_no_out,
+            ys_no_out,
+            covs_no_out,
         )
 
     # plot the fitted line
@@ -433,6 +463,8 @@ def plot_results_fit(
     # if outliers, mark them
     if len(outlier_idxs) > 0:
         line_ax.scatter(xs[outlier_idxs], ys[outlier_idxs], marker="x", color="y")
+
+    return outlier_idxs
 
 
 def plot_results2(
@@ -515,7 +547,11 @@ def plot_results2(
         ignore_comments,
         mark_comments,
     )
-    plot_results_fit(xs, ys, covs, ax, lh_ax, outliers=True)
+    out = np.where(match_comments(data, ignore_comments))[0]
+    auto_out = plot_results_fit(
+        xs, ys, covs, ax, lh_ax, outliers=out, auto_outliers=True
+    )
+    print("Outliers: ", data["Name"][auto_out])
     plot_naive_regression(ax, xs, ys, covs)
     return fig
 

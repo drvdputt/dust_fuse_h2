@@ -360,7 +360,7 @@ def plot_solution_linescatter(ax, m_samples, b_samples, **plot_kwargs):
 
 def sample_likelihood(m, b_perp, m_grid, b_perp_grid, logL_grid):
     """
-    Calculate and analyze the likelihood around the maximum
+    Analyze the likelihood around the maximum by sampling from it.
 
     Parameters
     ----------
@@ -368,9 +368,7 @@ def sample_likelihood(m, b_perp, m_grid, b_perp_grid, logL_grid):
 
     xs, ys, covs: the data
 
-    area: [[min_m, max_m], [min_b_perp, max_b_perp]]
-        Area around m, b_perp in which to calculate the likelihood
-        function. Calculation is on a cartesian grid.
+    m_grid, b_perp_grid, logL_grid : logL, discretized on a grid
 
     Returns
     -------

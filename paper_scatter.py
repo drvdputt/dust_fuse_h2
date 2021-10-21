@@ -39,6 +39,7 @@ set_comment("HD096675", "hi_h_av")
 for name in ["HD200775", "HD164906", "HD045314", "HD206773"]:
     set_comment(name, "lo_h_av")
 
+
 bohlin = get_bohlin78()
 shull = get_shull2021()
 
@@ -54,11 +55,13 @@ def finalize_double(fig, filename):
     fig.set_size_inches(base_width, 2 / 3 * base_width)
     save(fig, filename)
 
+
 def finalize_vertical(fig, filename):
     for ax in fig.axs[:-1]:
         ax.set_xlabel("")
     fig.set_size_inches(base_width / 2, base_width)
-    save(fig,filename)
+    save(fig, filename)
+
 
 def finalize_double_grid(fig, axs, filename):
     # turn off xlabel for everything but last row
@@ -109,10 +112,13 @@ def plot1():
         data_comp=comp,
         data_bohlin=bohlin,
         ignore_comments=["lo_h_av", "hi_h_av"],
-        report_rho=False
+        report_rho=False,
     )
     out = np.where(match_comments(data, ["lo_h_av", "hi_h_av"]))[0]
-    plot_results_fit(xs, ys, covs, ax, report_rho=True, outliers=out)
+    plot_results_fit(
+        xs, ys, covs, ax, report_rho=True, outliers=out, auto_outliers=True
+    )
+    # print("AV vs nhtot outliers: ", data['name'][
 
     ax = choose_ax("AV", "nhi")
     xs, ys, covs = plot_results_scatter(
@@ -198,7 +204,7 @@ def plot1():
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
+    plot_results_fit(xs, ys, covs, ax, auto_outliers=True)
 
     for ax in axs[1:, 0]:
         ax.yaxis.offsetText.set_visible(False)
@@ -229,23 +235,10 @@ def plot2():
         data_comp=comp,
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
-        report_rho=False
+        report_rho=False,
     )
     plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
-
-    ax = axs[1, 0]
-    xs, ys, covs = plot_results_scatter(
-        ax,
-        data,
-        "1_RV",
-        "fh2",
-        data_comp=comp,
-        data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
-        report_rho=False
-    )
-    plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
 
     ax = axs[0, 1]
     xs, ys, covs = plot_results_scatter(
@@ -259,16 +252,6 @@ def plot2():
     )
     plot_results_fit(xs, ys, covs, ax)
 
-    ax = axs[1, 1]
-    xs, ys, covs = plot_results_scatter(
-        ax,
-        data,
-        "A1000_AV",
-        "fh2",
-        data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
-    )
-
     ax = axs[0, 2]
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -281,6 +264,30 @@ def plot2():
     )
     plot_results_fit(xs, ys, covs, ax)
 
+    ax = axs[1, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "1_RV",
+        "fh2",
+        data_comp=comp,
+        data_bohlin=bohlin,
+        ignore_comments=["lo_h_av"],
+        report_rho=True,
+    )
+    # plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
+
+    ax = axs[1, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000_AV",
+        "fh2",
+        data_bohlin=bohlin,
+        # ignore_comments=["hi_h_av"],
+        mark_comments=["lo_h_av", "hi_h_av"],
+    )
+
     ax = axs[1, 2]
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -288,6 +295,7 @@ def plot2():
         "A2175_AV",
         "fh2",
         data_bohlin=bohlin,
+        # ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av", "hi_h_av"],
     )
     finalize_double_grid(fig, axs, "rv_trends.pdf")
@@ -421,9 +429,9 @@ def plot4():
         "T01",
         "denhtot",
         data_comp=comp,
-        mark_comments=["lo_h_av"],
+        # mark_comments=["lo_h_av"],
     )
-    ax.set_yscale('log')
+    ax.set_yscale("log")
     ax = axs[0, 1]
     _ = plot_results_scatter(
         ax,
@@ -431,7 +439,7 @@ def plot4():
         "T01",
         "fh2",
         data_comp=comp,
-        mark_comments=["lo_h_av"],
+        # mark_comments=["lo_h_av"],
     )
     ax.set_xlim(40, 140)
 
@@ -442,6 +450,6 @@ def plot4():
 
 if __name__ == "__main__":
     plot1()
-    # plot2()
-    # plot3()
-    # plot4()
+    plot2()
+    plot3()
+    plot4()

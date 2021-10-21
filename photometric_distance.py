@@ -103,7 +103,7 @@ def get_abs_magnitudes(sptype):
             mv_unc[i] = np.nan
             print(f"Did not find absolute magnitude for {s}")
 
-    print(sptype, mv, mv_unc)
+    # print(sptype, mv, mv_unc)
     return mv, mv_unc
 
 

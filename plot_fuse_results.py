@@ -679,65 +679,6 @@ def get_xs_ys_covs_new(data, xparam, yparam):
     if implementation == "flipped":
         return py, px, np.flip(covs)
 
-
-def get_xs_ys_covs(data, xparam, yparam, cparam):
-
-    """
-    Return arrays of x, y, and cov(x,y) for a pair of parameters
-
-    """
-    x, xerr = get_param_and_unc(xparam, data)
-    y, yerr = get_param_and_unc(yparam, data)
-    cterm, cterm_unc = get_param_and_unc(cparam, data)
-
-    if (xparam == "AV" and yparam == "NH_AV") or (
-        xparam == "EBV" and yparam == "NH_EBV"
-    ):
-        yfac = yerr / y
-        xfac = xerr / x
-        corr = -1.0 * xfac / yfac
-    elif (
-        xparam == "RV"
-        and yparam == "NH_AV"
-        and cterm is not None
-        and cterm_unc is not None
-    ):
-        avfac = cterm_unc / cterm
-        yfac = yerr / y
-        corr = -1.0 * avfac / yfac
-    elif xparam == "AV" and yparam == "RV":
-        yfac = yerr / y
-        xfac = xerr / x
-        corr = xfac / yfac
-    elif (
-        ((xparam == "RV") or (xparam == "AV"))
-        and ((yparam[0:3] == "CAV") or (yparam == "bump_area"))
-        and cterm is not None
-        and cterm_unc is not None
-    ):
-        avfac = cterm_unc / cterm
-        yfac = yerr / y
-        corr = -1.0 * avfac / yfac
-    elif (
-        ((xparam == "RV") or (xparam == "EBV"))
-        and (yparam[0:1] == "C")
-        and cterm is not None
-        and cterm_unc is not None
-    ):
-        ebvfac = cterm_unc / cterm
-        yfac = yerr / y
-        corr = ebvfac / yfac
-    else:
-        corr = np.full(len(x), 0.0)
-
-    covs = np.zeros((len(x), 2, 2))
-    covs[:, 0, 0] = np.square(xerr)
-    covs[:, 1, 1] = np.square(yerr)
-    covs[:, 0, 1] = xerr * yerr * corr
-    covs[:, 1, 0] = covs[:, 0, 1]
-    return x, y, covs
-
-
 if __name__ == "__main__":
 
     # get the data table

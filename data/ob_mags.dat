@@ -29,3 +29,5 @@ B8 -0.49 -0.49 -0.99 -1.06 -4.24 -4.98 -6.01
 B9 0.10 0.10 -0.77 -0.93 -3.94 -4.97 -5.98
 # data until B3: Bowen 2008 appendix 3B
 # data from B4 onwards: Wegner 2007 Table 8
+# There is a big jump in magnitude between these two sources, especially for the high luminosity
+# classes. Not sure what to do about this.

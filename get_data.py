@@ -3,8 +3,8 @@
 import numpy as np
 from astropy.table import Table, join
 import pandas
-import re
 import astropy.units as u
+import photometric_distance
 
 
 def add_lin_column_from_log(logcolname, data):
@@ -385,17 +385,11 @@ def add_distance(table, comp=False):
     table_edit["d_unc"] = table_edit["d_gaia_unc"]
 
     ### photometric
-
-    # distance in parsec according to magnitude equation
-    v = table_edit["V"]
-    av = table_edit["AV"]
-    mv = get_abs_magnitudes(table_edit["SpType"])
-    # apply magnitude distance equation (divide by 1000 to get kpc)
-    d = np.where(np.isnan(mv), np.nan, 10 * np.power(10, (v - av - mv) / 5) / 1000)
-    # hack for now. Should have real uncertainties here when doing
-    # something serious with distance
-    d_unc = 0.1 * d
-    table_edit.add_column(d, name="dphot")
+    dphot, dphot_unc = photometric_distance.calc_distance(
+        table_edit["SpType"], table_edit["V"], table_edit["AV"]
+    )
+    table_edit.add_column(dphot, name="dphot")
+    table_edit.add_column(dphot_unc, name="dphot_unc")
 
     # replace the main distance measurement where possible
     replace = np.isfinite(table_edit["dphot"])
@@ -416,41 +410,6 @@ def add_distance(table, comp=False):
     print(f"Took {count} distances from Shull+21")
 
     return table_edit
-
-
-def get_abs_magnitudes(sptype):
-    """
-    Use given spectral type column and ob_mags file to find absolute magnitude.
-
-    Uses table from appendix 3B of Bowen et al. 2008.
-
-    Parameters
-    ----------
-    sptype : spectral type column from main table
-
-    Returns
-    -------
-    MV : absolute magnitude for each star
-
-    """
-    # this works nicely
-    t = Table.read("data/ob_mags.dat", format="ascii.commented_header")
-    mv = np.zeros(len(sptype))
-    for i, s in enumerate(sptype):
-        # spectral type (e.g. B0.5)
-        match = re.match("[OB][0-9](\.[0-9])?", s)
-        # print(match[0])
-        # luminosity class (e.g. IV)
-        col = s[match.end() :].lower()
-        # retrieve from table
-        if match[0] in t["type"] and col in t.colnames:
-            index = np.where(t["type"] == match[0])[0][0]
-            mv[i] = t[col][index]
-        else:
-            mv[i] = np.nan
-            print(f"Did not find absolute magnitude for {s}")
-
-    return mv
 
 
 def get_merged_table(comp=False):

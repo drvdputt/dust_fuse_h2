@@ -209,6 +209,8 @@ def plot1():
     for ax in axs[1:, 0]:
         ax.yaxis.offsetText.set_visible(False)
 
+    axs[0][0].legend(bbox_to_anchor=(1.5, 1), loc="lower center", ncol=4)
+
     fig.tight_layout()
     finalize_double_grid(fig, axs, "column_vs_column.pdf")
 

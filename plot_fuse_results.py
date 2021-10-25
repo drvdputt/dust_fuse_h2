@@ -600,6 +600,7 @@ def get_xs_ys_covs_new(data, xparam, yparam):
         ("fh2", "nhtot"),
         ("RV", "NH_AV"),
         ("1_RV", "NH_AV"),
+        ("A1000_AV", "NH_AV"),
     ]
     if requested_pair in implemented_pairs:
         pair = requested_pair
@@ -663,6 +664,14 @@ def get_xs_ys_covs_new(data, xparam, yparam):
         Vrvm1 = px_unc ** 2
         Vnh_av = py_unc ** 2
         covs = covariance.make_cov_matrix(Vrvm1, Vnh_av, c)
+    elif pair == ("A1000_AV", "NH_AV"):
+        # no covariance here! "A1000_AV" is provided by the fit equation
+        # directly, so it is not obtained by dividing by AV. In reality,
+        # AV is extrapolated from the extinction curve, and so there
+        # actually is a correlation. But one would need to do some
+        # statistical modeling on the original data from Gordon 2009 to
+        # actually know this covariance.
+        covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2)
     else:
         # print(
         #     "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."

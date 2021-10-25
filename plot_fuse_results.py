@@ -472,7 +472,7 @@ def plot_results_fit(
 
     # if outliers, mark them
     if len(outlier_idxs) > 0:
-        line_ax.scatter(xs[outlier_idxs], ys[outlier_idxs], marker="x", color="y")
+        line_ax.scatter(xs[outlier_idxs], ys[outlier_idxs], marker="x", color="y", label='outlier')
 
     return outlier_idxs
 

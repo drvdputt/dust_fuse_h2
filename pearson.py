@@ -76,8 +76,8 @@ def pearson_mc(xs, ys, covs, save_hist=None):
         return f"rho = {rho:.2f} +- {std:.2f} ({num_sigmas:.2f} sigma0)\n sigmas range = {num_sigmas_lo:.2f} - {num_sigmas_hi:.2f}"
 
     print("+++ MC pearson result +++")
-    # rho_naive = np.corrcoef(xs, ys)[0, 1]
-    # print("data: ", rho_sigma_message(rho_naive))
+    rho_naive = np.corrcoef(xs, ys)[0, 1]
+    print("raw: ", rho_sigma_message(rho_naive))
     avg = np.average(rhos)
     print("avg: ", rho_sigma_message(avg))
     # med = np.median(rhos)

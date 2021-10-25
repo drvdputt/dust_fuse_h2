@@ -264,9 +264,9 @@ def plot_results_scatter(
     # plot comparison star data (not used for fitting)
     if data_comp is not None:
         # xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
-        xs, ys, covs = get_xs_ys_covs_new(data_comp, xparam, yparam)
+        xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam)
         covariance.plot_scatter_with_ellipses(
-            ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha, label="compar"
+            ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha, label="comp"
         )
 
     # decide which points to highlight as ignored
@@ -276,7 +276,7 @@ def plot_results_scatter(
     mark = match_comments(data, mark_comments)
 
     # get all data, and plot everything except ignored
-    xs, ys, covs = get_xs_ys_covs_new(data, xparam, yparam)
+    xs, ys, covs = get_xs_ys_covs(data, xparam, yparam)
     covariance.plot_scatter_with_ellipses(
         ax,
         xs[not_ignored],
@@ -293,18 +293,19 @@ def plot_results_scatter(
 
     # mark data points, if any
     if mark.any():
-        xs_mark, ys_mark, _ = get_xs_ys_covs_new(data[mark], xparam, yparam)
+        xs_mark, ys_mark, _ = get_xs_ys_covs(data[mark], xparam, yparam)
         ax.scatter(
             xs_mark,
             ys_mark,
             facecolors="none",
             edgecolors=MARK_COLOR,
             marker=MARK_MARKER,
+            # label="highlight"
         )
 
     # plot ignored points in different color
     if ignore.any():
-        bad_xs, bad_ys, bad_covs = get_xs_ys_covs_new(data[ignore], xparam, yparam)
+        bad_xs, bad_ys, bad_covs = get_xs_ys_covs(data[ignore], xparam, yparam)
         covariance.plot_scatter_with_ellipses(
             ax,
             bad_xs,
@@ -585,7 +586,7 @@ def get_param_and_unc(param, data):
     return d, unc
 
 
-def get_xs_ys_covs_new(data, xparam, yparam):
+def get_xs_ys_covs(data, xparam, yparam):
     # make this function work when x and y are flipped, too. See this
     # block, and the return statements at the end.
     requested_pair = (xparam, yparam)

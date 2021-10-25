@@ -111,7 +111,7 @@ def plot1():
         "nhtot",
         data_comp=comp,
         data_bohlin=bohlin,
-        ignore_comments=["lo_h_av", "hi_h_av"],
+        # ignore_comments=["lo_h_av", "hi_h_av"],
         report_rho=False,
     )
     out = np.where(match_comments(data, ["lo_h_av", "hi_h_av"]))[0]

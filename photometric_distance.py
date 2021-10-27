@@ -63,14 +63,7 @@ def get_abs_magnitudes(sptype):
             else:
                 raise ValueError("spT-1 not available (for calculating mv error)")
 
-            # the table is not monotonic in the lum direction, so we use
-            # the following approach to give a reasonable range.
-            # Technically only necessary for lum+-1, but we do it here
-            # too for consistency
-            mv_vals_when_change_spt = (mv[i], mv_spt_next, mv_spt_prev)
-            mv_unc_spt = 0.5 * (
-                max(mv_vals_when_change_spt) - min(mv_vals_when_change_spt)
-            )
+            mv_unc_spt = three_point_unc(mv_spt_prev, mv[i], mv_spt_next)
 
             # lum error
             lum_index = mv_table.colnames.index(lum)
@@ -91,10 +84,7 @@ def get_abs_magnitudes(sptype):
                 # raise ValueError("lum-1 not available (for calculating mv error)")
                 mv_lum_prev = mv[i]
 
-            mv_vals_when_change_lum = (mv[i], mv_lum_next, mv_lum_prev)
-            mv_unc_lum = 0.5 * (
-                max(mv_vals_when_change_lum) - min(mv_vals_when_change_lum)
-            )
+            mv_unc_lum = three_point_unc(mv_lum_prev, mv[i], mv_lum_next)
 
             mv_unc_flat = 0.25
             mv_unc[i] = np.sqrt(mv_unc_spt ** 2 + mv_unc_lum ** 2 + mv_unc_flat ** 2)
@@ -150,3 +140,12 @@ def calc_distance(sptype, v, v_unc, av, av_unc):
     mv, mv_unc = get_abs_magnitudes(sptype)
     d, d_unc = main_equation(mv, mv_unc, v, v_unc, av, av_unc)
     return d, d_unc
+
+
+def three_point_unc(left, middle, right):
+    """The way uncertainties are calculated for a position in the magnitude
+    table. The halfway point between data points is assumed to be the sigma.
+    """
+    # upper and lower sigma are halfway points. sigma is average of those.
+    # so 0.5 * (0.5 * abs(hi - mid) + 0.5 * abs(mid - lo))
+    return 0.25 * (abs(right - middle) + abs(middle - left))

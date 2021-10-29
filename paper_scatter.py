@@ -41,8 +41,17 @@ comp = get_merged_table(True)
 data.add_column(Column(["none"] * len(data), dtype="<U16", name="comment"))
 
 set_comment("HD096675", "hi_h_av")
-for name in ["HD200775", "HD164906", "HD045314", "HD206773"]:
+
+# the 4 low outliers
+for name in ["HD045314", "HD164906", "HD200775", "HD206773"]:
     set_comment(name, "lo_h_av")
+
+# Same but with two automatically detected low outliers (they are not
+# near the same group in the 1/RV plot, so we probably don't want to
+# confuse the reader more by indicating these ones too
+# for name in ["HD045314", "HD164906", "HD188001", "HD198781", "HD200775", "HD206773"]:
+    # set_comment(name, "lo_h_av")
+
 
 
 bohlin = get_bohlin78()
@@ -168,7 +177,7 @@ def plot1():
         data,
         "AV",
         "nhtot",
-        data_comp=comp,
+        # data_comp=comp,
         data_bohlin=bohlin,
         # ignore_comments=["lo_h_av", "hi_h_av"],
         report_rho=False,
@@ -186,9 +195,9 @@ def plot1():
         data,
         "AV",
         "nhi",
-        data_comp=comp,
+        # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
     ax = choose_ax("AV", "nh2")
     xs, ys, covs = plot_results_scatter(
@@ -196,9 +205,9 @@ def plot1():
         data,
         "AV",
         "nh2",
-        data_comp=comp,
+        # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
 
     ax = choose_ax("EBV", "nhtot")
@@ -207,7 +216,7 @@ def plot1():
         data,
         "EBV",
         "nhtot",
-        data_comp=comp,
+        # data_comp=comp,
         data_bohlin=bohlin,
         mark_comments=["lo_h_av"],
         # ignore_comments=["hi_h_av"],
@@ -222,9 +231,9 @@ def plot1():
         data,
         "EBV",
         "nhi",
-        data_comp=comp,
+        # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
 
     ax = choose_ax("EBV", "nh2")
@@ -233,9 +242,9 @@ def plot1():
         data,
         "EBV",
         "nh2",
-        data_comp=comp,
+        # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
 
     ax = choose_ax("A1000", "nhtot")
@@ -245,8 +254,9 @@ def plot1():
         "A1000",
         "nhtot",
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
+
     ax = choose_ax("A1000", "nhi")
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -254,8 +264,9 @@ def plot1():
         "A1000",
         "nhi",
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
+
     ax = choose_ax("A1000", "nh2")
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -263,7 +274,7 @@ def plot1():
         "A1000",
         "nh2",
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
     fit_results_table.append(latex_table_line("\\ak", "\\nhtwo", r))
 
@@ -295,7 +306,7 @@ def plot2():
         "1_RV",
         "NH_AV",
         pyrange=[0, max_nh_av],
-        data_comp=comp,
+        # data_comp=comp,
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
         report_rho=False,
@@ -336,7 +347,7 @@ def plot2():
         data,
         "1_RV",
         "fh2",
-        data_comp=comp,
+        # data_comp=comp,
         data_bohlin=bohlin,
         ignore_comments=["lo_h_av"],
         report_rho=True,
@@ -351,7 +362,7 @@ def plot2():
         "fh2",
         data_bohlin=bohlin,
         # ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
 
     ax = axs[1, 2]
@@ -362,7 +373,7 @@ def plot2():
         "fh2",
         data_bohlin=bohlin,
         # ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av", "hi_h_av"],
+        mark_comments=["lo_h_av"],
     )
     finalize_double_grid(fig, axs, "rv_trends.pdf")
 
@@ -494,7 +505,7 @@ def plot4():
         data,
         "T01",
         "denhtot",
-        data_comp=comp,
+        # data_comp=comp,
         # mark_comments=["lo_h_av"],
     )
     ax.set_yscale("log")
@@ -504,7 +515,7 @@ def plot4():
         data,
         "T01",
         "fh2",
-        data_comp=comp,
+        # data_comp=comp,
         # mark_comments=["lo_h_av"],
     )
     ax.set_xlim(40, 140)

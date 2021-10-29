@@ -9,11 +9,16 @@ Some of them are grouped using subplots
 
 from get_data import get_merged_table, get_bohlin78, get_shull2021
 import plot_fuse_results
-from plot_fuse_results import plot_results_scatter, plot_results_fit, match_comments
+from plot_fuse_results import (
+    plot_results_scatter,
+    plot_results_fit,
+    match_comments,
+)
 from matplotlib import pyplot as plt
 from astropy.table import Column
-import math
 import numpy as np
+from uncertainties import ufloat
+import math
 
 plt.rcParams.update({"font.family": "times"})
 
@@ -82,6 +87,60 @@ def save(fig, filename, need_hspace=False, need_wspace=False):
     fig.savefig("paper-plots/" + filename)
 
 
+# Simply a list of lines for the table. It's a global variable, and stuff is added to it when the different plot functions below are executed.
+fit_results_table = []
+
+
+def format_number_with_unc(x, x_unc):
+    """This should go in my general toolbox later.
+
+    Uses 'uncertainties' module, but changes the printing to be more
+    latexy."""
+    # heuristic for the number of figures after the decimal point
+    numdecimal = max(1, int(math.floor(math.log10(abs(x_unc / x)))))
+
+    u = ufloat(x, x_unc)
+    fstring = "{u:." + str(numdecimal) + "e}"
+
+    # typical output of ufloat formatter is '(2.21+/-0.02)e+19'
+    print_edit = fstring.format(u=u)
+    # replace parentheses and +/- by \num command from siunitx latex package
+    print_edit = print_edit.replace("(", "\\num{")
+    print_edit = print_edit.replace("+/-", " \\pm ")
+    print_edit = print_edit.replace(")", " ")
+    print_edit += "}"
+    return print_edit
+
+
+def latex_table_line(xparam, yparam, fit_results_dict):
+    """
+    Format a fit result as an entry for the fit results table in the paper.
+
+    Parameters
+    ----------
+    xparam: string
+        name of parameter on x-axis
+
+    yparam: string
+        name of parameter on y-axis
+
+    fit_results_dict: dict
+        output of plot_results_fit
+
+    Returns
+    -------
+    string:
+        xparam & yparam & m \pm m_unc & b \pm b_unc
+    """
+    m_and_unc_str = format_number_with_unc(
+        fit_results_dict["m"], fit_results_dict["m_unc"]
+    )
+    b_and_b_unc_str = format_number_with_unc(
+        fit_results_dict["b"], fit_results_dict["b_unc"]
+    )
+    return f"{xparam} & {yparam} & {m_and_unc_str} & {b_and_b_unc_str}\\\\"
+
+
 def plot1():
     """The first plot shows gas columns vs dust columns.
 
@@ -118,6 +177,7 @@ def plot1():
     plot_results_fit(
         xs, ys, covs, ax, report_rho=True, outliers=out, auto_outliers=True
     )
+    fit_results_table.append(latex_table_line("\\av", "\\nh", r))
     # print("AV vs nhtot outliers: ", data['name'][
 
     ax = choose_ax("AV", "nhi")
@@ -153,7 +213,8 @@ def plot1():
         # ignore_comments=["hi_h_av"],
         report_rho=False,
     )
-    plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
+    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
+    fit_results_table.append(latex_table_line("\\ebv", "\\nh", r))
 
     ax = choose_ax("EBV", "nhi")
     xs, ys, covs = plot_results_scatter(
@@ -204,7 +265,7 @@ def plot1():
         data_bohlin=bohlin,
         mark_comments=["lo_h_av", "hi_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax, auto_outliers=True)
+    fit_results_table.append(latex_table_line("\\ak", "\\nhtwo", r))
 
     for ax in axs[1:, 0]:
         ax.yaxis.offsetText.set_visible(False)
@@ -239,7 +300,8 @@ def plot2():
         mark_comments=["lo_h_av"],
         report_rho=False,
     )
-    plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
+    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False, report_rho=True)
+    fit_results_table.append(latex_table_line("\\rvi", "\\nhav", r))
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
 
     ax = axs[0, 1]
@@ -252,7 +314,8 @@ def plot2():
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
+    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
+    fit_results_table.append(latex_table_line("\\\akav", "\\nhav", r))
 
     ax = axs[0, 2]
     xs, ys, covs = plot_results_scatter(
@@ -264,7 +327,8 @@ def plot2():
         ignore_comments=["hi_h_av"],
         mark_comments=["lo_h_av"],
     )
-    plot_results_fit(xs, ys, covs, ax)
+    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
+    fit_results_table.append(latex_table_line("\\abumpav", "\\nhav", r))
 
     ax = axs[1, 0]
     xs, ys, covs = plot_results_scatter(

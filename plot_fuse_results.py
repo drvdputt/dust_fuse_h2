@@ -10,10 +10,13 @@ import linear_ortho_fit
 import pearson
 
 # some easily customizable constants
-BOHLIN_COLOR = "xkcd:magenta"
+BOHLIN_COLOR = "xkcd:gray"
+BOHLIN_MARKER = "D"
 SHULL_COLOR = "xkcd:dark yellow"
-COMP_COLOR = "xkcd:sky blue"
-MAIN_COLOR = "xkcd:gray"
+SHILL_MARKER = "o"
+COMP_COLOR = "xkcd:gray"
+MAIN_COLOR = "xkcd:purple"
+MAIN_MARKER = "+"
 MARK_COLOR = "r"
 MARK_MARKER = "s"
 FIT_COLOR = "k"
@@ -198,7 +201,7 @@ def plot_results_scatter(
     data_bohlin=None,
     data_shull=None,
     figsize=None,
-    alpha=0.5,
+    alpha=1,
     ignore_comments=None,
     mark_comments=None,
     report_rho=True,
@@ -220,7 +223,10 @@ def plot_results_scatter(
     print("-" * 72)
 
     # plot bohlin or shull data (not used for fitting)
-    def plot_extra_data(extra, label, color, find_dups=False):
+    def plot_extra_data(extra, find_dups=False, **kwargs):
+        kwargs["markersize"] = 2
+        kwargs["markerfacecolor"] = "white"
+        kwargs["elinewidth"] = 1
         if extra is not None and xparam in extra.colnames and yparam in extra.colnames:
             # errorbar() has no problems with xerr and yerr being None,
             # so don't need to check for uncertainty columns
@@ -231,35 +237,39 @@ def plot_results_scatter(
                 dup = np.isin(extra["Name"], data["Name"])
                 not_dup = np.logical_not(dup)
                 # plot duplicates as "+"
-                if dup.any():
-                    ax.scatter(
-                        xcol[dup],
-                        ycol[dup],
-                        label=label,
-                        color=color,
-                        marker="+",
-                        alpha=alpha,
-                    )
+                # if dup.any():
+                #     ax.scatter(
+                #         xcol[dup],
+                #         ycol[dup],
+                #         alpha=alpha ** kwargs,
+                #     )
                 # discard duplicates
                 xcol = xcol[not_dup]
                 ycol = ycol[not_dup]
                 xcol_unc = None if xcol_unc is None else xcol_unc[not_dup]
                 ycol_unc = None if ycol_unc is None else ycol_unc[not_dup]
+                print(f"{len(xcol)} stars remaining after removing duplicates")
 
             ax.errorbar(
                 xcol,
                 ycol,
                 xerr=xcol_unc,
                 yerr=ycol_unc,
-                label=label,
-                color=color,
                 linestyle="none",
-                marker=".",
-                alpha=alpha,
+                # alpha=alpha,
+                **kwargs,
             )
 
-    plot_extra_data(data_bohlin, "Bohlin78", BOHLIN_COLOR)
-    plot_extra_data(data_shull, "Shull+21", SHULL_COLOR, find_dups=True)
+    plot_extra_data(
+        data_bohlin,
+        label="Bohlin78",
+        color=BOHLIN_COLOR,
+        marker=BOHLIN_MARKER,
+        zorder=-10,
+    )
+    plot_extra_data(
+        data_shull, find_dups=True, label="Shull+21", color=SHULL_COLOR, marker="."
+    )
 
     # plot comparison star data (not used for fitting)
     if data_comp is not None:
@@ -285,8 +295,8 @@ def plot_results_scatter(
         1,
         color=MAIN_COLOR,
         alpha=alpha,
-        marker=".",
-        s=1,
+        marker=MAIN_MARKER,
+        s=50,
         label="sample",
         zorder=10,
     )
@@ -489,7 +499,12 @@ def plot_results_fit(
     # if outliers, mark them
     if len(outlier_idxs) > 0:
         line_ax.scatter(
-            xs[outlier_idxs], ys[outlier_idxs], marker="x", color="y", label="outlier"
+            xs[outlier_idxs],
+            ys[outlier_idxs],
+            marker="x",
+            color="y",
+            label="outlier",
+            zorder=10,
         )
 
     # return as dict, in case we want to do more specific things in

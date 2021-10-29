@@ -401,7 +401,7 @@ def plot_results_fit(
         sigma_hess=True,
         manual_outliers=outliers,
         auto_outliers=auto_outliers,
-        fit_includes_outlier=fit_includes_outliers,
+        fit_includes_outliers=fit_includes_outliers,
     )
     m = r["m"]
     b_perp = r["b_perp"]

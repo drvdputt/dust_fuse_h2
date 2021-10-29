@@ -134,6 +134,7 @@ def linear_ortho_maxlh(
     sigma_hess=False,
     manual_outliers=None,
     auto_outliers=False,
+    fit_includes_outliers=False,
 ):
     """Do a linear fit based on orthogonal distance, to data where each
     point can have a different covariance between x and y. Uses the
@@ -167,15 +168,19 @@ def linear_ortho_maxlh(
         mark outliers and rerun the fitting step iteratively until no
         new outliers are found
 
+    fit_includes_outliers : bool
+        Use the detected outliers in the fitting, despite them being
+        outliers.
+
     Returns
     -------
-    m: slope
-    b_perp: perpendicular intercept (b / sqrt(1 + m^2))
-    sigma_m: estimate of error on slop
-    sigma_b: estimate of error on intercept
-    rho_mb: estimate of pearson coefficient between m and b
-    outliers: {set of indices of outliers}
-
+    dict :
+        Contains
+        m: slope
+        b_perp: perpendicular intercept (b / sqrt(1 + m^2))
+        m_unc: estimate of error on slop
+        b_perp_unc: estimate of error on b_perp
+        outlier_idxs: list of indices of outliers
     """
     xy = np.column_stack((data_x, data_y))
     # choose a scale factor to avoid the problems that come with the
@@ -192,7 +197,10 @@ def linear_ortho_maxlh(
         outliers = set()
 
     def no_outliers(data):
-        return np.delete(data, list(outliers), axis=0)
+        if fit_includes_outliers:
+            return data
+        else:
+            return np.delete(data, list(outliers), axis=0)
 
     def to_minimize(v):
         m, b_perp = v
@@ -289,6 +297,8 @@ down {}
         print("m, b:", m_real, b_real)
         print(f"chi2min: {chi2min} or {chi2min/(len(xy) - 2)} per DOF")
 
+    result = {"m": m_real, "b_perp": b_perp_real, "outlier_idxs": outlier_output}
+
     if sigma_hess:
         # estimate error using hessian. Useful for choosing area around max
         # likelihood.
@@ -307,10 +317,10 @@ down {}
         sigma_m_real = sigma_m_frac * m_real
         sigma_b_perp_real = sigma_b_frac * b_perp_real
 
-        # return values and uncertainties
-        return m_real, b_perp_real, sigma_m_real, sigma_b_perp_real, outlier_output
-    else:
-        return m_real, b_perp_real, outlier_output
+        result["m_unc"] = sigma_m_real
+        result["b_perp_unc"] = sigma_b_perp_real
+
+    return result
 
 
 def bootstrap_fit_errors(data_x, data_y, cov_xy):
@@ -334,9 +344,9 @@ def bootstrap_fit_errors(data_x, data_y, cov_xy):
         boot_x = data_x[idxs]
         boot_y = data_y[idxs]
         boot_cov = cov_xy[idxs]
-        ms[m], bs[m], _ = linear_ortho_maxlh(
-            boot_x, boot_y, boot_cov, basic_print=False
-        )
+        r = linear_ortho_maxlh(boot_x, boot_y, boot_cov, basic_print=False)
+        ms[m] = r["m"]
+        bs[m] = r["b_perp"]
 
     print("Bootstrap: m = {} ; b = {}".format(np.average(ms), np.average(bs)))
     print("Bootstrap: sm = {} ; sb = {}".format(np.std(ms), np.std(bs)))

@@ -145,10 +145,10 @@ def plot_rho_box(ax, xs, ys, covs, save_hist=None):
 
     # choose best place to put it
     if rho > 0:
-        ha = 'left'
+        ha = "left"
         xpos = 0.03
     else:
-        ha = 'right'
+        ha = "right"
         xpos = 0.98
 
     ax.text(
@@ -352,6 +352,7 @@ def plot_results_fit(
     lh_ax=None,
     outliers=None,
     auto_outliers=False,
+    fit_includes_outliers=False,
     report_rho=False,
 ):
     """Do the fit and plot the result.
@@ -378,6 +379,9 @@ def plot_results_fit(
         outliers on plot (line ax). See outlier detection function for
         criterion.
 
+    fit_includes_outliers : bool
+        Use the detected outliers in the fitting, despite them being outliers.
+
     report_rho: draw a box with the correlation coefficient AFTER outlier removal
 
     Returns
@@ -389,7 +393,7 @@ def plot_results_fit(
     line_ax.set_xlim(line_ax.get_xlim())
     line_ax.set_ylim(line_ax.get_ylim())
 
-    m, b_perp, sm, sb_perp, outlier_idxs = linear_ortho_fit.linear_ortho_maxlh(
+    r = linear_ortho_fit.linear_ortho_maxlh(
         xs,
         ys,
         covs,
@@ -397,13 +401,25 @@ def plot_results_fit(
         sigma_hess=True,
         manual_outliers=outliers,
         auto_outliers=auto_outliers,
+        fit_includes_outlier=fit_includes_outliers,
     )
+    m = r["m"]
+    b_perp = r["b_perp"]
+    sm = r["m_unc"]
+    sb_perp = r["b_perp_unc"]
+    outlier_idxs = r["outlier_idxs"]
+
     b = linear_ortho_fit.b_perp_to_b(m, b_perp)
 
     # The fitting process also indicated some outliers. Do the rest without them.
-    xs_no_out = np.delete(xs, outlier_idxs, axis=0)
-    ys_no_out = np.delete(ys, outlier_idxs, axis=0)
-    covs_no_out = np.delete(covs, outlier_idxs, axis=0)
+    if fit_includes_outliers:
+        xs_used = xs
+        ys_used = ys
+        covs_used = covs
+    else:
+        xs_used = np.delete(xs, outlier_idxs, axis=0)
+        ys_used = np.delete(ys, outlier_idxs, axis=0)
+        covs_used = np.delete(covs, outlier_idxs, axis=0)
 
     # Looking at bootstrap with and without outliers might be interesting.
     # boot_cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs_no_out, ys_no_out, covs_no_out)
@@ -417,9 +433,9 @@ def plot_results_fit(
         m + a * sm,
         b_perp - a * sb_perp,
         b_perp + a * sb_perp,
-        xs_no_out,
-        ys_no_out,
-        covs_no_out,
+        xs_used,
+        ys_used,
+        covs_used,
     )
     sampled_m, sampled_b_perp = linear_ortho_fit.sample_likelihood(
         m, b_perp, m_grid, b_perp_grid, logL_grid
@@ -454,9 +470,9 @@ def plot_results_fit(
     if report_rho:
         plot_rho_box(
             line_ax,
-            xs_no_out,
-            ys_no_out,
-            covs_no_out,
+            xs_used,
+            ys_used,
+            covs_used,
         )
 
     # plot the fitted line
@@ -472,9 +488,21 @@ def plot_results_fit(
 
     # if outliers, mark them
     if len(outlier_idxs) > 0:
-        line_ax.scatter(xs[outlier_idxs], ys[outlier_idxs], marker="x", color="y", label='outlier')
+        line_ax.scatter(
+            xs[outlier_idxs], ys[outlier_idxs], marker="x", color="y", label="outlier"
+        )
 
-    return outlier_idxs
+    # return as dict, in case we want to do more specific things in
+    # post. Example: gathering numbers and putting them into a table, in
+    # the main plotting script (paper_scatter.py).
+    results = {
+        "m": m,
+        "m_unc": m_unc,
+        "b": b,
+        "b_unc": b_unc,
+        "outlier_idxs": outlier_idxs,
+    }
+    return results
 
 
 def plot_results2(
@@ -697,6 +725,7 @@ def get_xs_ys_covs(data, xparam, yparam):
         return px, py, covs
     if implementation == "flipped":
         return py, px, np.flip(covs)
+
 
 if __name__ == "__main__":
 

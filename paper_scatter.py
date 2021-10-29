@@ -183,7 +183,7 @@ def plot1():
         report_rho=False,
     )
     out = np.where(match_comments(data, ["lo_h_av", "hi_h_av"]))[0]
-    plot_results_fit(
+    r = plot_results_fit(
         xs, ys, covs, ax, report_rho=True, outliers=out, auto_outliers=True
     )
     fit_results_table.append(latex_table_line("\\av", "\\nh", r))
@@ -275,6 +275,16 @@ def plot1():
         "nh2",
         data_bohlin=bohlin,
         mark_comments=["lo_h_av"],
+        report_rho=False,
+    )
+    r = plot_results_fit(
+        xs,
+        ys,
+        covs,
+        ax,
+        auto_outliers=True,
+        fit_includes_outliers=True,
+        report_rho=True,
     )
     fit_results_table.append(latex_table_line("\\ak", "\\nhtwo", r))
 

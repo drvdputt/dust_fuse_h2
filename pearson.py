@@ -80,8 +80,8 @@ def pearson_mc(xs, ys, covs, save_hist=None):
     print("raw: ", rho_sigma_message(rho_naive))
     avg = np.average(rhos)
     print("avg: ", rho_sigma_message(avg))
-    # med = np.median(rhos)
-    # print("median: ", rho_sigma_message(med))
+    med = np.median(rhos)
+    print("median: ", rho_sigma_message(med))
 
     # for debugging purposes
     if save_hist is not None:
@@ -90,4 +90,4 @@ def pearson_mc(xs, ys, covs, save_hist=None):
         ax.hist(rhos, bins=50)
         fig.savefig(save_hist)
 
-    return avg, std_null
+    return med, std_null

@@ -23,7 +23,7 @@ import math
 plt.rcParams.update({"font.family": "times"})
 
 # change colors like this
-plot_fuse_results.MAIN_COLOR = "k"
+# plot_fuse_results.MAIN_COLOR = "m"
 
 # base width for figures. Is equal to the text width over two columns
 base_width = 7.1
@@ -106,7 +106,7 @@ def format_number_with_unc(x, x_unc):
     Uses 'uncertainties' module, but changes the printing to be more
     latexy."""
     # heuristic for the number of figures after the decimal point
-    numdecimal = max(1, int(math.floor(math.log10(abs(x_unc / x)))))
+    numdecimal = max(1, int(math.floor(abs(math.log10(abs(x_unc / x)))))) + 1
 
     u = ufloat(x, x_unc)
     fstring = "{u:." + str(numdecimal) + "e}"
@@ -336,7 +336,7 @@ def plot2():
         mark_comments=["lo_h_av"],
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
-    fit_results_table.append(latex_table_line("\\\akav", "\\nhav", r))
+    fit_results_table.append(latex_table_line("\\akav", "\\nhav", r))
 
     ax = axs[0, 2]
     xs, ys, covs = plot_results_scatter(
@@ -359,7 +359,8 @@ def plot2():
         "fh2",
         # data_comp=comp,
         data_bohlin=bohlin,
-        ignore_comments=["lo_h_av"],
+        # ignore_comments=["lo_h_av"],
+        mark_comments=["lo_h_av"],
         report_rho=True,
     )
     # plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)

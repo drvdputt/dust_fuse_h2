@@ -530,3 +530,5 @@ if __name__ == "__main__":
     plot2()
     plot3()
     plot4()
+    for line in fit_results_table:
+        print(line)

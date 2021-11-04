@@ -15,8 +15,9 @@ BOHLIN_MARKER = "D"
 SHULL_COLOR = "xkcd:dark yellow"
 SHILL_MARKER = "o"
 COMP_COLOR = "xkcd:gray"
-MAIN_COLOR = "xkcd:purple"
+MAIN_COLOR = "xkcd:bright blue"
 MAIN_MARKER = "+"
+MAIN_MARKER_MEW = 0.6  # linewidth for scatter command
 MARK_COLOR = "r"
 MARK_MARKER = "s"
 FIT_COLOR = "k"
@@ -296,7 +297,8 @@ def plot_results_scatter(
         color=MAIN_COLOR,
         alpha=alpha,
         marker=MAIN_MARKER,
-        s=50,
+        linewidth=MAIN_MARKER_MEW,
+        s=40,
         label="sample",
         zorder=10,
     )
@@ -311,6 +313,7 @@ def plot_results_scatter(
             edgecolors=MARK_COLOR,
             marker=MARK_MARKER,
             # label="highlight"
+            zorder=11,
         )
 
     # plot ignored points in different color

@@ -588,17 +588,16 @@ def get_merged_table(comp=False):
             unc = val + "_unc"
             merged_table[val] = extinction_curve(w)
             merged_table[unc] = extinction_curve_unc(w)
+            rel_unc = merged_table[unc] / merged_table[val]
 
-            # also multiply them by AV
+            # also multiply them by AV, but do not add AV error, since
+            # we are removing the 1/AV factor again by multiplying here.
             absval = val.replace("_AV", "")
             merged_table[absval] = merged_table[val] * merged_table["AV"]
-            rel_unc2 = (merged_table[unc] / merged_table[val]) ** 2 + (
-                merged_table["AV_unc"] / merged_table["AV"]
-            ) ** 2
-            merged_table[absval + "_unc"] = merged_table[absval] * np.sqrt(rel_unc2)
+            merged_table[absval + "_unc"] = merged_table[absval] * rel_unc
 
         add_specific_wavelength(1000)
-        add_den_column("A1000", "A1000_d")
+        # add_den_column("A1000", "A1000_d")
         add_specific_wavelength(2175)
 
     return merged_table

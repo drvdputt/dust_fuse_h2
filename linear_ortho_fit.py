@@ -3,7 +3,7 @@ from scipy import optimize
 import itertools
 from astropy.modeling import models, fitting
 from covariance import cov_ellipse
-
+from rescale import rescale_data, unscale_mb
 
 def perp(m):
     """Vector perpendicular to a line with slope m"""
@@ -462,22 +462,6 @@ def plot_solution_neighborhood(
         ax.add_patch(
             cov_ellipse(b_perp, m, cov_mb[::-1, ::-1], facecolor="none", edgecolor="k")
         )
-
-
-def rescale_data(xy, covs, factor_x, factor_y):
-    S = np.array([[factor_x, 0], [0, factor_y]])
-    xyr = np.einsum("ij,dj", S, xy)
-    covr = np.einsum("ij,djk,kl", S.T, covs, S)
-    return xyr, covr
-
-
-def unscale_mb(m, b, factor_x, factor_y):
-    # x * factor_x * m = y * factor_y --> y / x = ...
-    m_real = m * factor_x / factor_y
-    # b = y * factor_y --> y = ...
-    b_real = b / factor_y
-    return m_real, b_real
-
 
 def b_perp_to_b(m, b_perp):
     # reminder: b_perp = b cos(theta) = b / sqrt(1 + m^2)

@@ -11,22 +11,40 @@ instead of some best fitting model which has underlying assumptions.
 """
 import numpy as np
 from matplotlib import pyplot as plt
+import rescale
 
+RNG = np.random.default_rng(4321)
 
 def draw_points(xs, ys, covs, M):
+    """
+    Resample a set of points M times, adding noise according to their covariance matrices.
+
+    Returns
+    -------
+    x_samples, y_samples : np.array
+        Every column j, is x[j] redrawn M times.
+        Has M rows, and every row is a realization of xs or ys.
+    """
     # store the samples as follows
     # col0 = all resamplings of x0
     # -> each row is a different realization of our 75 sightlines
-    N = len(xs)
+
+    # rescale data to avoid numerical problems
+    factor_x = 1 / np.std(xs)
+    factor_y = 1 / np.std(ys)
+    xyr, covr = rescale.rescale_data(
+        np.column_stack((xs, ys)), covs, factor_x, factor_y
+    )
+    N = len(xyr)
     x_samples = np.zeros((M, N))
     y_samples = np.zeros((M, N))
     for j in range(N):
-        samples = np.random.multivariate_normal(
-            mean=(xs[j], ys[j]), cov=covs[j], size=M
-        )
+        samples = RNG.multivariate_normal(mean=xyr[j], cov=covr[j], size=M)
         x_samples[:, j] = samples[:, 0]
         y_samples[:, j] = samples[:, 1]
-    return x_samples, y_samples
+
+    # unscale the data again before returning
+    return x_samples / factor_x, y_samples / factor_y
 
 
 def pearson_mc(xs, ys, covs, save_hist=None):
@@ -40,7 +58,6 @@ def pearson_mc(xs, ys, covs, save_hist=None):
 
     std : standard deviation of the rho samples
     """
-
     M = 6000  # number of resamples
     # scramble test to create null hypothesis distribution of rho.
     # Technically, only the y samples need to be scrambled, but I'm
@@ -49,7 +66,7 @@ def pearson_mc(xs, ys, covs, save_hist=None):
     x_samples_scrambled, y_samples_scrambled = draw_points(xs, ys, covs, M)
     for i in range(M):
         # np.random.shuffle(x_samples_scrambled[i])
-        np.random.shuffle(y_samples_scrambled[i])
+        RNG.shuffle(y_samples_scrambled[i])
 
     corrcoefs_null = np.array(
         [np.corrcoef(x_samples_scrambled[i], y_samples_scrambled[i]) for i in range(M)]

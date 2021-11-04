@@ -734,6 +734,7 @@ def get_xs_ys_covs(data, xparam, yparam):
             * np.sqrt(covs[bad_cov, 0, 0] * covs[bad_cov, 1, 1])
         )
         covs[bad_cov, 1, 0] = covs[bad_cov, 0, 1]
+        print(f"Fudged for {bad_cov[bad_cov==True].shape} points.")
 
     # return the values in the correct order
     if implementation in ("normal", "none"):

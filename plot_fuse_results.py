@@ -703,22 +703,19 @@ def get_xs_ys_covs(data, xparam, yparam):
         # RV = AV / EBV, so adjust x for division by EBV
         ebv, ebv_unc = get_param_and_unc("EBV", data)
         covs = covariance.new_cov_when_divide_x(C_av_nhav, av, ebv, ebv_unc)
-    elif pair == ("1_RV", "NH_AV"):
+    elif (
+        pair == ("1_RV", "NH_AV")
+        or pair == ("A1000_AV", "NH_AV")
+        or pair == ("A2175_AV", "NH_AV")
+    ):
         av, av_unc = get_param_and_unc("AV", data)
-        ebv, ebv_unc = get_param_and_unc("EBV", data)
-        n, n_unc = get_param_and_unc("nhtot", data)
-        c = ebv * n * av_unc ** 2 / av ** 4
-        Vrvm1 = px_unc ** 2
-        Vnh_av = py_unc ** 2
-        covs = covariance.make_cov_matrix(Vrvm1, Vnh_av, c)
-    elif pair == ("A1000_AV", "NH_AV"):
-        # no covariance here! "A1000_AV" is provided by the fit equation
-        # directly, so it is not obtained by dividing by AV. In reality,
-        # AV is extrapolated from the extinction curve, and so there
-        # actually is a correlation. But one would need to do some
-        # statistical modeling on the original data from Gordon 2009 to
-        # actually know this covariance.
-        covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2)
+        c = px * py * av_unc ** 2 / av ** 2
+        covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2, c)
+        # The A1000_AV value was obtained from the FM90 function and
+        # parameters, which was in turn fitted to data divided by AV. So
+        # the entire fitting function has an equal fractional
+        # uncertainty contribution across the entire curve, that
+        # dictates the correlation here.
     else:
         # print(
         #     "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."

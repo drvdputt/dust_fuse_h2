@@ -71,11 +71,9 @@ def header():
 
 
 def footer():
-    return r"""
-\enddata
+    return r"""\enddata
 \tablerefs{
     (1) This paper
-    E$($\bv$)$ - 2N$(H$_2$);
     (2) \citet{2006ApJ...641..327C};
     (3) \citet{1994ApJ...427..274D};
     (4) \citet{1990ApJS...72..163F};

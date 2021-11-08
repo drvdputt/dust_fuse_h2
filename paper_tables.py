@@ -109,3 +109,5 @@ def main():
 
     with open("test.tex", "w") as f:
         f.writelines(lines)
+
+main()

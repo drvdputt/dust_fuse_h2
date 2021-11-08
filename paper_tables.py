@@ -7,21 +7,23 @@ change.
 """
 import get_data
 import itertools
+import numpy as np
 
 # columns we want from the astropy Table (with and without uncertainties)
-quantities_and_unc = ["lognhtot", "lognhi", "lognh2"]
-quantities_only = ["fh2", "denhtot", "d"]
+quantities_and_unc = ["lognhtot", "lognhi", "lognh2", "dphot"]
+quantities_only = ["fh2", "denhtot"]
 qu_headers = [
     r"$\log_{10} N(\text{H})$",
     r"$\log_{10} N(\text{\ion{H}{1}})$",
     r"$\log_{10} N(\text{H}_2)$",
+    r"$d_{\mathrm{phot}}$",
 ]
 q_headers = [
     r"$f(\text{H}_2)$",
     r"$\log_{10} n(\text{H})$",
-    "$d$",
 ]
 
+# last column is hiref
 num_columns = len(quantities_and_unc) * 2 + len(quantities_only) + 1
 
 
@@ -33,6 +35,14 @@ def format_row(table, index):
     )
     values_only = [table[q][index] for q in quantities_only]
     hiref = table["hiref"][index]
+    # subsitutions to make new reference legend work
+    hiref = np.where(hiref == 9, 5, hiref)
+    hiref = np.where(hiref == 15, 6, hiref)
+    # hiref[hiref == 9] = 5
+    # hiref[hiref == 15] = 6
+    # then double check that no unexplained references are there
+    if (hiref > 6).any():
+        print("Warning! Problem with hiref")
 
     everything = [name, *values_and_unc, *values_only, hiref]
     fmt = (
@@ -62,6 +72,7 @@ def header():
         lines.append(f" & \\multicolumn{{2}}{{c}}{{{label}}}")
     for label in q_headers:
         lines.append(f" & \\colhead{{{label}}}")
+    lines.append(r" & \colhead{HI Ref.}")
 
     lines.append(
         r"""}
@@ -71,8 +82,9 @@ def header():
 
 
 def footer():
-    return r"""\enddata
-\tablerefs{
+    """This footer needs to contain the hi refs.
+
+    The old version is
     (1) This paper
     (2) \citet{2006ApJ...641..327C};
     (3) \citet{1994ApJ...427..274D};
@@ -85,8 +97,22 @@ def footer():
     (10) \citet{2002ApJ...577..221R};
     (11) \citet{2005ApJ...619..891J};
     (13) \citet{1992ApJS...81..795G};
-    (14) \citet{2007ApJ...669..378J}.}
+    (14) \citet{2007ApJ...669..378J};
+    (15) \citet{2021ApJ...911...55S};
 
+    But we're only using 1, 2, 3, 4, 9, and 15, so reorder here.
+    Substitutions made: 9 --> 5, and 15 --> 6. This is done here,
+    ad-hoc, in the main line formatting function.
+
+    """
+    return r"""\enddata
+\tablerefs{
+    (1) This paper
+    (2) \citet{2006ApJ...641..327C};
+    (3) \citet{1994ApJ...427..274D};
+    (4) \citet{1990ApJS...72..163F};
+    (5) \citet{1994ApJ...430..630B};
+    (6) \citet{2021ApJ...911...55S};}
 \end{deluxetable*}"""
 
 

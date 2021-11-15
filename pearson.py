@@ -12,6 +12,7 @@ instead of some best fitting model which has underlying assumptions.
 import numpy as np
 from matplotlib import pyplot as plt
 import rescale
+from pathlib import Path
 
 RNG = np.random.default_rng(4321)
 
@@ -51,6 +52,12 @@ def pearson_mc(xs, ys, covs, save_hist=None):
     """Calculate Pearson correlation coefficient and uncertainty on it in a MC way.
 
     Repeatedly resample xs, ys using 2D gaussian described by covs.
+
+    Parameters
+    ----------
+
+    save_hist : string
+        File name for figure of histogram for rho and rho0
 
     Returns
     -------
@@ -102,6 +109,8 @@ def pearson_mc(xs, ys, covs, save_hist=None):
 
     # for debugging purposes
     if save_hist is not None:
+        d = Path(save_hist).parent
+        d.mkdir(exist_ok=True)
         fig, ax = plt.subplots()
         ax.hist(rhos_null, bins=50)
         ax.hist(rhos, bins=50)

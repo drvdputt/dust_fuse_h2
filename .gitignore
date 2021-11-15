@@ -129,3 +129,5 @@ data/fuse_h2_details_kept.dat
 data/fuse_h2_details_main.dat
 # ignore outputted figured
 rho_histograms
+# ignore downloaded file by get_jenkins2019_hi_h2.sh
+jenkins2019_hi_h2.fits

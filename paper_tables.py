@@ -133,7 +133,7 @@ def main():
     lines += data_lines(True)
     lines += footer()
 
-    with open("test.tex", "w") as f:
+    with open("gastable.tex", "w") as f:
         f.writelines(lines)
 
 main()

@@ -3,7 +3,9 @@
 .ipynb_checkpoints/
 *~
 .DS_Store
+auto
 # ignore spectral data downloaded by download_HST_data.py and get_gaia.py
+mast_search_results.txt
 data/gaia/BD+32d270.dat
 data/gaia/BD+35d4258.dat
 data/gaia/BD+52d3210.dat
@@ -96,6 +98,8 @@ data/gaia/HD216898.dat
 data/gaia/HD235874.dat
 data/gaia/HD239729.dat
 data/gaia/HD326329.dat
+data/gaia/HD332407.dat
+data/gaia/merged_comp.dat
 data/BD+52 3210/
 data/BD+52d3210/
 data/BD+56 524/
@@ -131,3 +135,10 @@ data/fuse_h2_details_main.dat
 rho_histograms
 # ignore downloaded file by get_jenkins2019_hi_h2.sh
 jenkins2019_hi_h2.fits
+# ignore paper plots
+paper-plots/*
+# ignore compiled readme output
+README.html
+# ignore output of lya fitting script
+lya-plots/
+lyafitting_overview.dat

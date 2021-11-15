@@ -17,7 +17,7 @@ def retrieve_gaia(data):
 
     # get info from simbad
     Simbad.add_votable_fields("parallax")
-    s_path = Path("data/stars_simbad.dat")
+    s_path = Path("data/simbad_coordinates.dat")
     if s_path.exists():
         s = Table.read(s_path, format="ascii.commented_header")
     else:

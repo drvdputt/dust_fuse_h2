@@ -22,7 +22,7 @@ for name in ["HD200775", "HD164906", "HD045314", "HD206773"]:
 set_comment("HD096675", "hi_h_av")
 
 qnames = [
-    "T01",
+    # "T01",
     "nhtot",
     "denhtot",
     "nhi",
@@ -35,16 +35,16 @@ qnames = [
     "EBV",
     "A1000",
     "A2175",
-    "AV",
+    # "AV",
     # "A1000_d",
     "A1000_AV",
     "A2175_AV",
     "1_RV",
-    # "CAV3",
+    "CAV3",
     "CAV4",
     # "gamma",
     # "x0",
-    "bump_amp",
+    # "bump_amp",
     # "C3",
     # "C4",
     # 'd'
@@ -64,7 +64,7 @@ for yi, xi in itertools.combinations_with_replacement(range(nq), 2):
 
     xparam = qnames[xi]
     yparam = qnames[yi]
-    plot_results_scatter(ax, data, xparam, yparam, alpha=1, mark_comments=["lo_h_av"])
+    plot_results_scatter(ax, data, xparam, yparam, alpha=1, mark_comments=["lo_h_av"], report_rho=False)
 
     if ypos < nq - 1:
         ax.set_xticklabels([])

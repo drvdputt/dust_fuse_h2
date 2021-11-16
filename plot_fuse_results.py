@@ -607,7 +607,7 @@ def plot_results2(
     auto_out = plot_results_fit(
         xs, ys, covs, ax, lh_ax, outliers=out, auto_outliers=True
     )
-    print("Outliers: ", data["Name"][auto_out])
+    # print("Outliers: ", data["Name"][auto_out])
     plot_naive_regression(ax, xs, ys, covs)
     return fig
 

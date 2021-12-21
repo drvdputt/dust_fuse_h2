@@ -325,6 +325,28 @@ def plot2():
     fit_results_table.append(latex_table_line("\\rvi", "\\nhav", r))
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
 
+    def eval_nhav(rv):
+        x = 1 / rv
+        dm = x
+        db = 1
+        y = x * r["m"] + r["b"]
+        varterm = (dm * r["m_unc"]) ** 2 + (db * r["b_unc"]) ** 2
+        covterm = dm * db * r["mb_cov"]
+        return y, np.sqrt(varterm + covterm)
+
+    nhav_3d1, nhav_unc = eval_nhav(3.1)
+    nhav_2, _ = eval_nhav(2)
+    nhav_6, _ = eval_nhav(6)
+
+    print("Evaluated at galactic average 1/RV = 0.32,  NH/AV() = ", nhav_3d1)
+    print("Error with covariance = ", nhav_unc)
+    y_samples = 0.32 * r["m_samples"] + r["b_samples"]
+    print(y_samples)
+    print("Error based on samples = ", np.std(y_samples))
+
+    print("Value at RV = 2: ", nhav_2)
+    print("Value at RV = 6: ", nhav_6)
+
     ax = axs[0, 1]
     xs, ys, covs = plot_results_scatter(
         ax,

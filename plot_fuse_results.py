@@ -450,16 +450,18 @@ def plot_results_fit(
         ys_used,
         covs_used,
     )
-    sampled_m, sampled_b_perp = linear_ortho_fit.sample_likelihood(
-        m, b_perp, m_grid, b_perp_grid, logL_grid
-    )
-    sample_cov_mb = np.cov(sampled_m, sampled_b_perp)
-    m_unc = np.sqrt(sample_cov_mb[0, 0])
-    b_perp_unc = np.sqrt(sample_cov_mb[1, 1])
-    mb_corr = sample_cov_mb[0, 1] / (m_unc * b_perp_unc)
 
-    b_unc_rel = b_perp_unc / b_perp
-    b_unc = b * b_unc_rel
+    # Sample the likelihood of (m, b_perp) and convert to (m, b), so we
+    # can properly determine the covariance.
+    sampled_m, sampled_b_perp = linear_ortho_fit.sample_likelihood(
+        m, b_perp, m_grid, b_perp_grid, logL_grid, N=2000
+    )
+    sampled_b = linear_ortho_fit.b_perp_to_b(sampled_m, sampled_b_perp)
+
+    sample_cov_mb = np.cov(sampled_m, sampled_b)
+    m_unc = np.sqrt(sample_cov_mb[0, 0])
+    b_unc = np.sqrt(sample_cov_mb[1, 1])
+    mb_corr = sample_cov_mb[0, 1] / (m_unc * b_unc)
 
     # print out results here
     print("*** FIT RESULT ***")
@@ -513,12 +515,16 @@ def plot_results_fit(
     # return as dict, in case we want to do more specific things in
     # post. Example: gathering numbers and putting them into a table, in
     # the main plotting script (paper_scatter.py).
+    # Also return covariance and samples, useful for determining error on y = mx + b.
     results = {
         "m": m,
         "m_unc": m_unc,
         "b": b,
         "b_unc": b_unc,
+        "mb_cov": sample_cov_mb[0, 1],
         "outlier_idxs": outlier_idxs,
+        "m_samples": sampled_m,
+        "b_samples": sampled_b,
     }
     return results
 

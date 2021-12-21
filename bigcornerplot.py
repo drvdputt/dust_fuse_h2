@@ -5,7 +5,7 @@ from get_data import get_merged_table
 from astropy.table import Column
 from plot_fuse_results import plot_results_scatter
 
-plt.rcParams.update({'font.size': 10})
+plt.rcParams.update({"font.size": 10})
 
 data = get_merged_table()
 # add comments for certain stars here
@@ -32,16 +32,16 @@ qnames = [
     "fh2",
     "NH_AV",
     # "AV_d",
-    "EBV",
-    "A1000",
-    "A2175",
-    # "AV",
+    # "EBV",
+    # "A1000",
+    # "A2175",
+    "AV",
     # "A1000_d",
     "A1000_AV",
     "A2175_AV",
     "1_RV",
-    "CAV3",
-    "CAV4",
+    # "CAV3",
+    # "CAV4",
     # "gamma",
     # "x0",
     # "bump_amp",
@@ -64,7 +64,9 @@ for yi, xi in itertools.combinations_with_replacement(range(nq), 2):
 
     xparam = qnames[xi]
     yparam = qnames[yi]
-    plot_results_scatter(ax, data, xparam, yparam, alpha=1, mark_comments=["lo_h_av"], report_rho=False)
+    plot_results_scatter(
+        ax, data, xparam, yparam, alpha=1, mark_comments=["lo_h_av"], report_rho=False
+    )
 
     if ypos < nq - 1:
         ax.set_xticklabels([])

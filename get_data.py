@@ -545,16 +545,23 @@ def get_merged_table(comp=False):
 
     # add A1000 (within H2 dissociation cross section) and A1300
     # (outside that range)
+    # only try this if all FM90 parameters are present
     params_needed = [f"CAV{n}" for n in range(1, 5)] + ["gamma", "x_o"]
     if all([p in merged_table.colnames for p in params_needed]):
+        # get FM90 params and their uncertainties
         cav1, cav2, cav3, cav4, gamma, x0 = [merged_table[p] for p in params_needed]
         cav1_unc, cav2_unc, cav3_unc, cav4_unc, gamma_unc, x0_unc = [
             merged_table[p + "_unc"] for p in params_needed
         ]
 
+        micron = 10000
+
         def extinction_curve(w):
-            """w in angstrom"""
-            micron = 10000
+            """
+            Evaluate the FM90 function for all sightlines, at a given wavelength.
+
+            w : wavelength in angstrom
+            """
             # x is 1/w in micron
             x = 1 / (w / micron)
             # drude
@@ -564,17 +571,22 @@ def get_merged_table(comp=False):
             return Aw_AV
 
         def extinction_curve_unc(w):
-            x = 1 / w
+            """
+            Uncertainty on the FM90 function, as propagated from the parameter uncertainties.
+            """
+            x = 1 / (w / micron)
+
             # drude
-            D = x ** 2 / ((x ** 2 - x0 ** 2) ** 2 + (x * gamma) ** 2)
+            D_denom = (x ** 2 - x0 ** 2) ** 2 + (x * gamma) ** 2
+            D = x ** 2 / D_denom
             F = 0.5392 * (x - 5.9) ** 2 + 0.05644 * (x - 5.9) ** 3
 
             # dD / dg = -2gx^4 / (g^2 x^2 + (x0^2 + x^2)^2)^2
             # dD / dx0 = -4mx^2(m^2+x^2)/(g^2x^2+(m^2+x^2)^2)^2
-            D_denom = (x ** 2 - x0 ** 2) ** 2 + (x * gamma) ** 2
+
             # multivariate error propagation
             D_unc_gamma = 2 * gamma * x ** 4 / D_denom ** 2 * gamma_unc
-            D_unc_x0 = 4 * x0 * x ** 2 * (x0 ** 2 + x ** 2) / D_denom ** 2 * x0_unc
+            D_unc_x0 = 4 * x0 * x ** 2 * (x ** 2 - x0 ** 2) / D_denom ** 2 * x0_unc
             VD_rel = (D_unc_gamma ** 2 + D_unc_x0 ** 2) / D ** 2
             # sum of relative variances
             Vcav3_rel = (cav3_unc / cav3) ** 2
@@ -595,6 +607,8 @@ def get_merged_table(comp=False):
             absval = val.replace("_AV", "")
             merged_table[absval] = merged_table[val] * merged_table["AV"]
             merged_table[absval + "_unc"] = merged_table[absval] * rel_unc
+
+            # also add NH / Alambda, as an alternative to NH / AV
 
         add_specific_wavelength(1000)
         # add_den_column("A1000", "A1000_d")

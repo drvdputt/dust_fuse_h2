@@ -506,10 +506,14 @@ def get_merged_table(comp=False):
 
     # generate the N(H)/A(V) columns
     merged_table["NH_AV"] = merged_table["nhtot"] / merged_table["AV"]
-    merged_table["NH_AV_unc"] = merged_table["NH_AV"] * np.sqrt(
+    rel_unc_nh_av = np.sqrt(
         np.square(merged_table["nhtot_unc"] / merged_table["nhtot"])
         + np.square(merged_table["AV_unc"] / merged_table["AV"])
     )
+    merged_table["NH_AV_unc"] = merged_table["NH_AV"] * rel_unc_nh_av
+    # also add AV_NH in case interpreting this is easier
+    merged_table["AV_NH"] = 1 / merged_table["NH_AV"]
+    merged_table["AV_NH_unc"] = merged_table["AV_NH"] * rel_unc_nh_av
 
     # generate the N(H)/E(B-V) columns
     merged_table["NH_EBV"] = merged_table["nhtot"] / merged_table["EBV"]
@@ -605,10 +609,21 @@ def get_merged_table(comp=False):
             # also multiply them by AV, but do not add AV error, since
             # we are removing the 1/AV factor again by multiplying here.
             absval = val.replace("_AV", "")
-            merged_table[absval] = merged_table[val] * merged_table["AV"]
-            merged_table[absval + "_unc"] = merged_table[absval] * rel_unc
+            Alambda = merged_table[val] * merged_table["AV"]
+            merged_table[absval] = Alambda
+            merged_table[absval + "_unc"] = Alambda * rel_unc
 
             # also add NH / Alambda, as an alternative to NH / AV
+            nhtot_Alambda = merged_table["nhtot"] / Alambda
+            merged_table["NH_" + absval] = nhtot_Alambda
+            nhtot_Alambda_rel_unc = np.sqrt(
+                rel_unc ** 2 + (merged_table["nhtot_unc"] / merged_table["nhtot"]) ** 2
+            )
+            merged_table["NH_" + absval + "_unc"] = nhtot_Alambda * nhtot_Alambda_rel_unc
+
+            # also add inverse of this for easier interpretation
+            merged_table[absval + "_NH"] = 1 / nhtot_Alambda
+            merged_table[absval + "_NH_unc"] = merged_table[absval + "_NH"] * nhtot_Alambda_rel_unc
 
         add_specific_wavelength(1000)
         # add_den_column("A1000", "A1000_d")
@@ -618,7 +633,6 @@ def get_merged_table(comp=False):
 
 
 if __name__ == "__main__":
-
     merged_table = get_merged_table()
     print(merged_table.colnames)
     print(merged_table)

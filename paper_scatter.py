@@ -8,7 +8,6 @@ Some of them are grouped using subplots
 """
 
 from get_data import get_merged_table, get_bohlin78, get_shull2021
-import plot_fuse_results
 from plot_fuse_results import (
     plot_results_scatter,
     plot_results_fit,

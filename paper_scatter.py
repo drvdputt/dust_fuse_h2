@@ -141,13 +141,37 @@ def latex_table_line(xparam, yparam, fit_results_dict):
     string:
         xparam & yparam & m \pm m_unc & b \pm b_unc
     """
-    m_and_unc_str = format_number_with_unc(
-        fit_results_dict["m"], fit_results_dict["m_unc"]
-    )
-    b_and_b_unc_str = format_number_with_unc(
-        fit_results_dict["b"], fit_results_dict["b_unc"]
-    )
-    return f"{xparam} & {yparam} & {m_and_unc_str} & {b_and_b_unc_str}\\\\"
+    power = 1e20
+    m, m_unc = fit_results_dict["m"] / power, fit_results_dict["m_unc"] / power
+    b, b_unc = fit_results_dict["b"] / power, fit_results_dict["b_unc"] / power
+    # m_and_unc_str = format_number_with_unc(m, m_unc)
+    # the above doesn't look so good in a table, too many ()'s and 'x e21's
+    # do something custom here
+
+    def choose_numdecimal(unc):
+        """Correct number of decimals for a plain floating point number, not
+        power of 10 notation.
+
+        Matches the order of the uncertainty, with two significant
+        digits. Only use when all numbers have a power of divided out
+        already.
+
+        """
+        order = int(math.floor(math.log10(unc)))
+        if order > 0:  # just print number without floating point
+            f = 0
+        else:  # order 0 --> x.x; order -1 --> 0.xx; order -2 --> 0.0xx
+            f = -order + 1
+        return f
+
+    def format_val_and_unc(val, unc):
+        n = choose_numdecimal(unc)
+        fstring = "${val:." + str(n) + "f} \\pm {unc:." + str(n) + "f}$"
+        return fstring.format(val=val, unc=unc)
+
+    m_and_unc_str = format_val_and_unc(m, m_unc)
+    b_and_unc_str = format_val_and_unc(b, b_unc)
+    return f"{xparam} & {yparam} & {m_and_unc_str} & {b_and_unc_str}\\\\"
 
 
 def plot1():

@@ -114,6 +114,6 @@ def pearson_mc(xs, ys, covs, save_hist=None):
         fig, ax = plt.subplots()
         ax.hist(rhos_null, bins=50)
         ax.hist(rhos, bins=50)
-        fig.savefig(save_hist)
+        fig.savefig("rho_histograms/" + save_hist)
 
     return med, std_null

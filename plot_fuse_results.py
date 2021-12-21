@@ -350,7 +350,7 @@ def plot_results_scatter(
                 xs[not_ignored],
                 ys[not_ignored],
                 covs[not_ignored],
-                save_hist=f"rho_histograms/{xparam}-{yparam}.pdf",
+                save_hist=f"{xparam}-{yparam}.pdf",
             )
 
     # return all data, for use in fitting

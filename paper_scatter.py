@@ -49,31 +49,11 @@ for name in ["HD045314", "HD164906", "HD200775", "HD206773"]:
 # near the same group in the 1/RV plot, so we probably don't want to
 # confuse the reader more by indicating these ones too
 # for name in ["HD045314", "HD164906", "HD188001", "HD198781", "HD200775", "HD206773"]:
-    # set_comment(name, "lo_h_av")
-
+# set_comment(name, "lo_h_av")
 
 
 bohlin = get_bohlin78()
 shull = get_shull2021()
-
-
-def finalize_single(fig, filename):
-    fig.set_size_inches(base_width / 2, 2 / 3 * base_width)
-    save(fig, filename)
-
-
-def finalize_double(fig, filename):
-    for ax in fig.axes[1:]:
-        ax.set_ylabel("")
-    fig.set_size_inches(base_width, 2 / 3 * base_width)
-    save(fig, filename)
-
-
-def finalize_vertical(fig, filename):
-    for ax in fig.axs[:-1]:
-        ax.set_xlabel("")
-    fig.set_size_inches(base_width / 2, base_width)
-    save(fig, filename)
 
 
 def finalize_double_grid(fig, axs, filename):

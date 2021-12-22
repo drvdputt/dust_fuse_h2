@@ -654,6 +654,8 @@ def get_xs_ys_covs(data, xparam, yparam):
         ("RV", "NH_AV"),
         ("1_RV", "NH_AV"),
         ("A1000_AV", "NH_AV"),
+        ("A1000_NH", "AV_NH"),
+        ("A2175_NH", "AV_NH"),
     ]
     if requested_pair in implemented_pairs:
         pair = requested_pair
@@ -715,13 +717,15 @@ def get_xs_ys_covs(data, xparam, yparam):
         or pair == ("A2175_AV", "NH_AV")
     ):
         av, av_unc = get_param_and_unc("AV", data)
-        c = px * py * av_unc ** 2 / av ** 2
-        covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2, c)
+        covs = covariance.cov_common_denominator(px, px_unc, py, py_unc, av, av_unc)
         # The A1000_AV value was obtained from the FM90 function and
         # parameters, which was in turn fitted to data divided by AV. So
         # the entire fitting function has an equal fractional
         # uncertainty contribution across the entire curve, that
         # dictates the correlation here.
+    elif pair == ("A1000_NH", "AV_NH") or pair == ("A2175_NH", "AV_NH"):
+        nh, nh_unc = get_param_and_unc("nhtot", data)
+        covs = covariance.cov_common_denominator(px, px_unc, py, py_unc, nh, nh_unc)
     else:
         # print(
         #     "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."

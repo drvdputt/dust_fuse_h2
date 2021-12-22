@@ -188,3 +188,10 @@ def new_cov_when_divide_x(cov_xy, x, B, B_err):
     Vx = cov_xy[:, 0, 0]
     new_cov[:, 0, 0] = (x / B) ** 2 * (Vx / x ** 2 + (B_err / B) ** 2)
     return new_cov
+
+def cov_common_denominator(x_a, x_a_unc, y_a, y_a_unc, a, a_unc):
+    """Covariance between an x and y of the form x = x0 / AV and y = y0 / AV
+
+    AV can be substituted by something else of course.
+    """
+    return make_cov_matrix(x_a_unc**2, y_a_unc**2, x_a * y_a * a_unc ** 2 / a ** 2)

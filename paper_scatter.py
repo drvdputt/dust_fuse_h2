@@ -153,7 +153,7 @@ def latex_table_line(xparam, yparam, fit_results_dict):
     return f"{xparam} & {yparam} & {m_and_unc_str} & {b_and_unc_str}\\\\"
 
 
-def plot1():
+def plot1_column_column():
     """The first plot shows gas columns vs dust columns.
 
     Main things to show:
@@ -300,7 +300,7 @@ def plot1():
     finalize_double_grid(fig, axs, "column_vs_column.pdf")
 
 
-def plot2():
+def plot2_ratio_ratio():
     """Ratio vs ratio.
 
     x: RV and maybe A1000/AV (extinction ratios)

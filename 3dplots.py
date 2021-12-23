@@ -51,18 +51,22 @@ def threedee(xparam, yparam, zparam, cparam=None):
         cb.set_label(cparam)
 
 
-scatter_and_color("1_RV", "A1000", "fh2")
+# scatter_and_color("1_RV", "A1000", "fh2")
 # scatter_and_color('A1000', 'fh2', '1_RV')
 
-scatter_and_color("1_RV", "fh2", "NH_AV", data["NH_AV"] < 8e21)
-scatter_and_color("1_RV", "fh2", "A1000")
+# scatter_and_color("1_RV", "fh2", "NH_AV", data["NH_AV"] < 8e21)
+# scatter_and_color("1_RV", "fh2", "A1000")
 
-scatter_and_color("1_RV", "fh2", "CAV4")
-scatter_and_color("A1000", "fh2", "1_RV")
-scatter_and_color("A1000", "fh2", "CAV4")
+# scatter_and_color("1_RV", "fh2", "CAV4")
+# scatter_and_color("A1000", "fh2", "1_RV")
+# scatter_and_color("A1000", "fh2", "CAV4")
 
-scatter_and_color("A1000", "CAV4", "fh2")
+# scatter_and_color("A1000", "CAV4", "fh2")
 
-threedee("1_RV", "A1000", "CAV4", "fh2")
+# threedee("1_RV", "A1000", "CAV4", "fh2")
+
+scatter_and_color("A2175_NH", "AV_NH", "1_RV")
+scatter_and_color("A1000_NH", "AV_NH", "1_RV")
+scatter_and_color("1_RV", "A2175_AV", "AV_NH")
 
 plt.show()

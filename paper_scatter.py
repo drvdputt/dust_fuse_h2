@@ -426,6 +426,35 @@ def plot2_ratio_ratio():
     print("NH_AV evaluated at Galactic average 1_RV=0.32:", nhav_eval, " pm ", nhav_err)
 
 
+def plot2b_perh():
+    """Compares extinction normalized per H
+
+    [done] Needs implementation of covariance due to NH
+    """
+    fig, axs = plt.subplots(1, 3, sharex="col", sharey="row", squeeze=False)
+    fig.set_size_inches(base_width, base_width * 2 / 3)
+
+    ax = axs[0, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000_NH",
+        "AV_NH",
+        mark_comments=["lo_h_av"],
+    )
+
+    ax = axs[0, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A2175_NH",
+        "AV_NH",
+        mark_comments=["lo_h_av"],
+    )
+
+    finalize_double_grid(fig, axs, "nh_normalized.pdf")
+
+
 def plot3():
     """FM90 vs fh2."""
     fig, axs = plt.subplots(4, 2, sharey=True)
@@ -562,9 +591,10 @@ def plot4():
 
 
 if __name__ == "__main__":
-    plot1()
-    plot2()
-    plot3()
-    plot4()
+    # plot1_column_column()
+    # plot2_ratio_ratio()
+    plot2b_perh()
+    # plot3()
+    # plot4()
     for line in fit_results_table:
         print(line)

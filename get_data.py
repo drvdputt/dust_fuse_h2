@@ -589,8 +589,157 @@ def get_merged_table(comp=False):
         add_specific_wavelength(1000)
         # add_den_column("A1000", "A1000_d")
         add_specific_wavelength(2175)
+        add_specific_wavelength(3000)
 
     return merged_table
+
+def get_param_and_unc(param, data):
+    """
+    Returns the unc column if it is in the table
+    """
+    d = data[param].data
+    unc_key = param + "_unc"
+    unc = data[unc_key] if unc_key in data.colnames else None
+    return d, unc
+
+def get_xs_ys_covs(data, xparam, yparam):
+    """
+    Get columns for two quantities, and the covariance matrix between them
+
+    data: data table, e.g. the output of get_merged_table
+
+    xparam: string
+        parameter name
+
+    yparam: string
+        parameter name
+
+    Returns
+    -------
+
+    xs, ys, covs
+
+    xs: np.array or astropy column
+        data['xparam']
+
+    ys: np.array or astropy column
+        data['yparam']
+
+    covs: np.array of size (len(data), 2, 2)
+        every
+    """
+    # make this function work when x and y are flipped, too. See this
+    # block, and the return statements at the end.
+    requested_pair = (xparam, yparam)
+    implemented_pairs = [
+        ("AV", "NH_AV"),
+        ("EBV", "NH_EBV"),
+        ("nhtot", "NH_AV"),
+        ("nhtot", "NH_EBV"),
+        ("nhi", "NH_AV"),
+        ("fh2", "NH_AV"),
+        ("fh2", "NH_EBV"),
+        ("fh2", "nhtot"),
+        ("RV", "NH_AV"),
+        ("1_RV", "NH_AV"),
+        ("A1000_AV", "NH_AV"),
+        ("A1000_NH", "AV_NH"),
+        ("A2175_NH", "AV_NH"),
+    ]
+    if requested_pair in implemented_pairs:
+        pair = requested_pair
+        implementation = "normal"
+    elif requested_pair[::-1] in implemented_pairs:
+        pair = requested_pair[::-1]
+        implementation = "flipped"
+    else:
+        pair = requested_pair
+        implementation = "none"
+
+    px, px_unc = get_param_and_unc(pair[0], data)
+    py, py_unc = get_param_and_unc(pair[1], data)
+
+    if pair in (("AV", "NH_AV"), ("EBV", "NH_EBV")):
+        covs = covariance.get_cov_x_ydx(px, py, px_unc, py_unc)
+    elif pair in (("nhtot", "NH_AV"), ("nhtot", "NH_EBV")):
+        covs = covariance.get_cov_x_xdy(px, py, px_unc, py_unc)
+    elif pair == ("nhi", "NH_AV"):
+        nhi, nhi_unc = px, px_unc
+        nh2, nh2_unc = get_param_and_unc("nh2", data)
+        av, av_unc = get_param_and_unc("AV", data)
+        cov_nhi_nhi = covariance.make_cov_matrix(
+            nhi_unc ** 2, nhi_unc ** 2, nhi_unc ** 2
+        )
+        # add variance due to nh2
+        cov_nhi_nhtot = cov_nhi_nhi + np.diag([nh2_unc, nh2_unc]) ** 2
+        cov_nhi_nhav = covariance.new_cov_when_divide_y(
+            cov_nhi_nhtot, nhi + nh2, av, av_unc
+        )
+        covs = cov_nhi_nhav
+    elif pair in (("fh2", "NH_AV"), ("fh2", "NH_EBV"), ("fh2", "nhtot")):
+        x1, x1_unc = get_param_and_unc("nhi", data)
+        x2, x2_unc = get_param_and_unc("nh2", data)
+        C_fh2_htot = covariance.get_cov_fh2_htot(x1, x2, x1_unc, x2_unc)
+        # in case of NH, no extra factor is needed
+        if pair[1] == "nhtot":
+            covs = C_fh2_htot
+        if pair[1] == "NH_AV":
+            av, av_unc = get_param_and_unc("AV", data)
+            covs = covariance.new_cov_when_divide_y(
+                C_fh2_htot, data["nhtot"], av, av_unc
+            )
+        elif pair[1] == "NH_EBV":
+            ebv, ebv_unc = get_param_and_unc("EBV", data)
+            covs = covariance.new_cov_when_divide_y(
+                C_fh2_htot, data["nhtot"], ebv, ebv_unc
+            )
+    elif pair == ("RV", "NH_AV"):
+        # first, get the covariance of AV and NH_AV
+        av, av_unc = get_param_and_unc("AV", data)
+        C_av_nhav = covariance.get_cov_x_ydx(av, py, av_unc, py_unc)
+        # RV = AV / EBV, so adjust x for division by EBV
+        ebv, ebv_unc = get_param_and_unc("EBV", data)
+        covs = covariance.new_cov_when_divide_x(C_av_nhav, av, ebv, ebv_unc)
+    elif (
+        pair == ("1_RV", "NH_AV")
+        or pair == ("A1000_AV", "NH_AV")
+        or pair == ("A2175_AV", "NH_AV")
+    ):
+        av, av_unc = get_param_and_unc("AV", data)
+        covs = covariance.cov_common_denominator(px, px_unc, py, py_unc, av, av_unc)
+        # The A1000_AV value was obtained from the FM90 function and
+        # parameters, which was in turn fitted to data divided by AV. So
+        # the entire fitting function has an equal fractional
+        # uncertainty contribution across the entire curve, that
+        # dictates the correlation here.
+    elif pair == ("A1000_NH", "AV_NH") or pair == ("A2175_NH", "AV_NH"):
+        nh, nh_unc = get_param_and_unc("nhtot", data)
+        covs = covariance.cov_common_denominator(px, px_unc, py, py_unc, nh, nh_unc)
+    else:
+        # print(
+        #     "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."
+        # )
+        covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2)
+
+    # Check if cauchy schwarz is satisfied. If not, enforce using fudge
+    # factor.
+    bad_cov = covs[:, 0, 1] ** 2 > covs[:, 0, 0] * covs[:, 1, 1]
+    if (bad_cov).any():
+        print("Some covs don't satisfy Cauchy-Schwarz inequality! cov^2 !< Vx * Vy!")
+        print("Fudging the correlation to 99% to avoid further problems.")
+        covs[bad_cov, 0, 1] = (
+            np.sign(covs[bad_cov, 0, 1])
+            * 0.99
+            * np.sqrt(covs[bad_cov, 0, 0] * covs[bad_cov, 1, 1])
+        )
+        covs[bad_cov, 1, 0] = covs[bad_cov, 0, 1]
+        print(f"Fudged for {bad_cov[bad_cov==True].shape} points.")
+
+    # return the values in the correct order
+    if implementation in ("normal", "none"):
+        return px, py, covs
+    if implementation == "flipped":
+        return py, px, np.flip(covs)
 
 
 if __name__ == "__main__":

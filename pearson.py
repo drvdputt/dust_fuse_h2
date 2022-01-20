@@ -16,6 +16,7 @@ from pathlib import Path
 
 RNG = np.random.default_rng(4321)
 
+
 def draw_points(xs, ys, covs, M):
     """
     Resample a set of points M times, adding noise according to their covariance matrices.
@@ -48,7 +49,7 @@ def draw_points(xs, ys, covs, M):
     return x_samples / factor_x, y_samples / factor_y
 
 
-def pearson_mc(xs, ys, covs, save_hist=None):
+def pearson_mc(xs, ys, covs, save_hist=None, return_hist_fig_ax=False):
     """Calculate Pearson correlation coefficient and uncertainty on it in a MC way.
 
     Repeatedly resample xs, ys using 2D gaussian described by covs.
@@ -57,13 +58,18 @@ def pearson_mc(xs, ys, covs, save_hist=None):
     ----------
 
     save_hist : string
-        File name for figure of histogram for rho and rho0
+        File name for figure of histogram for rho and rho0.
+
+    return_hist_fig_ax :
+        Will plot histogram, and add the created figure and axes to the outputs
 
     Returns
     -------
     rho : correlation coefficient
 
     std : standard deviation of the rho samples
+
+    (fig, ax) : figure and axes of histogram (only if return_hist_fig_ax=True)
     """
     M = 6000  # number of resamples
     # scramble test to create null hypothesis distribution of rho.
@@ -107,13 +113,21 @@ def pearson_mc(xs, ys, covs, save_hist=None):
     med = np.median(rhos)
     print("median: ", rho_sigma_message(med))
 
-    # for debugging purposes
-    if save_hist is not None:
-        d = Path(save_hist).parent
-        d.mkdir(exist_ok=True)
+    outputs = [med, std_null]
+
+    # any of these this implies that we have to plot
+    if save_hist is not None or return_hist_fig_ax:
+        # plot histograms
         fig, ax = plt.subplots()
         ax.hist(rhos_null, bins=50)
         ax.hist(rhos, bins=50)
-        fig.savefig("rho_histograms/" + save_hist)
+        # save hist to file if requested
+        if save_hist is not None:
+            d = Path(save_hist).parent
+            d.mkdir(exist_ok=True)
+            fig.savefig("rho_histograms/" + save_hist)
+        # add figure and axes to output if requested
+        if return_hist_fig_ax:
+            outputs.append((fig, ax))
 
-    return med, std_null
+    return outputs

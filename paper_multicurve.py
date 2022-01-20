@@ -27,7 +27,8 @@ for row in range(len(data)):
 
 # try dividing by average curve too, and hope my brain survives trying to interpret this.
 avgcurve = np.average(curves, axis=0)
-curves /= avgcurve[None, :]
+sigmacurve = np.std(curves, axis=0)
+curves = (curves - avgcurve[None, :]) / sigmacurve[None, :]
 
 def plot_all_curves(fig, ax, color_axis):
     color_data = data[color_axis]
@@ -65,7 +66,7 @@ def slope_all_wavelengths(variable='1_RV'):
         
     fig, axs = plt.subplots(2, 1, sharex=True)
     axs[0].plot(xpoints, ypoints)
-    axs[0].set_ylabel("$\\Delta A(\\lambda)/N(\\rm{H}) / \\Delta$" + variable)
+    axs[0].set_ylabel("$\\Delta A(\\lambda)/N(\\rm{H}) / \\Delta$" + variable + "relative to $\\langle A(\\lambda)/N(\\rm{H})\\rangle$")
     axs[0].axhline(0)
     axs[1].plot(xpoints, extrapoints)
     axs[1].set_ylabel("$R^2$")

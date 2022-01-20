@@ -6,7 +6,7 @@ import pandas
 import astropy.units as u
 import photometric_distance
 from extinction_curve_set import ExtinctionCurveSet
-
+import covariance
 
 def add_lin_column_from_log(logcolname, data):
     log = data[logcolname]

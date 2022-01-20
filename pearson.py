@@ -49,7 +49,7 @@ def draw_points(xs, ys, covs, M):
     return x_samples / factor_x, y_samples / factor_y
 
 
-def pearson_mc(xs, ys, covs, save_hist=None, return_hist_fig_ax=False):
+def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
     """Calculate Pearson correlation coefficient and uncertainty on it in a MC way.
 
     Repeatedly resample xs, ys using 2D gaussian described by covs.
@@ -60,16 +60,14 @@ def pearson_mc(xs, ys, covs, save_hist=None, return_hist_fig_ax=False):
     save_hist : string
         File name for figure of histogram for rho and rho0.
 
-    return_hist_fig_ax :
-        Will plot histogram, and add the created figure and axes to the outputs
+    hist_ax : figure, axes
+        Plot histogram on this axes. If None, a new figure will be made.
 
     Returns
     -------
     rho : correlation coefficient
 
     std : standard deviation of the rho samples
-
-    (fig, ax) : figure and axes of histogram (only if return_hist_fig_ax=True)
     """
     M = 6000  # number of resamples
     # scramble test to create null hypothesis distribution of rho.
@@ -116,18 +114,23 @@ def pearson_mc(xs, ys, covs, save_hist=None, return_hist_fig_ax=False):
     outputs = [med, std_null]
 
     # any of these this implies that we have to plot
-    if save_hist is not None or return_hist_fig_ax:
-        # plot histograms
-        fig, ax = plt.subplots()
-        ax.hist(rhos_null, bins=50)
-        ax.hist(rhos, bins=50)
+    if save_hist is not None or hist_ax is not None:
+        # make new fig, ax if none was given
+        if hist_ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig, ax = hist_ax.get_figure(), hist_ax
+
+        bins = 64
+        ax.hist(rhos_null, bins=bins, label="null data", color="xkcd:gray", alpha=0.5)
+        ax.hist(
+            rhos, bins=bins, label="resampled data", color="xkcd:bright blue", alpha=0.5
+        )
+
         # save hist to file if requested
         if save_hist is not None:
             d = Path(save_hist).parent
             d.mkdir(exist_ok=True)
             fig.savefig("rho_histograms/" + save_hist)
-        # add figure and axes to output if requested
-        if return_hist_fig_ax:
-            outputs.append((fig, ax))
 
     return outputs

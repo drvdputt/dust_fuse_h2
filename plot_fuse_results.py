@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from astropy.modeling import models, fitting
-from get_data import get_merged_table, get_bohlin78
+from get_data import get_merged_table, get_bohlin78, get_param_and_unc, get_xs_ys_covs
 import covariance
 import linear_ortho_fit
 import pearson

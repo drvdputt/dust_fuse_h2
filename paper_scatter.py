@@ -18,15 +18,10 @@ from astropy.table import Column
 import numpy as np
 from uncertainties import ufloat
 import math
-
-plt.rcParams.update({"font.family": "times"})
+import paper_rcparams
 
 # change colors like this
 # plot_fuse_results.MAIN_COLOR = "m"
-
-# base width for figures. Is equal to the text width over two columns
-base_width = 7.1
-base_height = 9.3
 
 
 def set_comment(name, s):
@@ -165,7 +160,7 @@ def plot1_column_column():
     """
 
     fig, axs = plt.subplots(3, 3, sharey="row", sharex="col")
-    fig.set_size_inches(base_width, base_width)
+    fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_width)
 
     # use these variables, so we can easily swap column and rows around
     col = {"AV": 0, "EBV": 1, "A1000": 2}
@@ -308,7 +303,7 @@ def plot2_ratio_ratio():
 
     """
     fig, axs = plt.subplots(2, 3, sharex="col", sharey="row")
-    fig.set_size_inches(base_width, base_width * 2 / 3)
+    fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_width * 2 / 3)
 
     max_nh_av = 5e21
 
@@ -432,7 +427,7 @@ def plot2b_perh():
     [done] Needs implementation of covariance due to NH
     """
     fig, axs = plt.subplots(1, 3, sharex="col", sharey="row", squeeze=False)
-    fig.set_size_inches(base_width, base_width * 2 / 3)
+    fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_width * 2 / 3)
 
     ax = axs[0, 0]
     xs, ys, covs = plot_results_scatter(
@@ -524,7 +519,7 @@ def plot3():
     #     mark_comments=["lo_h_av"],
     # )
 
-    fig.set_size_inches(base_width, base_height)
+    fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height)
     for (ax_l, ax_r) in axs:
         ax_r.set_ylabel("")
     fig.tight_layout()
@@ -585,7 +580,9 @@ def plot4():
     )
     ax.set_xlim(40, 140)
 
-    fig.set_size_inches(base_width, base_height * 2 / 3)
+    fig.set_size_inches(
+        paper_rcparams.base_width, paper_rcparams.paper_rcparams.base_height * 2 / 3
+    )
     fig.subplots_adjust(wspace=0.3)
     save(fig, "temp_dens.pdf", need_wspace=True)
 

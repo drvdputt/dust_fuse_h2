@@ -124,7 +124,7 @@ def get_fuse_h2_details(components=False, comparison=False, stars=None):
                 data["Name"][extra_index] = data["Name"][idx]
                 extra_index += 1
     result = data[keep]
-    result.write(fn.replace(".dat", "_kept.dat"), format="ascii.commented_header")
+    # result.write(fn.replace(".dat", "_kept.dat"), format="ascii.commented_header")
 
     # if the separate components are needed, we can return early
     if components:

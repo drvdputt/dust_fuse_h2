@@ -122,9 +122,19 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
             fig, ax = hist_ax.get_figure(), hist_ax
 
         bins = 64
-        ax.hist(rhos_null, bins=bins, label="null data", color="xkcd:gray", alpha=0.5)
         ax.hist(
-            rhos, bins=bins, label="resampled data", color="xkcd:bright blue", alpha=0.5
+            rhos_null,
+            bins=bins,
+            label="null sample",
+            color="xkcd:gray",
+            alpha=0.5,
+        )
+        ax.hist(
+            rhos,
+            bins=bins,
+            label="correlated sample",
+            color="xkcd:bright blue",
+            alpha=0.5,
         )
 
         # save hist to file if requested

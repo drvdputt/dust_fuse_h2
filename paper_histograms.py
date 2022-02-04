@@ -1,10 +1,10 @@
 """Demonstration of rho-histograms"""
-
+import paper_rcparams
 import get_data
 import pearson
 from matplotlib import pyplot as plt
 from plot_fuse_results import format_colname
-import paper_rcparams
+
 
 data = get_data.get_merged_table()
 
@@ -14,12 +14,13 @@ def rho_histogram(ax, xparam, yparam, comment, vert_label=False):
     vert_label: bool
         Label the vertical lines
     """
+    annotation_size = 9
     xs, ys, covs = get_data.get_xs_ys_covs(data, xparam, yparam)
     rho_median, std_null = pearson.pearson_mc(xs, ys, covs, hist_ax=ax)
     xlabel = format_colname(xparam).split(" ")[0]
     ylabel = format_colname(yparam).split(" ")[0]
     text = f"$x = ${xlabel}\n$y = ${ylabel}\n{comment}"
-    ax.text(0.03, 0.9, text, transform=ax.transAxes, va="top", fontsize=10)
+    ax.text(0.03, 0.9, text, transform=ax.transAxes, va="top", fontsize=annotation_size)
     ax.tick_params("x", direction="inout")
 
     def weighted_y(f):
@@ -48,7 +49,13 @@ def rho_histogram(ax, xparam, yparam, comment, vert_label=False):
         xycoords="data",
         arrowprops=dict(arrowstyle="->"),
     )
-    ax.text(std_null * 0.8, height1 + y_offset, "$\\sigma(\\rho_0)$", ha="center")
+    ax.text(
+        std_null * 0.8,
+        height1 + y_offset,
+        "$\\sigma(\\rho_0)$",
+        ha="center",
+        fontsize=annotation_size,
+    )
     # n sigmfa arrow
     # ax.arrow(0, weighted_y(0.4), rho_median, 0, length_includes_head=True, head_length=3, head_width=3)
     height2 = weighted_y(0.4)
@@ -63,7 +70,8 @@ def rho_histogram(ax, xparam, yparam, comment, vert_label=False):
         rho_median * 0.8,
         height2 + y_offset,
         f"${rho_median / std_null:.1f}\\sigma$",
-        ha="center",
+        ha="right",
+        fontsize=annotation_size,
     )
 
 
@@ -75,6 +83,6 @@ rho_histogram(ax[1], "A1000_AV", "NH_AV", "significant", vert_label=True)
 ax[0].legend()
 ax[1].set_xlabel("$\\rho$")
 ax[1].set_ylabel("number of $\\rho$ samples")
-fig.set_size_inches(paper_rcparams.column_width, paper_rcparams.column_width * 3 / 4)
+fig.set_size_inches(paper_rcparams.column_width, paper_rcparams.column_width * 1)
 fig.subplots_adjust(hspace=0, top=0.996, right=0.996)
 fig.savefig("paper-plots/hist.pdf", bbox_inches="tight")

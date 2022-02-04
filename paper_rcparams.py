@@ -2,5 +2,5 @@
 import matplotlib as mpl
 base_width = 7.1
 base_height = 9.3
-column_width = 4.4
+column_width = 3
 mpl.rcParams["font.family"] = "times"

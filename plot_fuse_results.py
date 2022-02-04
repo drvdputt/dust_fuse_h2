@@ -158,7 +158,7 @@ def plot_rho_box(ax, xs, ys, covs, save_hist=None):
     ax.text(
         xpos,
         0.96,
-        f"$\\rho = {rho:.2f}$\n${np.abs(rho/srho):.1f}\\sigma$",
+        f"$r = {rho:.2f}$\n${np.abs(rho/srho):.1f}\\sigma$",
         transform=ax.transAxes,
         horizontalalignment=ha,
         # bbox=dict(facecolor="white", edgecolor='none', alpha=0.5),

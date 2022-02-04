@@ -125,14 +125,14 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
         ax.hist(
             rhos_null,
             bins=bins,
-            label="null sample",
+            label="null",
             color="xkcd:gray",
             alpha=0.5,
         )
         ax.hist(
             rhos,
             bins=bins,
-            label="correlated sample",
+            label="correlated",
             color="xkcd:bright blue",
             alpha=0.5,
         )

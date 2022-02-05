@@ -581,17 +581,17 @@ def plot4():
     ax.set_xlim(40, 140)
 
     fig.set_size_inches(
-        paper_rcparams.base_width, paper_rcparams.paper_rcparams.base_height * 2 / 3
+        paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3
     )
     fig.subplots_adjust(wspace=0.3)
     save(fig, "temp_dens.pdf", need_wspace=True)
 
 
 if __name__ == "__main__":
-    # plot1_column_column()
-    # plot2_ratio_ratio()
+    plot1_column_column()
+    plot2_ratio_ratio()
     plot2b_perh()
-    # plot3()
-    # plot4()
+    plot3()
+    plot4()
     for line in fit_results_table:
         print(line)

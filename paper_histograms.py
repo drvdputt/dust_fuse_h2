@@ -52,7 +52,7 @@ def rho_histogram(ax, xparam, yparam, comment, vert_label=False):
     ax.text(
         std_null * 0.8,
         height1 + y_offset,
-        "$\\sigma(\\rho_0)$",
+        "$\\sigma(r_0)$",
         ha="center",
         fontsize=annotation_size,
     )
@@ -81,8 +81,8 @@ rho_histogram(ax[0], "1_RV", "NH_AV", "not significant")
 rho_histogram(ax[1], "A1000_AV", "NH_AV", "significant", vert_label=True)
 
 ax[0].legend()
-ax[1].set_xlabel("$\\rho$")
-ax[1].set_ylabel("number of $\\rho$ samples")
+ax[1].set_xlabel("$r$")
+ax[1].set_ylabel("number of $r$ samples")
 fig.set_size_inches(paper_rcparams.column_width, paper_rcparams.column_width * 1)
 fig.subplots_adjust(hspace=0, top=0.996, right=0.996)
 fig.savefig("paper-plots/hist.pdf", bbox_inches="tight")

@@ -295,15 +295,22 @@ def plot1_column_column():
     finalize_double_grid(fig, axs, "column_vs_column.pdf")
 
 
-def plot2_ratio_ratio():
+def plot2_ratio_ratio(no_fh2=False):
     """Ratio vs ratio.
 
     x: RV and maybe A1000/AV (extinction ratios)
     y: NH/AV and fh2 (column ratios)
 
     """
-    fig, axs = plt.subplots(2, 3, sharex="col", sharey="row")
-    fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_width * 2 / 3)
+    if no_fh2:
+        nrows = 1
+        height = paper_rcparams.base_width * 1 / 3
+    else:
+        nrows = 2
+        height = paper_rcparams.base_width * 2 / 3
+
+    fig, axs = plt.subplots(nrows, 3, sharex="col", sharey="row", squeeze=False)
+    fig.set_size_inches(paper_rcparams.base_width, height)
 
     max_nh_av = 5e21
 
@@ -371,41 +378,44 @@ def plot2_ratio_ratio():
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\abumpav", "\\nhav", r))
 
-    ax = axs[1, 0]
-    xs, ys, covs = plot_results_scatter(
-        ax,
-        data,
-        "1_RV",
-        "fh2",
-        # data_comp=comp,
-        data_bohlin=bohlin,
-        # ignore_comments=["lo_h_av"],
-        mark_comments=["lo_h_av"],
-        report_rho=True,
-    )
-    # plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
+    if not no_fh2:
+        ax = axs[1, 0]
+        xs, ys, covs = plot_results_scatter(
+            ax,
+            data,
+            "1_RV",
+            "fh2",
+            # data_comp=comp,
+            data_bohlin=bohlin,
+            # ignore_comments=["lo_h_av"],
+            mark_comments=["lo_h_av"],
+            report_rho=True,
+        )
+        # plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
 
-    ax = axs[1, 1]
-    xs, ys, covs = plot_results_scatter(
-        ax,
-        data,
-        "A1000_AV",
-        "fh2",
-        data_bohlin=bohlin,
-        # ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av"],
-    )
+        ax = axs[1, 1]
+        xs, ys, covs = plot_results_scatter(
+            ax,
+            data,
+            "A1000_AV",
+            "fh2",
+            data_bohlin=bohlin,
+            # ignore_comments=["hi_h_av"],
+            mark_comments=["lo_h_av"],
+        )
 
-    ax = axs[1, 2]
-    xs, ys, covs = plot_results_scatter(
-        ax,
-        data,
-        "A2175_AV",
-        "fh2",
-        data_bohlin=bohlin,
-        # ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av"],
-    )
+        ax = axs[1, 2]
+        xs, ys, covs = plot_results_scatter(
+            ax,
+            data,
+            "A2175_AV",
+            "fh2",
+            data_bohlin=bohlin,
+            # ignore_comments=["hi_h_av"],
+            mark_comments=["lo_h_av"],
+        )
+
+    # plt.show()
     finalize_double_grid(fig, axs, "rv_trends.pdf")
 
     # there is a number that goes with this plot: the fit evaluated at RV = 3.1 or 1/RV = 0.32.

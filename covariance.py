@@ -22,7 +22,7 @@ def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
         # eigenvalues and vectors, respectively. Eigh is more stable for
         # symmetric / hermitian matrices.
         values, vectors = eigh(cov)
-        width, height = np.sqrt(np.abs(values)) * num_sigma
+        width, height = np.sqrt(np.abs(values))
     else:
         width = sqrt(cov[0, 0])
         height = sqrt(cov[1, 1])
@@ -35,8 +35,9 @@ def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
     # rotates into the short coordinate (~1).
 
     # two vectors representing the axes of the ellipse
-    vw = vectors[:, 0] * width / 2
-    vh = vectors[:, 1] * height / 2
+    # one sigma around center
+    vw = vectors[:, 0] * width * num_sigma
+    vh = vectors[:, 1] * height * num_sigma
 
     # generate corners
     num_corners = 16

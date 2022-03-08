@@ -479,27 +479,27 @@ def plot_fit(target, ax, wavs, flux, fc, lognhi, lower_upper=None):
 
     # continuum fit
     fcs = fc(wavs)
-    ax.plot(wavs, fcs, label="continuum fit", color=cont_color, zorder=30)
+    ax.plot(wavs, fcs, label="continuum", color=cont_color, zorder=30)
 
     # lya extinction
     e = extinction_factor(lognhi, wavs)
 
     # lya fit
     fms = fcs * e
-    ax.plot(wavs, fms, label="profile fit", color=lya_color, zorder=40)
+    ax.plot(wavs, fms, label="model", color=lya_color, zorder=40)
 
     # data
     ax.plot(wavs, flux, label="data", color="k", zorder=10, linewidth=1)
     # reconstructed continuum
     rec = flux / e
     safe = np.isfinite(rec) & (rec <= np.amax(flux))
-    ax.plot(wavs[safe], rec[safe], label="Reconstructed", color="r", alpha=0.5)
+    ax.plot(wavs[safe], rec[safe], label="reconstructed", color="r", alpha=0.5)
 
     used_for_cont = use_for_cont(wavs, flux, target)
     ax.plot(
         wavs[used_for_cont],
         flux[used_for_cont],
-        label="continuum fit",
+        label="cont. points",
         color=cont_color,
         linestyle="none",
         marker="o",
@@ -511,7 +511,7 @@ def plot_fit(target, ax, wavs, flux, fc, lognhi, lower_upper=None):
     ax.plot(
         wavs[used_for_lya],
         flux[used_for_lya],
-        label="lya fit",
+        label="fit points",
         color="b",
         linestyle="none",
         marker="+",
@@ -519,16 +519,16 @@ def plot_fit(target, ax, wavs, flux, fc, lognhi, lower_upper=None):
         zorder=50,
     )
     # rejections
-    bad = np.logical_not(is_good_data(wavs, flux, target))
-    ax.plot(
-        wavs[bad],
-        flux[bad],
-        label="bad",
-        color="r",
-        linestyle="none",
-        marker="x",
-        zorder=60,
-    )
+    # bad = np.logical_not(is_good_data(wavs, flux, target))
+    # ax.plot(
+    #     wavs[bad],
+    #     flux[bad],
+    #     label="bad",
+    #     color="r",
+    #     linestyle="none",
+    #     marker="x",
+    #     zorder=60,
+    # )
 
     # uncertainty
     if lower_upper is not None:

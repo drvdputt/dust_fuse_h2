@@ -50,7 +50,26 @@ def draw_ellipses(ax, xs, ys, covs, num_sigma=1, **kwargs):
         ax.add_patch(cov_ellipse(x, y, cov, num_sigma, **kwargs))
 
 
+def plot_scatter_auto(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
+    """Automatically chooses between error bars or ellipses"""
+    if np.any(np.nonzero(covs[:, 0, 1])):
+        plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
+    else:
+        plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
+
+
 def plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
+    """
+    Parameters
+    ----------
+    ax : matplotlib axes
+
+    xs : array of shape (N,) containing x data
+
+    ys : array of shape (N,) containing y data
+
+    cov : array of shape (N, 2, 2)
+    """
     scatter_kwargs.setdefault("marker", ".")
     pathcollection = ax.scatter(xs, ys, **scatter_kwargs)
 
@@ -59,6 +78,24 @@ def plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     alpha = color[3]
     ellipse_kwargs = {"facecolor": color, "edgecolor": color, "alpha": 0.3 * alpha}
     draw_ellipses(ax, xs, ys, covs, num_sigma=num_sigma, **ellipse_kwargs)
+
+
+def plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
+    """
+    Draw regular error bars instead of ellipses. Ignores covariance.
+    Useful if covariance was zero anyway, in which case ellipses would be too much information anyway.
+    """
+    scatter_kwargs.setdefault("marker", ".")
+    if "s" in scatter_kwargs:
+        scatter_kwargs["ms"] = np.sqrt(scatter_kwargs.pop("s")) / 6.3  # area to radius
+    ax.errorbar(
+        xs,
+        ys,
+        ls="none",
+        xerr=num_sigma * np.sqrt(covs[:, 0, 0]),
+        yerr=num_sigma * np.sqrt(covs[:, 1, 1]),
+        **scatter_kwargs
+    )
 
 
 def make_cov_matrix(Vx, Vy, covs=None):
@@ -73,8 +110,8 @@ def make_cov_matrix(Vx, Vy, covs=None):
 
 def get_cov_x_xdy(x, xdy, xerr, xdy_err):
     """Covariance matrix for (x, x / y)"""
-    Vx = xerr ** 2
-    Vxdy = xdy_err ** 2
+    Vx = xerr**2
+    Vxdy = xdy_err**2
     # cov(x, x / y) = Vx / y = Vx / x * (x/y)
     cov = (Vx / x) * xdy
     return make_cov_matrix(Vx, Vxdy, cov)
@@ -97,13 +134,13 @@ def get_cov_x_ydx(x, ydx, xerr, ydx_err):
         (data point, xy, xy).
     """
     # V(x) = sigma_x**2 (trivial)
-    Vx = xerr ** 2
+    Vx = xerr**2
 
     # V(y/x) = (dg / dx)**2 sigma_x**2 + (dg / dy)**2 sigma_y**2
     # with g = y/x
     # -> y**2 / x**4 sigma_x**2 + sigma_y**2 / x**2
     # = (y/x)**2 * [ sigma_x**2 / x**2 + sigma_y**2 / y**2 ]
-    Vydx = ydx_err ** 2  # is already calculated in get_data
+    Vydx = ydx_err**2  # is already calculated in get_data
 
     # cov(x, y/x) = (dx / dx) (dg / dx) Vx + (dx / dy) (dg / dy) Vy
     #             = -(y / x) Vx / x
@@ -140,8 +177,8 @@ def get_cov_fh2_htot(hi, h2, hi_err, h2_err):
     # Output: (4 vy x - 2 vx y)/(x + 2 y)^2
     x = hi
     y = h2
-    vx = hi_err ** 2
-    vy = h2_err ** 2
+    vx = hi_err**2
+    vy = h2_err**2
     cov = (4 * vy * x - 2 * vx * y) / (x + 2 * y) ** 2
 
     # sigma_x**2 + (2 sigma_y)**2
@@ -149,7 +186,7 @@ def get_cov_fh2_htot(hi, h2, hi_err, h2_err):
 
     # analogously, vfh2[x_, y_] := vx D[g[x, y], x] D[g[x, y], x] + vy D[g[x, y], y] D[g[x, y], y]
     # Output: 4 (vy x^2 + vx y^2))/(x + 2 y)^4
-    vfh2 = 4 * (vy * x ** 2 + vx * y ** 2) / (x + 2 * y) ** 4
+    vfh2 = 4 * (vy * x**2 + vx * y**2) / (x + 2 * y) ** 4
 
     return make_cov_matrix(vfh2, vhtot, cov)
 
@@ -157,7 +194,7 @@ def get_cov_fh2_htot(hi, h2, hi_err, h2_err):
 def new_cov_when_divide_y(cov_xy, y, A, A_err):
     """Turn cov(x, y) into cov(x / A, y), given x/A and A
 
-    Where A is an independent variable with respect to x and y. """
+    Where A is an independent variable with respect to x and y."""
 
     # when doing e.g. htot / AV, the covariance gets a factor 1 / AV
     new_cov = cov_xy.copy()
@@ -168,7 +205,7 @@ def new_cov_when_divide_y(cov_xy, y, A, A_err):
 
     # V(y / A) becomes (y / A)**2 * (Vy / y**2 + sigma_A**2 / A**2)
     Vy = cov_xy[:, 1, 1]
-    new_cov[:, 1, 1] = (y / A) ** 2 * (Vy / y ** 2 + (A_err / A) ** 2)
+    new_cov[:, 1, 1] = (y / A) ** 2 * (Vy / y**2 + (A_err / A) ** 2)
     return new_cov
 
 
@@ -186,12 +223,35 @@ def new_cov_when_divide_x(cov_xy, x, B, B_err):
     # V(RV) = V(x / B) becomes (x / B)**2 * ( (Vx / x)**2 + (VB / B)**2 )
     # (value * relative error)
     Vx = cov_xy[:, 0, 0]
-    new_cov[:, 0, 0] = (x / B) ** 2 * (Vx / x ** 2 + (B_err / B) ** 2)
+    new_cov[:, 0, 0] = (x / B) ** 2 * (Vx / x**2 + (B_err / B) ** 2)
     return new_cov
 
+
 def cov_common_denominator(x_a, x_a_unc, y_a, y_a_unc, a, a_unc):
-    """Covariance between an x and y of the form x = x0 / AV and y = y0 / AV
+    """Covariance between an x and y of the form x = x0 / A and y = y0 / A,
+       where x0, y0 and A are all variables with uncertainties.
+
+    Parameters
+    ----------
+    x_a: y/A values
+
+    X_a_unc: sigma(X/A)
+
+    y_a: y/A values
+
+    y_a_unc: sigma(y/A)
+
+    a: A
+
+    a_unc: sigma(A)
 
     AV can be substituted by something else of course.
+
+    Returns
+    -------
+    cov_matrix: np.array of size(len(x_a), 2, 2)
+        covariance matrix
+        [[       V(x/A), cov(x/A, y/A)],
+         [cov(x/A, y/A),        V(y,A)]]
     """
-    return make_cov_matrix(x_a_unc**2, y_a_unc**2, x_a * y_a * a_unc ** 2 / a ** 2)
+    return make_cov_matrix(x_a_unc**2, y_a_unc**2, x_a * y_a * a_unc**2 / a**2)

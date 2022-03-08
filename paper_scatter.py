@@ -417,7 +417,7 @@ def plot2_ratio_ratio():
     sb = 1.47e20
     x = 0.32
     nhav_eval = m * x + b
-    nhav_err = math.sqrt((sm * x) ** 2 + sb ** 2)
+    nhav_err = math.sqrt((sm * x) ** 2 + sb**2)
     print("NH_AV evaluated at Galactic average 1_RV=0.32:", nhav_eval, " pm ", nhav_err)
 
 
@@ -580,18 +580,38 @@ def plot4():
     )
     ax.set_xlim(40, 140)
 
-    fig.set_size_inches(
-        paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3
-    )
+    fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3)
     fig.subplots_adjust(wspace=0.3)
     save(fig, "temp_dens.pdf", need_wspace=True)
 
 
+def plot5_null():
+    """Some interesting null results.
+
+    Most important one: NH/AV vs fh2"""
+    fig, axs = plt.subplots()
+    ax = axs
+    max_nh_av = 5e21
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "fh2",
+        "NH_AV",
+        pyrange=[0, max_nh_av],
+        # data_comp=comp,
+        ignore_comments=["hi_h_av"],
+        mark_comments=["lo_h_av"],
+        report_rho=True,
+    )
+    save(fig, "null.pdf")
+
+
 if __name__ == "__main__":
     plot1_column_column()
-    plot2_ratio_ratio()
+    plot2_ratio_ratio(True)
     plot2b_perh()
     plot3()
     plot4()
+    plot5_null()
     for line in fit_results_table:
         print(line)

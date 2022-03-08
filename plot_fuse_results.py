@@ -276,7 +276,7 @@ def plot_results_scatter(
     if data_comp is not None:
         # xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
         xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam)
-        covariance.plot_scatter_with_ellipses(
+        covariance.plot_scatter_auto(
             ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha, label="comp"
         )
 
@@ -288,7 +288,7 @@ def plot_results_scatter(
 
     # get all data, and plot everything except ignored
     xs, ys, covs = get_xs_ys_covs(data, xparam, yparam)
-    covariance.plot_scatter_with_ellipses(
+    covariance.plot_scatter_auto(
         ax,
         xs[not_ignored],
         ys[not_ignored],
@@ -319,7 +319,7 @@ def plot_results_scatter(
     # plot ignored points in different color
     if ignore.any():
         bad_xs, bad_ys, bad_covs = get_xs_ys_covs(data[ignore], xparam, yparam)
-        covariance.plot_scatter_with_ellipses(
+        covariance.plot_scatter_auto(
             ax,
             bad_xs,
             bad_ys,

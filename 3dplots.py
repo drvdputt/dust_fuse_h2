@@ -2,6 +2,7 @@ from get_data import get_merged_table
 from matplotlib import pyplot as plt
 from astropy.table import Column
 import numpy as np
+from plot_fuse_results import format_colname
 
 data = get_merged_table()
 # add comments for certain stars here
@@ -28,8 +29,8 @@ def scatter_and_color(xparam, yparam, cparam, mask=np.full((len(data),), True)):
     c = data[cparam][mask]
     plt.figure()
     plt.scatter(x, y, c=c)
-    plt.xlabel(xparam)
-    plt.ylabel(yparam)
+    plt.xlabel(format_colname(xparam))
+    plt.ylabel(format_colname(yparam))
     cb = plt.colorbar()
     cb.set_label(cparam)
 
@@ -65,8 +66,11 @@ def threedee(xparam, yparam, zparam, cparam=None):
 
 # threedee("1_RV", "A1000", "CAV4", "fh2")
 
-scatter_and_color("A2175_NH", "AV_NH", "1_RV")
-scatter_and_color("A1000_NH", "AV_NH", "1_RV")
-scatter_and_color("1_RV", "A2175_AV", "AV_NH")
+# scatter_and_color("A2175_NH", "AV_NH", "1_RV")
+# scatter_and_color("A1000_NH", "AV_NH", "1_RV")
+# scatter_and_color("1_RV", "A2175_AV", "AV_NH")
+
+scatter_and_color("nhi", "nh2", "A1000", mask=data["comment"] != "hi_h_av")
+scatter_and_color("nhi", "nh2", "AV", mask=data["comment"] != "hi_h_av")
 
 plt.show()

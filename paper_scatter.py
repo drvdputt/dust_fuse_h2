@@ -53,11 +53,14 @@ shull = get_shull2021()
 
 def finalize_double_grid(fig, axs, filename):
     # turn off xlabel for everything but last row
-    for ax in axs[:-1].flatten():
-        ax.set_xlabel("")
-    # turn off ylabel for everything but last column
-    for ax in axs[:, 1:].flatten():
-        ax.set_ylabel("")
+    if axs.shape[0] > 1:
+        pass
+    #     for ax in axs[:-1].flatten():
+    #         ax.set_xlabel("")
+    # # turn off ylabel for everything but last column
+    if axs.shape[1] > 1:
+        for ax in axs[:, 1:].flatten():
+            ax.set_ylabel("")
     save(fig, filename)
 
 
@@ -67,7 +70,7 @@ def save(fig, filename, need_hspace=False, need_wspace=False):
     if not need_wspace:
         fig.subplots_adjust(wspace=0.02)
     fig.subplots_adjust(right=0.99)
-    fig.savefig("paper-plots/" + filename)
+    fig.savefig("paper-plots/" + filename, bbox_inches="tight")
 
 
 # Simply a list of lines for the table. It's a global variable, and stuff is added to it when the different plot functions below are executed.
@@ -148,7 +151,7 @@ def latex_table_line(xparam, yparam, fit_results_dict):
     return f"{xparam} & {yparam} & {m_and_unc_str} & {b_and_unc_str}\\\\"
 
 
-def plot1_column_column():
+def plot1_column_column(mark4: bool = True):
     """The first plot shows gas columns vs dust columns.
 
     Main things to show:
@@ -157,7 +160,16 @@ def plot1_column_column():
     - A1000 is very correlated with NH2, and not with AV
     - NHI and NHTOT are correlated with AV, but less with A1000
     - Also show NHtot
+
+    Parameters
+    ----------
+    mark4: bool
+        show the 4 points with low NH/AV on all the plots
     """
+    if mark4:
+        mark_comments = ["lo_h_av"]
+    else:
+        mark_comments = None
 
     fig, axs = plt.subplots(3, 3, sharey="row", sharex="col")
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_width)
@@ -195,7 +207,7 @@ def plot1_column_column():
         "nhi",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
     )
     ax = choose_ax("AV", "nh2")
     xs, ys, covs = plot_results_scatter(
@@ -205,7 +217,7 @@ def plot1_column_column():
         "nh2",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
     )
 
     ax = choose_ax("EBV", "nhtot")
@@ -216,7 +228,7 @@ def plot1_column_column():
         "nhtot",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
         # ignore_comments=["hi_h_av"],
         report_rho=False,
     )
@@ -231,7 +243,7 @@ def plot1_column_column():
         "nhi",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
     )
 
     ax = choose_ax("EBV", "nh2")
@@ -242,7 +254,7 @@ def plot1_column_column():
         "nh2",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
     )
 
     ax = choose_ax("A1000", "nhtot")
@@ -252,7 +264,7 @@ def plot1_column_column():
         "A1000",
         "nhtot",
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
     )
 
     ax = choose_ax("A1000", "nhi")
@@ -262,7 +274,7 @@ def plot1_column_column():
         "A1000",
         "nhi",
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
     )
 
     ax = choose_ax("A1000", "nh2")
@@ -272,7 +284,7 @@ def plot1_column_column():
         "A1000",
         "nh2",
         data_bohlin=bohlin,
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
         report_rho=False,
     )
     r = plot_results_fit(
@@ -295,13 +307,25 @@ def plot1_column_column():
     finalize_double_grid(fig, axs, "column_vs_column.pdf")
 
 
-def plot2_ratio_ratio(no_fh2=False):
+def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     """Ratio vs ratio.
 
     x: RV and maybe A1000/AV (extinction ratios)
     y: NH/AV and fh2 (column ratios)
 
+    Parameters
+    ----------
+    no_fh2: bool
+        Do not do the bottom 4 plots (for talk)
+
+    mark4: bool
+        show the 4 points with low NH/AV on all the plots
     """
+    if mark4:
+        mark_comments = ["lo_h_av"]
+    else:
+        mark_comments = None
+
     if no_fh2:
         nrows = 1
         height = paper_rcparams.base_width * 1 / 3
@@ -323,7 +347,7 @@ def plot2_ratio_ratio(no_fh2=False):
         pyrange=[0, max_nh_av],
         # data_comp=comp,
         ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
         report_rho=False,
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False, report_rho=True)
@@ -360,7 +384,7 @@ def plot2_ratio_ratio(no_fh2=False):
         "NH_AV",
         pyrange=[0, max_nh_av],
         ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\akav", "\\nhav", r))
@@ -373,7 +397,7 @@ def plot2_ratio_ratio(no_fh2=False):
         "NH_AV",
         pyrange=[0, max_nh_av],
         ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av"],
+        mark_comments=mark_comments,
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\abumpav", "\\nhav", r))
@@ -387,8 +411,8 @@ def plot2_ratio_ratio(no_fh2=False):
             "fh2",
             # data_comp=comp,
             data_bohlin=bohlin,
-            # ignore_comments=["lo_h_av"],
-            mark_comments=["lo_h_av"],
+            # ignore_comments=mark_comments,
+            mark_comments=mark_comments,
             report_rho=True,
         )
         # plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
@@ -401,7 +425,7 @@ def plot2_ratio_ratio(no_fh2=False):
             "fh2",
             data_bohlin=bohlin,
             # ignore_comments=["hi_h_av"],
-            mark_comments=["lo_h_av"],
+            mark_comments=mark_comments,
         )
 
         ax = axs[1, 2]
@@ -412,7 +436,7 @@ def plot2_ratio_ratio(no_fh2=False):
             "fh2",
             data_bohlin=bohlin,
             # ignore_comments=["hi_h_av"],
-            mark_comments=["lo_h_av"],
+            mark_comments=mark_comments,
         )
 
     # plt.show()
@@ -617,11 +641,13 @@ def plot5_null():
 
 
 if __name__ == "__main__":
-    plot1_column_column()
-    plot2_ratio_ratio(True)
-    plot2b_perh()
-    plot3()
-    plot4()
-    plot5_null()
+    # for presentations, we clean up the plots a bit with some of the
+    # parameters given here
+    plot1_column_column(mark4=False)
+    plot2_ratio_ratio(mark4=False, no_fh2=True)
+    # plot2b_perh()
+    # plot3()
+    # plot4()
+    # plot5_null()
     for line in fit_results_table:
         print(line)

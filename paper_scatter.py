@@ -19,6 +19,9 @@ import numpy as np
 from uncertainties import ufloat
 import math
 import paper_rcparams
+import argparse
+
+OUTPUT_TYPE = "pdf"
 
 # change colors like this
 # plot_fuse_results.MAIN_COLOR = "m"
@@ -70,7 +73,8 @@ def save(fig, filename, need_hspace=False, need_wspace=False):
     if not need_wspace:
         fig.subplots_adjust(wspace=0.02)
     fig.subplots_adjust(right=0.99)
-    fig.savefig("paper-plots/" + filename, bbox_inches="tight")
+    dpi = None if OUTPUT_TYPE=='pdf' else 300
+    fig.savefig(f"paper-plots/{filename}.{OUTPUT_TYPE}", bbox_inches="tight", dpi=dpi)
 
 
 # Simply a list of lines for the table. It's a global variable, and stuff is added to it when the different plot functions below are executed.
@@ -304,7 +308,7 @@ def plot1_column_column(mark4: bool = True):
     axs[0][0].legend(bbox_to_anchor=(1.5, 1), loc="lower center", ncol=4)
 
     fig.tight_layout()
-    finalize_double_grid(fig, axs, "column_vs_column.pdf")
+    finalize_double_grid(fig, axs, "column_vs_column")
 
 
 def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
@@ -440,7 +444,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
         )
 
     # plt.show()
-    finalize_double_grid(fig, axs, "rv_trends.pdf")
+    finalize_double_grid(fig, axs, "rv_trends")
 
     # there is a number that goes with this plot: the fit evaluated at RV = 3.1 or 1/RV = 0.32.
 
@@ -481,7 +485,7 @@ def plot2b_perh():
         mark_comments=["lo_h_av"],
     )
 
-    finalize_double_grid(fig, axs, "nh_normalized.pdf")
+    finalize_double_grid(fig, axs, "nh_normalized")
 
 
 def plot3():
@@ -558,7 +562,7 @@ def plot3():
         ax_r.set_ylabel("")
     fig.tight_layout()
     fig.subplots_adjust(wspace=0.03, right=0.99, left=0.1, bottom=0.05, top=0.99)
-    save(fig, "fh2_vs_fm90.pdf", need_hspace=True)
+    save(fig, "fh2_vs_fm90", need_hspace=True)
 
 
 def plot4():
@@ -616,7 +620,7 @@ def plot4():
 
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3)
     fig.subplots_adjust(wspace=0.3)
-    save(fig, "temp_dens.pdf", need_wspace=True)
+    save(fig, "temp_dens", need_wspace=True)
 
 
 def plot5_null():
@@ -637,10 +641,15 @@ def plot5_null():
         mark_comments=["lo_h_av"],
         report_rho=True,
     )
-    save(fig, "null.pdf")
+    save(fig, "null")
 
 
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--outputtype", default=None)
+    args = ap.parse_args()
+    if args.outputtype is not None:
+        OUTPUT_TYPE = args.outputtype
     # for presentations, we clean up the plots a bit with some of the
     # parameters given here
     plot1_column_column(mark4=False)

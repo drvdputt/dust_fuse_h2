@@ -3,7 +3,8 @@ from scipy import optimize
 import itertools
 from astropy.modeling import models, fitting
 from covariance import cov_ellipse
-from rescale import rescale_data, unscale_mb
+import rescale
+from rescale import RescaledData
 
 def perp(m):
     """Vector perpendicular to a line with slope m"""
@@ -182,12 +183,9 @@ def linear_ortho_maxlh(
         b_perp_unc: estimate of error on b_perp
         outlier_idxs: list of indices of outliers
     """
-    xy = np.column_stack((data_x, data_y))
     # choose a scale factor to avoid the problems that come with the
-    # huge dynamic range difference between certain x and y data.
-    factor_x = 1 / np.std(data_x)
-    factor_y = 1 / np.std(data_y)
-    xy, covs = rescale_data(xy, cov_xy, factor_x, factor_y)
+    # huge order of magnitude difference between certain x and y data.
+    rd = RescaledData(data_x, data_y, cov_xy)
 
     # if manual outliers, add them here. Will be deleted after first
     # iteration
@@ -204,16 +202,16 @@ def linear_ortho_maxlh(
 
     def to_minimize(v):
         m, b_perp = v
-        return -logL(m, b_perp, no_outliers(xy), no_outliers(covs))
+        return -logL(m, b_perp, no_outliers(rd.xy), no_outliers(rd.covs))
 
     def jac(v):
         m, b_perp = v
-        return -grad_logL(m, b_perp, no_outliers(xy), no_outliers(covs))
+        return -grad_logL(m, b_perp, no_outliers(rd.xy), no_outliers(rd.covs))
 
     # use naive result as initial guess
     line_init = models.Linear1D()
     fit = fitting.LinearLSQFitter()
-    naive_fit = fit(line_init, xy[:, 0], xy[:, 1], weights=1.0 / np.sqrt(covs[:, 1, 1]))
+    naive_fit = fit(line_init, rd.xy[:, 0], rd.xy[:, 1], weights=1.0 / np.sqrt(rd.covs[:, 1, 1]))
     initial_guess = np.array(
         [
             naive_fit.slope.value,
@@ -250,7 +248,7 @@ def linear_ortho_maxlh(
             if counter == 0:
                 outliers.clear()
             # new outliers is previous + current
-            new_outliers = outliers or find_outliers(xy, covs, m, b_perp)
+            new_outliers = outliers or find_outliers(rd.xy, rd.covs, m, b_perp)
             # if new set = old set, we're done
             if outliers == new_outliers:
                 iter_done = True
@@ -267,11 +265,11 @@ def linear_ortho_maxlh(
     if debug_print:
         print(res)
         # manual check for convergence
-        logL0 = logL(m, b_perp, xy, covs)
-        logL_up = logL(m + 0.1 * abs(m), b_perp, xy, covs)
-        logL_down = logL(m - 0.1 * abs(m), b_perp, xy, covs)
-        logL_right = logL(m, b_perp + 0.1 * abs(b_perp), xy, covs)
-        logL_left = logL(m, b_perp - 0.1 * abs(b_perp), xy, covs)
+        logL0 = logL(m, b_perp, rd.xy, rd.covs)
+        logL_up = logL(m + 0.1 * abs(m), b_perp, rd.xy, rd.covs)
+        logL_down = logL(m - 0.1 * abs(m), b_perp, rd.xy, rd.covs)
+        logL_right = logL(m, b_perp + 0.1 * abs(b_perp), rd.xy, rd.covs)
+        logL_left = logL(m, b_perp - 0.1 * abs(b_perp), rd.xy, rd.covs)
 
         string = """ local logL:
 up {}
@@ -284,7 +282,7 @@ down {}
 
     # undo the scale factors to get the m and b for the real data
     b = b_perp_to_b(m, b_perp)
-    m_real, b_real = unscale_mb(m, b, factor_x, factor_y)
+    m_real, b_real = rescale.unscale_mb(m, b, rd.factor_x, rd.factor_y)
     b_perp_real = b_to_b_perp(m_real, b_real)
 
     if debug_print:
@@ -295,7 +293,7 @@ down {}
         print("Solution")
         print("m, b_perp:", m_real, b_perp_real)
         print("m, b:", m_real, b_real)
-        print(f"chi2min: {chi2min} or {chi2min/(len(xy) - 2)} per DOF")
+        print(f"chi2min: {chi2min} or {chi2min/(len(rd.xy) - 2)} per DOF")
 
     result = {"m": m_real, "b_perp": b_perp_real, "outlier_idxs": outlier_output}
 

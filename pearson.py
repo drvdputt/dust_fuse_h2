@@ -32,21 +32,17 @@ def draw_points(xs, ys, covs, M):
     # -> each row is a different realization of our 75 sightlines
 
     # rescale data to avoid numerical problems
-    factor_x = 1 / np.std(xs)
-    factor_y = 1 / np.std(ys)
-    xyr, covr = rescale.rescale_data(
-        np.column_stack((xs, ys)), covs, factor_x, factor_y
-    )
-    N = len(xyr)
+    rd = rescale.RescaledData(xs, ys, covs)
+    N = len(rd.xy)
     x_samples = np.zeros((M, N))
     y_samples = np.zeros((M, N))
     for j in range(N):
-        samples = RNG.multivariate_normal(mean=xyr[j], cov=covr[j], size=M)
+        samples = RNG.multivariate_normal(mean=rd.xy[j], cov=rd.covs[j], size=M)
         x_samples[:, j] = samples[:, 0]
         y_samples[:, j] = samples[:, 1]
 
     # unscale the data again before returning
-    return x_samples / factor_x, y_samples / factor_y
+    return x_samples / rd.factor_x, y_samples / rd.factor_y
 
 
 def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):

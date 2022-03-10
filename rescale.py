@@ -26,6 +26,49 @@ solve this type of problem when it comes up.
 
 import numpy as np
 
+
+class RescaledData:
+    """
+    Utility for rescaling data, and rescaling and unscaling other data
+    with the same factors.
+
+    Atributes
+    ---------
+
+    xy_original
+
+    covs_original
+
+    xy
+
+    covs
+
+    factor_x
+
+    factor_y
+    """
+
+    def __init__(self, xs, ys, covs, xfactor_yfactor=None):
+        """
+        Parameters
+        ----------
+        xfactor_yfactor: (float, float)
+            Choose scaling factor for each axis. Default is None. If
+            None, 1/std(xs or yy) will be used.
+        """
+        self.xy_original = np.column_stack((xs, ys))
+        self.covs_original = covs
+
+        if xfactor_yfactor is None:
+            self.factor_x, self.factor_y = 1 / np.std(self.xy_original, axis=0)
+        else:
+            self.factor_x, self.factor_y = xfactor_yfactor
+
+        self.xy, self.covs = rescale_data(
+            self.xy_original, self.covs_original, self.factor_x, self.factor_y
+        )
+
+
 def rescale_data(xy, covs, factor_x, factor_y):
     """Multiply the data (x,y) by a scaling matrix
     S = ( fx 0
@@ -42,9 +85,10 @@ def rescale_data(xy, covs, factor_x, factor_y):
     covr = np.einsum("ij,djk,kl", S.T, covs, S)
     return xyr, covr
 
+
 def unscale_mb(m, b, factor_x, factor_y):
     """Unscale the slope and intercept of a linear fit that was performed to
-       data that was rescaled."""
+    data that was rescaled."""
     # x * factor_x * m = y * factor_y --> y / x = ...
     m_real = m * factor_x / factor_y
     # b = y * factor_y --> y = ...

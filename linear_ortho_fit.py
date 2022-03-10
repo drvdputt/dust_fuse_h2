@@ -361,9 +361,14 @@ def plot_solution_linescatter(ax, m_samples, b_samples, **plot_kwargs):
 
     """
     x = np.array(ax.get_xlim())
+    num = 0
     for (m, b_perp) in zip(m_samples, b_samples):
         y = m * x + b_perp_to_b(m, b_perp)
         ax.plot(x, y, **plot_kwargs)
+        # keep the number of lines plotted under 100
+        num += 1
+        if num > 100:
+            break
 
 
 def sample_likelihood(m, b_perp, m_grid, b_perp_grid, logL_grid, N=300):

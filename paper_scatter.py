@@ -73,7 +73,7 @@ def save(fig, filename, need_hspace=False, need_wspace=False):
     if not need_wspace:
         fig.subplots_adjust(wspace=0.02)
     fig.subplots_adjust(right=0.99)
-    dpi = None if OUTPUT_TYPE=='pdf' else 300
+    dpi = None if OUTPUT_TYPE == "pdf" else 300
     fig.savefig(f"paper-plots/{filename}.{OUTPUT_TYPE}", bbox_inches="tight", dpi=dpi)
 
 
@@ -348,6 +348,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
         data,
         "1_RV",
         "NH_AV",
+        pxrange=[0.1, 0.5],
         pyrange=[0, max_nh_av],
         # data_comp=comp,
         ignore_comments=["hi_h_av"],
@@ -652,7 +653,7 @@ if __name__ == "__main__":
         OUTPUT_TYPE = args.outputtype
     # for presentations, we clean up the plots a bit with some of the
     # parameters given here
-    plot1_column_column(mark4=False)
+    # plot1_column_column(mark4=False)
     plot2_ratio_ratio(mark4=False, no_fh2=True)
     # plot2b_perh()
     # plot3()

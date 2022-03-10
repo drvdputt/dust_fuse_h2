@@ -2,6 +2,9 @@ from scipy.linalg import eigh
 import numpy as np
 from math import sqrt, cos, sin
 from matplotlib.patches import Polygon
+from scipy.stats import multivariate_normal
+from rescale import RescaledData
+import cmasher
 
 
 def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
@@ -56,7 +59,8 @@ def plot_scatter_auto(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     if np.any(np.nonzero(covs[:, 0, 1])):
         # if True:
         scatter_kwargs["marker"] = "+"
-        plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
+        # plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
+        plot_scatter_density(ax, xs, ys, covs)
     else:
         scatter_kwargs["marker"] = "o"
         plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
@@ -80,7 +84,6 @@ def plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
 
     # use same color for point and ellipse
     color = pathcollection.get_facecolors()[0]
-    alpha = color[3]
     ellipse_kwargs = {"facecolor": color, "edgecolor": color, "alpha": 0.075}
     draw_ellipses(ax, xs, ys, covs, num_sigma=num_sigma, **ellipse_kwargs)
 
@@ -108,6 +111,63 @@ def plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     for bar in bars:
         bar.set_alpha(0.15)
 
+
+def plot_scatter_density(ax, xs, ys, covs):
+    """
+    Heat map visualizing the collection of all data points and their covariance ellipses.
+
+    Might be useful for talk or for later projects.
+    """
+    # rescale to avoid floating point/singular matrix problems
+    rd = RescaledData(xs, ys, covs)
+    # ranges
+    sx = np.sqrt(covs[:, 0, 0])
+    sy = np.sqrt(covs[:, 1, 1])
+    minx = np.amin(xs - 3 * sx)
+    maxx = np.amax(xs + 3 * sx)
+    miny = np.amin(ys - 3 * sy)
+    maxy = np.amax(ys + 3 * sy)
+    # grid. 1000j = complex number, because the mgrid syntax is weird.
+    # If you pass a complex integer, you get number of points instead of
+    # step length)
+    nx = 1000
+    ny = 1000
+    xx_yy = np.mgrid[minx : maxx : nx * 1j, miny : maxy : ny * 1j]
+    print("grid_shape", xx_yy.shape)
+    # indexed on (i, j, x or y)
+    grid_of_xy_pairs = np.moveaxis(xx_yy, 0, -1)
+
+    # calculating the multivariate normal density is the part where the
+    # rescaling is needed. It can struggle with the covariance matrix if
+    # the orders of magnitude of the elements are too different
+    rescaled_grid = grid_of_xy_pairs.copy()
+    rescaled_grid[:, :, 0] *= rd.factor_x
+    rescaled_grid[:, :, 1] *= rd.factor_y
+    density_array = np.zeros((nx, ny))
+    for i in range(len(xs)):
+        # calculate using the rescaled version of the problem
+        density_array += multivariate_normal.pdf(
+            rescaled_grid, mean=rd.xy[i], cov=rd.covs[i]
+        )
+
+    # we can choose to rescale the density array here, but probably not necessary for the visualization
+
+    extent = (minx, maxx, miny, maxy)
+    print(density_array)
+
+    # cut the ends off the colormap, to make the low end more distinguishable
+    # cmap = "cmr.arctic_r"
+    cmap = cmasher.get_sub_cmap("cmr.arctic_r", 0, .9)
+
+    ax.imshow(
+        density_array.T,
+        origin="lower",
+        extent=extent,
+        aspect="auto",
+        cmap=cmap,
+    )
+    ax.scatter(xs, ys, marker="+", s=12, color="k", alpha=0.75, linewidth=0.6))
+    draw_ellipses(ax, xs, ys, covs, facecolor="none", edgecolor="#00000020", lw=.5)
 
 
 def make_cov_matrix(Vx, Vy, covs=None):

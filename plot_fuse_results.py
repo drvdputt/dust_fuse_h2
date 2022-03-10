@@ -492,12 +492,11 @@ def plot_results_fit(
     xlim = line_ax.get_xlim()
     xp = np.linspace(xlim[0], xlim[1], 3)
     yp = m * xp + b
-    line_ax.plot(xp, yp, color=FIT_COLOR, linewidth=2)
+    line_ax.plot(xp, yp, color=FIT_COLOR, linewidth=1)
 
     # plot sampled lines
     linear_ortho_fit.plot_solution_linescatter(
-        line_ax, sampled_m, sampled_b_perp, color=FIT_COLOR, alpha=5 / len(sampled_m)
-    )
+        line_ax, sampled_m, sampled_b_perp, color=FIT_COLOR, alpha=4/255)
 
     # if outliers, mark them
     if len(outlier_idxs) > 0:

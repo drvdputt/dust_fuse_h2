@@ -54,8 +54,11 @@ def draw_ellipses(ax, xs, ys, covs, num_sigma=1, **kwargs):
 def plot_scatter_auto(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     """Automatically chooses between error bars or ellipses"""
     if np.any(np.nonzero(covs[:, 0, 1])):
+        # if True:
+        scatter_kwargs["marker"] = "+"
         plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
     else:
+        scatter_kwargs["marker"] = "o"
         plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
 
 
@@ -72,12 +75,13 @@ def plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     cov : array of shape (N, 2, 2)
     """
     scatter_kwargs.setdefault("marker", ".")
+    scatter_kwargs.setdefault("alpha", 0.66)
     pathcollection = ax.scatter(xs, ys, **scatter_kwargs)
 
     # use same color for point and ellipse
     color = pathcollection.get_facecolors()[0]
     alpha = color[3]
-    ellipse_kwargs = {"facecolor": color, "edgecolor": color, "alpha": 0.3 * alpha}
+    ellipse_kwargs = {"facecolor": color, "edgecolor": color, "alpha": 0.075}
     draw_ellipses(ax, xs, ys, covs, num_sigma=num_sigma, **ellipse_kwargs)
 
 
@@ -87,16 +91,23 @@ def plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     Useful if covariance was zero anyway, in which case ellipses would be too much information anyway.
     """
     scatter_kwargs.setdefault("marker", ".")
+    scatter_kwargs.setdefault("alpha", 0.33)
     if "s" in scatter_kwargs:
-        scatter_kwargs["ms"] = np.sqrt(scatter_kwargs.pop("s")) / 6.3  # area to radius
-    ax.errorbar(
+        scatter_kwargs["ms"] = np.sqrt(
+            scatter_kwargs.pop("s")
+        )  # / 6.3  # area to radius
+    markers, caps, bars = ax.errorbar(
         xs,
         ys,
         ls="none",
         xerr=num_sigma * np.sqrt(covs[:, 0, 0]),
         yerr=num_sigma * np.sqrt(covs[:, 1, 1]),
+        elinewidth=1.5,
         **scatter_kwargs
     )
+    for bar in bars:
+        bar.set_alpha(0.15)
+
 
 
 def make_cov_matrix(Vx, Vy, covs=None):

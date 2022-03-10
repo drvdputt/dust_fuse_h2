@@ -16,8 +16,9 @@ SHULL_COLOR = "xkcd:dark yellow"
 SHILL_MARKER = "o"
 COMP_COLOR = "xkcd:gray"
 MAIN_COLOR = "xkcd:bright blue"
-MAIN_MARKER = "+"
+MAIN_MARKER = "o"
 MAIN_MARKER_MEW = 0.6  # linewidth for scatter command
+MAIN_MARKER_SIZE = 20
 MARK_COLOR = "r"
 MARK_MARKER = "s"
 FIT_COLOR = "k"
@@ -202,7 +203,6 @@ def plot_results_scatter(
     data_bohlin=None,
     data_shull=None,
     figsize=None,
-    alpha=1,
     ignore_comments=None,
     mark_comments=None,
     report_rho=True,
@@ -277,7 +277,7 @@ def plot_results_scatter(
         # xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam, "AV")
         xs, ys, covs = get_xs_ys_covs(data_comp, xparam, yparam)
         covariance.plot_scatter_auto(
-            ax, xs, ys, covs, 1, color=COMP_COLOR, alpha=alpha, label="comp"
+            ax, xs, ys, covs, 1, color=COMP_COLOR, label="comp"
         )
 
     # decide which points to highlight as ignored
@@ -295,10 +295,9 @@ def plot_results_scatter(
         covs[not_ignored],
         1,
         color=MAIN_COLOR,
-        alpha=alpha,
         marker=MAIN_MARKER,
         linewidth=MAIN_MARKER_MEW,
-        s=40,
+        s=MAIN_MARKER_SIZE,
         label="sample",
         zorder=10,
     )
@@ -326,7 +325,6 @@ def plot_results_scatter(
             bad_covs,
             1,
             color=BAD_COLOR,
-            alpha=alpha,
             marker="x",
             label="ignore",
         )

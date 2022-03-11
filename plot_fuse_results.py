@@ -496,7 +496,7 @@ def plot_results_fit(
 
     # plot sampled lines
     linear_ortho_fit.plot_solution_linescatter(
-        line_ax, sampled_m, sampled_b_perp, color=FIT_COLOR, alpha=4/255)
+        line_ax, sampled_m, sampled_b_perp, color=FIT_COLOR, alpha=4/255, zorder=-10)
 
     # if outliers, mark them
     if len(outlier_idxs) > 0:

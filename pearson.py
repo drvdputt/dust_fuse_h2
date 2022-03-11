@@ -71,6 +71,22 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
     # going to do both just to be sure.
     x_samples, y_samples = draw_points(xs, ys, covs, M)
     x_samples_scrambled, y_samples_scrambled = draw_points(xs, ys, covs, M)
+    # TODO: current way is actually wrong. Works fine for uncorrelated
+    # data, but does not do what it needs to do when there are
+    # correlations. Need to shift according to noise AFTER scrambling x
+    # with respect to y. To be clear: 1. create uncorrelated data 2.
+    # induce correlation due to correlated uncertainties 3. see if
+    # observed correlation is significantly higher than the typical
+    # induced correlation
+
+    # the hard part: need covariance matrix for each point in the
+    # scrambled data set. We can use the covariance equations that we
+    # used for the original data for this though. See get_xs_ys_covs in
+    # get_data.
+
+    # possible way to go would be choosing the "worst case scenario".
+    # Pick the biggest correlation coefficient, and then use the same
+    # covariance matrix to sampel the shifts of all the scrambled pairs.
     for i in range(M):
         # np.random.shuffle(x_samples_scrambled[i])
         RNG.shuffle(y_samples_scrambled[i])

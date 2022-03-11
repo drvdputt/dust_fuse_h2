@@ -63,6 +63,7 @@ def plot_scatter_auto(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
         plot_scatter_density(ax, xs, ys, covs)
     else:
         scatter_kwargs["marker"] = "o"
+        scatter_kwargs["s"] = 12
         plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
 
 
@@ -94,7 +95,7 @@ def plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     Useful if covariance was zero anyway, in which case ellipses would be too much information anyway.
     """
     scatter_kwargs.setdefault("marker", ".")
-    scatter_kwargs.setdefault("alpha", 0.33)
+    scatter_kwargs.setdefault("alpha", 0.66)
     if "s" in scatter_kwargs:
         scatter_kwargs["ms"] = np.sqrt(
             scatter_kwargs.pop("s")

@@ -134,7 +134,7 @@ def plot_scatter_density(ax, xs, ys, covs):
     nx = 1000
     ny = 1000
     xx_yy = np.mgrid[minx : maxx : nx * 1j, miny : maxy : ny * 1j]
-    print("grid_shape", xx_yy.shape)
+    # print("grid_shape", xx_yy.shape)
     # indexed on (i, j, x or y)
     grid_of_xy_pairs = np.moveaxis(xx_yy, 0, -1)
 
@@ -153,13 +153,10 @@ def plot_scatter_density(ax, xs, ys, covs):
 
     # we can choose to rescale the density array here, but probably not necessary for the visualization
 
-    extent = (minx, maxx, miny, maxy)
-    print(density_array)
-
     # cut the ends off the colormap, to make the low end more distinguishable
     # cmap = "cmr.arctic_r"
     cmap = cmasher.get_sub_cmap("cmr.arctic_r", 0, 0.9)
-
+    extent = (minx, maxx, miny, maxy)
     ax.imshow(
         density_array.T,
         origin="lower",

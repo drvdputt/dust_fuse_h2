@@ -22,6 +22,11 @@ import paper_rcparams
 import argparse
 
 OUTPUT_TYPE = "pdf"
+MARK4 = False # switch to enable marking of low NH/AV points
+if MARK4:
+    MARK_STRING = ["lo_h_av"]
+else:
+    MARK_STRING = None
 
 # change colors like this
 # plot_fuse_results.MAIN_COLOR = "m"
@@ -155,7 +160,7 @@ def latex_table_line(xparam, yparam, fit_results_dict):
     return f"{xparam} & {yparam} & {m_and_unc_str} & {b_and_unc_str}\\\\"
 
 
-def plot1_column_column(mark4: bool = True):
+def plot1_column_column():
     """The first plot shows gas columns vs dust columns.
 
     Main things to show:
@@ -165,16 +170,7 @@ def plot1_column_column(mark4: bool = True):
     - NHI and NHTOT are correlated with AV, but less with A1000
     - Also show NHtot
 
-    Parameters
-    ----------
-    mark4: bool
-        show the 4 points with low NH/AV on all the plots
     """
-    if mark4:
-        mark_comments = ["lo_h_av"]
-    else:
-        mark_comments = None
-
     fig, axs = plt.subplots(3, 3, sharey="row", sharex="col")
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_width)
 
@@ -211,7 +207,7 @@ def plot1_column_column(mark4: bool = True):
         "nhi",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
     )
     ax = choose_ax("AV", "nh2")
     xs, ys, covs = plot_results_scatter(
@@ -221,7 +217,7 @@ def plot1_column_column(mark4: bool = True):
         "nh2",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
     )
 
     ax = choose_ax("EBV", "nhtot")
@@ -232,7 +228,7 @@ def plot1_column_column(mark4: bool = True):
         "nhtot",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
         # ignore_comments=["hi_h_av"],
         report_rho=False,
     )
@@ -247,7 +243,7 @@ def plot1_column_column(mark4: bool = True):
         "nhi",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
     )
 
     ax = choose_ax("EBV", "nh2")
@@ -258,7 +254,7 @@ def plot1_column_column(mark4: bool = True):
         "nh2",
         # data_comp=comp,
         data_bohlin=bohlin,
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
     )
 
     ax = choose_ax("A1000", "nhtot")
@@ -268,7 +264,7 @@ def plot1_column_column(mark4: bool = True):
         "A1000",
         "nhtot",
         data_bohlin=bohlin,
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
     )
 
     ax = choose_ax("A1000", "nhi")
@@ -278,7 +274,7 @@ def plot1_column_column(mark4: bool = True):
         "A1000",
         "nhi",
         data_bohlin=bohlin,
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
     )
 
     ax = choose_ax("A1000", "nh2")
@@ -288,7 +284,7 @@ def plot1_column_column(mark4: bool = True):
         "A1000",
         "nh2",
         data_bohlin=bohlin,
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
         report_rho=False,
     )
     r = plot_results_fit(
@@ -325,11 +321,6 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     mark4: bool
         show the 4 points with low NH/AV on all the plots
     """
-    if mark4:
-        mark_comments = ["lo_h_av"]
-    else:
-        mark_comments = None
-
     if no_fh2:
         nrows = 1
         height = paper_rcparams.base_width * 1 / 3
@@ -352,7 +343,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
         pyrange=[0, max_nh_av],
         # data_comp=comp,
         ignore_comments=["hi_h_av"],
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
         report_rho=False,
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False, report_rho=True)
@@ -389,7 +380,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
         "NH_AV",
         pyrange=[0, max_nh_av],
         ignore_comments=["hi_h_av"],
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\akav", "\\nhav", r))
@@ -402,7 +393,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
         "NH_AV",
         pyrange=[0, max_nh_av],
         ignore_comments=["hi_h_av"],
-        mark_comments=mark_comments,
+        mark_comments=MARK_STRING,
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\abumpav", "\\nhav", r))
@@ -417,7 +408,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             # data_comp=comp,
             data_bohlin=bohlin,
             # ignore_comments=mark_comments,
-            mark_comments=mark_comments,
+            mark_comments=MARK_STRING,
             report_rho=True,
         )
         # plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
@@ -430,7 +421,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             "fh2",
             data_bohlin=bohlin,
             # ignore_comments=["hi_h_av"],
-            mark_comments=mark_comments,
+            mark_comments=MARK_STRING,
         )
 
         ax = axs[1, 2]
@@ -441,7 +432,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             "fh2",
             data_bohlin=bohlin,
             # ignore_comments=["hi_h_av"],
-            mark_comments=mark_comments,
+            mark_comments=MARK_STRING,
         )
 
     # plt.show()
@@ -465,7 +456,7 @@ def plot2b_perh():
 
     [done] Needs implementation of covariance due to NH
     """
-    fig, axs = plt.subplots(1, 3, sharex="col", sharey="row", squeeze=False)
+    fig, axs = plt.subplots(1, 2, sharex="col", sharey="row", squeeze=False)
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_width * 2 / 3)
 
     ax = axs[0, 0]
@@ -474,7 +465,7 @@ def plot2b_perh():
         data,
         "A1000_NH",
         "AV_NH",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
 
     ax = axs[0, 1]
@@ -483,7 +474,7 @@ def plot2b_perh():
         data,
         "A2175_NH",
         "AV_NH",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
 
     finalize_double_grid(fig, axs, "nh_normalized")
@@ -497,56 +488,56 @@ def plot3():
         data,
         "CAV1",
         "fh2",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
     _ = plot_results_scatter(
         axs[0, 1],
         data,
         "CAV2",
         "fh2",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
     _ = plot_results_scatter(
         axs[1, 0],
         data,
         "CAV3",
         "fh2",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
     _ = plot_results_scatter(
         axs[1, 1],
         data,
         "CAV4",
         "fh2",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
     _ = plot_results_scatter(
         axs[2, 0],
         data,
         "gamma",
         "fh2",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
     _ = plot_results_scatter(
         axs[2, 1],
         data,
         "x_o",
         "fh2",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
     _ = plot_results_scatter(
         axs[3, 0],
         data,
         "bump_amp",
         "fh2",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
     _ = plot_results_scatter(
         axs[3, 1],
         data,
         "bump_area",
         "fh2",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
 
     # this one is already in rv trends plot
@@ -555,7 +546,7 @@ def plot3():
     #     data,
     #     "A2175_AV",
     #     "fh2",
-    #     mark_comments=["lo_h_av"],
+    #     mark_comments=MARK_STRING,
     # )
 
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height)
@@ -573,7 +564,7 @@ def plot4():
     is high! Let's do those first, and then take another look at the
     corner plot.
 
-    Additional things to show: T01 decreases with log(denhtot)
+    Additional things to show: T01 decreases with log(denhtot) (but noisy plot)
 
     x values: CAV4
     y values: T01 and denhtot
@@ -585,7 +576,7 @@ def plot4():
         data,
         "CAV4",
         "T01",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
 
     ax = axs[1, 0]
@@ -594,7 +585,7 @@ def plot4():
         data,
         "CAV4",
         "denhtot",
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
     )
     ax.set_yscale("log")
 
@@ -605,7 +596,7 @@ def plot4():
         "T01",
         "denhtot",
         # data_comp=comp,
-        # mark_comments=["lo_h_av"],
+        # mark_comments=MARK_STRING,
     )
     ax.set_yscale("log")
     ax = axs[0, 1]
@@ -615,7 +606,7 @@ def plot4():
         "T01",
         "fh2",
         # data_comp=comp,
-        # mark_comments=["lo_h_av"],
+        # mark_comments=MARK_STRING,
     )
     ax.set_xlim(40, 140)
 
@@ -639,9 +630,10 @@ def plot5_null():
         pyrange=[0, max_nh_av],
         # data_comp=comp,
         ignore_comments=["hi_h_av"],
-        mark_comments=["lo_h_av"],
+        mark_comments=MARK_STRING,
         report_rho=True,
     )
+    fig.set_size_inches(paper_rcparams.column_width, paper_rcparams.column_width)
     save(fig, "null")
 
 

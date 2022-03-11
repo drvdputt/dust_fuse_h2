@@ -504,7 +504,7 @@ def plot_results_fit(
             xs[outlier_idxs],
             ys[outlier_idxs],
             marker="x",
-            color="y",
+            color="r",
             label="outlier",
             zorder=10,
         )

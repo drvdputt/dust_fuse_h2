@@ -157,7 +157,7 @@ def plot_scatter_density(ax, xs, ys, covs):
 
     # cut the ends off the colormap, to make the low end more distinguishable
     # cmap = "cmr.arctic_r"
-    cmap = cmasher.get_sub_cmap("cmr.arctic_r", 0, .9)
+    cmap = cmasher.get_sub_cmap("cmr.arctic_r", 0, 0.9)
 
     ax.imshow(
         density_array.T,
@@ -166,8 +166,8 @@ def plot_scatter_density(ax, xs, ys, covs):
         aspect="auto",
         cmap=cmap,
     )
-    ax.scatter(xs, ys, marker="+", s=12, color="k", alpha=0.75, linewidth=0.6))
-    draw_ellipses(ax, xs, ys, covs, facecolor="none", edgecolor="#00000020", lw=.5)
+    ax.scatter(xs, ys, marker="+", s=12, color="k", alpha=0.75, linewidth=0.6)
+    draw_ellipses(ax, xs, ys, covs, facecolor="none", edgecolor="#00000020", lw=0.5)
 
 
 def make_cov_matrix(Vx, Vy, covs=None):

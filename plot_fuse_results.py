@@ -9,6 +9,9 @@ import covariance
 import linear_ortho_fit
 import pearson
 
+# quick workaround to hide sigma number for talk plots 
+HIDE_SIGMA = True
+
 # some easily customizable constants
 BOHLIN_COLOR = "xkcd:gray"
 BOHLIN_MARKER = "D"
@@ -156,10 +159,14 @@ def plot_rho_box(ax, xs, ys, covs, save_hist=None):
         ha = "right"
         xpos = 0.98
 
+    text = f"$r = {rho:.2f}$"
+    if not HIDE_SIGMA:
+        text += f"\n${np.abs(rho/srho):.1f}\\sigma$"
+
     ax.text(
         xpos,
         0.96,
-        f"$r = {rho:.2f}$\n${np.abs(rho/srho):.1f}\\sigma$",
+        text,
         transform=ax.transAxes,
         horizontalalignment=ha,
         # bbox=dict(facecolor="white", edgecolor='none', alpha=0.5),

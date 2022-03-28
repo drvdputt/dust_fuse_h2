@@ -64,6 +64,8 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
     rho : correlation coefficient
 
     std : standard deviation of the rho samples
+
+    TODO : need center of rho0 (affected by correlated errors)
     """
     M = 6000  # number of resamples
     # scramble test to create null hypothesis distribution of rho.
@@ -86,7 +88,12 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
 
     # possible way to go would be choosing the "worst case scenario".
     # Pick the biggest correlation coefficient, and then use the same
-    # covariance matrix to sampel the shifts of all the scrambled pairs.
+    # covariance matrix to sample the shifts of all the scrambled pairs.
+
+    # but that won't work, because often the points with the biggest
+    # error bars have smaller covariances.
+
+    # other options: order covariance matrices randomly?
     for i in range(M):
         # np.random.shuffle(x_samples_scrambled[i])
         RNG.shuffle(y_samples_scrambled[i])

@@ -483,9 +483,13 @@ def plot2b_perh():
     finalize_double_grid(fig, axs, "nh_normalized")
 
 
-def plot3():
+def plot3_fm90(hide_alternative=False):
     """FM90 vs fh2."""
-    fig, axs = plt.subplots(4, 2, sharey=True)
+    if hide_alternative:
+        nrows = 3
+    else:
+        nrows = 4
+    fig, axs = plt.subplots(nrows, 2, sharey=True)
     _ = plot_results_scatter(
         axs[0, 0],
         data,
@@ -528,29 +532,21 @@ def plot3():
         "fh2",
         mark_comments=MARK_STRING,
     )
-    _ = plot_results_scatter(
-        axs[3, 0],
-        data,
-        "bump_amp",
-        "fh2",
-        mark_comments=MARK_STRING,
-    )
-    _ = plot_results_scatter(
-        axs[3, 1],
-        data,
-        "bump_area",
-        "fh2",
-        mark_comments=MARK_STRING,
-    )
-
-    # this one is already in rv trends plot
-    # _ = plot_results_scatter(
-    #     axs[3, 1],
-    #     data,
-    #     "A2175_AV",
-    #     "fh2",
-    #     mark_comments=MARK_STRING,
-    # )
+    if not hide_alternative:
+        _ = plot_results_scatter(
+            axs[3, 0],
+            data,
+            "bump_amp",
+            "fh2",
+            mark_comments=MARK_STRING,
+        )
+        _ = plot_results_scatter(
+            axs[3, 1],
+            data,
+            "bump_area",
+            "fh2",
+            mark_comments=MARK_STRING,
+        )
 
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height)
     for (ax_l, ax_r) in axs:

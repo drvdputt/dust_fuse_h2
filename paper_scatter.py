@@ -384,6 +384,9 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\akav", "\\nhav", r))
+    # print out biggest correlation coefficient in the data, so that we can argue that the effect is small
+    # alternative idea: some quantity for diagonal displacement
+    print("A1000_AV vs NH_AV data corrs", covs[:, 0, 1] / np.sqrt(covs[:,0,0]*covs[:,1,1]))
 
     ax = axs[0, 2]
     xs, ys, covs = plot_results_scatter(

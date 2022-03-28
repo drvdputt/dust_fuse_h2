@@ -613,6 +613,50 @@ def plot4():
     fig.subplots_adjust(wspace=0.3)
     save(fig, "temp_dens", need_wspace=True)
 
+def plot_c4_talk():
+    """
+    Show only the CAV4 results, so I can fit all of them on one slide in my talk
+
+    x values: CAV4
+    y values: T01, denhtot, fh2
+    """
+    fig, axs = plt.subplots(1, 3, sharey="row", squeeze=False)
+
+    ax = axs[0, 0]
+    _ = plot_results_scatter(
+        ax,
+        data,
+        "fh2",
+        "CAV4",
+        mark_comments=MARK_STRING,
+    )
+    # ax.set_xscale("log")
+
+    ax = axs[0, 1]
+    _ = plot_results_scatter(
+        ax,
+        data,
+        "denhtot",
+        "CAV4",
+        mark_comments=MARK_STRING,
+    )
+    ax.set_xscale("log")
+
+    ax = axs[0, 2]
+    _ = plot_results_scatter(
+        ax,
+        data,
+        "T01",
+        "CAV4",
+        mark_comments=MARK_STRING,
+    )
+    # ax.set_xscale("log")
+    ax.set_xlim(40, 140)
+
+    fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height * 1 / 3)
+    fig.subplots_adjust(wspace=0.3)
+    # save(fig, "c4", need_wspace=False)
+    finalize_double_grid(fig, axs, "c4")
 
 def plot5_null():
     """Some interesting null results.

@@ -155,7 +155,7 @@ def plot_scatter_density(ax, xs, ys, covs):
 
     # cut the ends off the colormap, to make the low end more distinguishable
     # cmap = "cmr.arctic_r"
-    cmap = cmasher.get_sub_cmap("cmr.arctic_r", 0, 0.9)
+    cmap = cmasher.get_sub_cmap("cmr.arctic_r", 0, 0.8)
     extent = (minx, maxx, miny, maxy)
     ax.imshow(
         density_array.T,

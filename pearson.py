@@ -186,7 +186,7 @@ def pearson_mock_test(mocker):
     xs, ys, covs = mocker.xs, mocker.ys, mocker.covs
 
     N = len(xs)
-    M = 10000
+    M = 2048
     # physical samples for null hypothesis
     mock_x_p = np.zeros((M, N))
     mock_y_p = np.zeros((M, N))
@@ -203,33 +203,51 @@ def pearson_mock_test(mocker):
         mock_x_meas[m], mock_y_meas[m] = shift_data(
             mock_x_p[m], mock_y_p[m], mock_cov[m]
         )
-        mock_cov_too_big = mock_cov[m, :, 0, 1] > np.sqrt(
+        mock_cov_too_big = np.abs(mock_cov[m, :, 0, 1]) > np.sqrt(
             mock_cov[m, :, 0, 0] * mock_cov[m, :, 1, 1]
         )
         if mock_cov_too_big.any():
+            # hack this problem
+            mock_cov[m, mock_cov_too_big, 0, 1] = (
+                np.sign(mock_cov[m, mock_cov_too_big, 0, 1])
+                * 0.99
+                * np.sqrt(
+                    mock_cov[m, mock_cov_too_big, 0, 0]
+                    * mock_cov[m, mock_cov_too_big, 1, 1]
+                )
+            )
+            mock_cov[m, mock_cov_too_big, 1, 0] = mock_cov[m, mock_cov_too_big, 0, 1]
             pass
             # print("problem with mock cov for indices", np.where(mock_cov_too_big))
-            # print(mock_cov[m, mock_cov_too_big])
+            # print(mock_cov[m, mock_cov_too_big],
+            #       mock_cov[m, mock_cov_too_big][:, 0,1]
+            #       / np.sqrt(mock_cov[m, mock_cov_too_big][:, 0,0] * mock_cov[m, mock_cov_too_big][:,1,1]))
 
         data_x_shift[m], data_y_shift[m] = shift_data(xs, ys, covs)
 
-    physical_rhos = all_rhos(mock_x_p, mock_y_p)
-    measured_rhos = all_rhos(mock_x_meas, mock_y_meas)
+    physical_nullrhos = all_rhos(mock_x_p, mock_y_p)
+    measured_nullrhos = all_rhos(mock_x_meas, mock_y_meas)
     data_rhos = all_rhos(data_x_shift, data_y_shift)
     real_rho = np.corrcoef(xs, ys)[0, 1]
 
     bins = np.linspace(-1, 1, 128)
-    plt.hist(physical_rhos, bins=bins, label="physical null", alpha=1)
-    plt.hist(measured_rhos, bins=bins, label="measured null", alpha=0.5)
+    plt.hist(physical_nullrhos, bins=bins, label="physical null", alpha=1)
+    plt.hist(measured_nullrhos, bins=bins, label="measured null", alpha=0.5)
     plt.hist(data_rhos, bins=bins, label="data wiggle", alpha=0.25)
     plt.legend()
     plt.axvline(real_rho, label="measured data", color="k")
 
     # num_sigma_to_null_physical = (real_rho - np.median(physical_rhos)) / np.std(physical_rhos)
-    num_sigma_to_null_measured = (real_rho - np.median(measured_rhos)) / np.std(
-        measured_rhos
+    num_sigma_to_null_measured = (real_rho - np.median(measured_nullrhos)) / np.std(
+        measured_nullrhos
     )
-    return num_sigma_to_null_measured
+    num_sigma_to_null_wiggled = (
+        np.median(data_rhos) - np.median(measured_nullrhos)
+    ) / np.std(measured_nullrhos)
+    return {
+        "as measured": num_sigma_to_null_measured,
+        "median of wiggle": num_sigma_to_null_wiggled,
+    }
 
 
 class PearsonNullMock:
@@ -276,7 +294,12 @@ class CommonDenominatorMock(PearsonNullMock):
 
         # calculate covs given this parameter set
         covs_scr = cov_common_denominator(
-            self.xs, xs_unc_adj, ys_scr, ys_unc_scr_adj, self.a[a_order], self.sa[a_order]
+            self.xs,
+            xs_unc_adj,
+            ys_scr,
+            ys_unc_scr_adj,
+            self.a[a_order],
+            self.sa[a_order],
         )
         return self.xs, ys_scr, covs_scr
 

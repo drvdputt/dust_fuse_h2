@@ -13,6 +13,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 import rescale
 from pathlib import Path
+from rescale import RescaledData
+from covariance import cov_common_denominator
 
 RNG = np.random.default_rng(4321)
 
@@ -50,6 +52,16 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
 
     Repeatedly resample xs, ys using 2D gaussian described by covs.
 
+    KNOWN DEFICIENCY: does not work with correlated uncertainties.
+    Alternate methods to generate a null hypothesis sample, and simulate
+    the shift from r=0 due to measurement correlations, will be
+    attempted below.
+
+    This function only does a good job of estimating the r-distribution
+    under the null hypothesis that the physical rho=0, when the
+    uncertainties are uncorrelated. Any correlations induced by the
+    covariance, are removed again because of the scrambling.
+
     Parameters
     ----------
 
@@ -64,8 +76,6 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
     rho : correlation coefficient
 
     std : standard deviation of the rho samples
-
-    TODO : need center of rho0 (affected by correlated errors)
     """
     M = 6000  # number of resamples
     # scramble test to create null hypothesis distribution of rho.
@@ -163,3 +173,123 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
             fig.savefig("rho_histograms/" + save_hist)
 
     return outputs
+
+
+def pearson_mock_test(xs_data, ys_data, covs_data, f_null_mock):
+    """
+
+    f_null_mock: function that generates xs0, ys0, covs0, i.e. mock data
+    under the null hypothesis.
+
+    Some of the mock methods run into problems with invalid covariance
+    matrices sometimes. Most of these (but not all of them) were fixed
+    by rescaling the data.
+
+    """
+    rd = RescaledData(xs_data, ys_data, covs_data, xfactor_yfactor=(1, 1e-21))
+    xs, ys, covs = rd.xy[:, 0], rd.xy[:, 1], rd.covs
+
+    N = len(xs)
+    M = 10000
+    # physical samples for null hypothesis
+    mock_x_p = np.zeros((M, N))
+    mock_y_p = np.zeros((M, N))
+    mock_cov = np.zeros((M, N, 2, 2))
+    # shifted due to correlated measurement noise
+    mock_y_meas = np.zeros((M, N))
+    mock_x_meas = np.zeros((M, N))
+    # also make shifted version of real data data
+    data_x_shift = np.zeros((M, N))
+    data_y_shift = np.zeros((M, N))
+
+    for m in range(M):
+        mock_x_p[m], mock_y_p[m], mock_cov[m] = f_null_mock()
+        mock_x_meas[m], mock_y_meas[m] = shift_data(
+            mock_x_p[m], mock_y_p[m], mock_cov[m]
+        )
+        data_x_shift[m], data_y_shift[m] = shift_data(xs, ys, covs)
+
+    physical_rhos = all_rhos(mock_x_p, mock_y_p)
+    measured_rhos = all_rhos(mock_x_meas, mock_y_meas)
+    data_rhos = all_rhos(data_x_shift, data_y_shift)
+    real_rho = np.corrcoef(xs, ys)[0, 1]
+
+    bins = np.linspace(-1, 1, 128)
+    plt.hist(physical_rhos, bins=bins, label="physical null", alpha=1)
+    plt.hist(measured_rhos, bins=bins, label="measured null", alpha=0.5)
+    plt.hist(data_rhos, bins=bins, label="data wiggle", alpha=0.25)
+    plt.legend()
+    plt.axvline(real_rho, label="measured data", color="k")
+
+    # num_sigma_to_null_physical = (real_rho - np.median(physical_rhos)) / np.std(physical_rhos)
+    num_sigma_to_null_measured = (real_rho - np.median(measured_rhos)) / np.std(
+        measured_rhos
+    )
+    return num_sigma_to_null_measured
+
+
+class PearsonNullMock:
+    """Class providing different methods to generates data under the null
+    hypothesis."""
+
+    def __init__(self, xs, ys, covs):
+        self.xs = xs
+        self.ys = ys
+        self.covs = covs
+        self.N = len(xs)
+        self.xs_unc = np.sqrt(covs[:, 0, 0])
+        self.ys_unc = np.sqrt(covs[:, 1, 1])
+        self.xs_rel_unc = self.xs_unc / xs
+        self.ys_rel_unc = self.ys_unc / ys
+
+    def mock_with_common_denominator(self, a, sa):
+        """
+        An attempt to estimate the correlation significance of two variables
+        x/a and y/a, with correlated errors due to a.
+        """
+        a_rel_unc = sa / a
+
+        # create uncorrelated sample by scrambling
+        y_order = random_order(self.N)
+        ys_scr = self.ys[y_order]
+
+        # assign AV randomly.
+        a_order = random_order(self.N)
+
+        # remove rel unc of original av, add rel unc of newly assigned av
+        xs_unc_adj = self.xs * (self.xs_rel_unc - a_rel_unc + a_rel_unc[a_order])
+        # remove rel unc of original av (matching to the original y point)
+        ys_unc_scr_adj = ys_scr * (
+            self.ys_rel_unc[y_order] - a_rel_unc[y_order] + a_rel_unc[a_order]
+        )
+
+        # calculate covs given this parameter set
+        covs_scr = cov_common_denominator(
+            self.xs, xs_unc_adj, ys_scr, ys_unc_scr_adj, a[a_order], sa[a_order]
+        )
+        return self.xs, ys_scr, covs_scr
+
+    def mock_with_random_covs(self):
+        y_order = random_order(self.N)
+        covs_order = random_order(self.N)
+        return self.xs, self.ys[y_order], self.covs[covs_order]
+
+
+def all_rhos(all_xs, all_ys):
+    """Parameters indexed on m, i (number of samples, data point)"""
+    return [np.corrcoef(all_xs[m], all_ys[m])[0, 1] for m in range(len(all_xs))]
+
+
+def random_order(size):
+    order = np.arange(size)
+    np.random.shuffle(order)
+    return order
+
+
+def shift_data(xs, ys, covs, plot=False):
+    shifted = np.array(
+        [np.random.multivariate_normal((xs[i], ys[i]), covs[i]) for i in range(len(xs))]
+    )
+    xs_shift = shifted[:, 0]
+    ys_shift = shifted[:, 1]
+    return xs_shift, ys_shift

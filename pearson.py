@@ -13,7 +13,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 import rescale
 from pathlib import Path
-from rescale import RescaledData
 from covariance import cov_common_denominator
 
 RNG = np.random.default_rng(4321)
@@ -175,19 +174,16 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
     return outputs
 
 
-def pearson_mock_test(xs_data, ys_data, covs_data, f_null_mock):
-    """
-
-    f_null_mock: function that generates xs0, ys0, covs0, i.e. mock data
-    under the null hypothesis.
+def pearson_mock_test(mocker):
+    """mocker: subclass of PearsonNullMock, which also contains the data. It
+    is recommended to rescale the data to avoid floating point issues.
 
     Some of the mock methods run into problems with invalid covariance
-    matrices sometimes. Most of these (but not all of them) were fixed
+    matrices sometimes. Most of these (but not all of them) are fixed
     by rescaling the data.
 
     """
-    rd = RescaledData(xs_data, ys_data, covs_data, xfactor_yfactor=(1, 1e-21))
-    xs, ys, covs = rd.xy[:, 0], rd.xy[:, 1], rd.covs
+    xs, ys, covs = mocker.xs, mocker.ys, mocker.covs
 
     N = len(xs)
     M = 10000
@@ -203,10 +199,18 @@ def pearson_mock_test(xs_data, ys_data, covs_data, f_null_mock):
     data_y_shift = np.zeros((M, N))
 
     for m in range(M):
-        mock_x_p[m], mock_y_p[m], mock_cov[m] = f_null_mock()
+        mock_x_p[m], mock_y_p[m], mock_cov[m] = mocker.mock()
         mock_x_meas[m], mock_y_meas[m] = shift_data(
             mock_x_p[m], mock_y_p[m], mock_cov[m]
         )
+        mock_cov_too_big = mock_cov[m, :, 0, 1] > np.sqrt(
+            mock_cov[m, :, 0, 0] * mock_cov[m, :, 1, 1]
+        )
+        if mock_cov_too_big.any():
+            pass
+            # print("problem with mock cov for indices", np.where(mock_cov_too_big))
+            # print(mock_cov[m, mock_cov_too_big])
+
         data_x_shift[m], data_y_shift[m] = shift_data(xs, ys, covs)
 
     physical_rhos = all_rhos(mock_x_p, mock_y_p)
@@ -242,12 +246,19 @@ class PearsonNullMock:
         self.xs_rel_unc = self.xs_unc / xs
         self.ys_rel_unc = self.ys_unc / ys
 
-    def mock_with_common_denominator(self, a, sa):
+
+class CommonDenominatorMock(PearsonNullMock):
+    def __init__(self, xs, ys, covs, a, sa):
+        super().__init__(xs, ys, covs)
+        self.a = a
+        self.sa = sa
+
+    def mock(self):
         """
         An attempt to estimate the correlation significance of two variables
         x/a and y/a, with correlated errors due to a.
         """
-        a_rel_unc = sa / a
+        a_rel_unc = self.sa / self.a
 
         # create uncorrelated sample by scrambling
         y_order = random_order(self.N)
@@ -265,11 +276,13 @@ class PearsonNullMock:
 
         # calculate covs given this parameter set
         covs_scr = cov_common_denominator(
-            self.xs, xs_unc_adj, ys_scr, ys_unc_scr_adj, a[a_order], sa[a_order]
+            self.xs, xs_unc_adj, ys_scr, ys_unc_scr_adj, self.a[a_order], self.sa[a_order]
         )
         return self.xs, ys_scr, covs_scr
 
-    def mock_with_random_covs(self):
+
+class RandomCovMock(PearsonNullMock):
+    def mock(self):
         y_order = random_order(self.N)
         covs_order = random_order(self.N)
         return self.xs, self.ys[y_order], self.covs[covs_order]

@@ -67,6 +67,8 @@ class RescaledData:
         self.xy, self.covs = rescale_data(
             self.xy_original, self.covs_original, self.factor_x, self.factor_y
         )
+        self.xs = self.xy[:, 0]
+        self.ys = self.xy[:, 1]
 
 
 def rescale_data(xy, covs, factor_x, factor_y):

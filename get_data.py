@@ -589,7 +589,7 @@ def get_merged_table(comp=False):
         add_specific_wavelength(1000)
         # add_den_column("A1000", "A1000_d")
         add_specific_wavelength(2175)
-        add_specific_wavelength(3000)
+        add_specific_wavelength(2900)
 
     return merged_table
 

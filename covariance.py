@@ -322,6 +322,6 @@ def cov_common_denominator(x_a, x_a_unc, y_a, y_a_unc, a, a_unc):
     cov_matrix: np.array of size(len(x_a), 2, 2)
         covariance matrix
         [[       V(x/A), cov(x/A, y/A)],
-         [cov(x/A, y/A),        V(y,A)]]
+         [cov(x/A, y/A),        V(y/A)]]
     """
     return make_cov_matrix(x_a_unc**2, y_a_unc**2, x_a * y_a * a_unc**2 / a**2)

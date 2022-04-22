@@ -20,6 +20,7 @@ from uncertainties import ufloat
 import math
 import paper_rcparams
 import argparse
+import pearson
 
 OUTPUT_TYPE = "pdf"
 MARK4 = False # switch to enable marking of low NH/AV points
@@ -346,7 +347,10 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
         mark_comments=MARK_STRING,
         report_rho=False,
     )
-    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False, report_rho=True)
+    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False, report_rho=False)
+    # add a rho box using the method specialized for rho with covariance
+    out = r['outlier_idxs']
+    pearson.new_rho_method(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0))
     fit_results_table.append(latex_table_line("\\rvi", "\\nhav", r))
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
 
@@ -384,6 +388,8 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\akav", "\\nhav", r))
+    out = r['outlier_idxs']
+    pearson.new_rho_method(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0))
     # print out biggest correlation coefficient in the data, so that we can argue that the effect is small
     # alternative idea: some quantity for diagonal displacement
     print("A1000_AV vs NH_AV data corrs", covs[:, 0, 1] / np.sqrt(covs[:,0,0]*covs[:,1,1]))
@@ -399,6 +405,8 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
         mark_comments=MARK_STRING,
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
+    out = r['outlier_idxs']
+    pearson.new_rho_method(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0))
     fit_results_table.append(latex_table_line("\\abumpav", "\\nhav", r))
 
     if not no_fh2:
@@ -688,8 +696,8 @@ if __name__ == "__main__":
         OUTPUT_TYPE = args.outputtype
     # for presentations, we clean up the plots a bit with some of the
     # parameters given here
-    plot1_column_column()
-    # plot2_ratio_ratio(no_fh2=True)
+    # plot1_column_column()
+    plot2_ratio_ratio(no_fh2=True)
     # plot2b_perh()
     # plot3_fm90(hide_alternative=True)
     # plot4()

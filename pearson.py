@@ -173,8 +173,47 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
 
     return outputs
 
+def new_rho_method(ax, xs, ys, covs):
+    """Driver for pearson_mock_test and setting up one of the mockers below.
+    This is what will go on most plots. Draws a box with rho and num
+    sigma on top of the given axes.
 
-def pearson_mock_test(mocker):
+    Since we are in the last phases of writing the paper, this function
+    is called directly from the paper_scatter script, instead of
+    integrating it with the rest of the plotting routines. The mock
+    method chosen is just hardcoded here too.
+
+    """
+    mocker = RandomCovMock(xs, ys, covs)
+    results = pearson_mock_test(mocker)
+    # numbers to use for box
+    rho = results['real_rho']
+    srho = results['as measured']
+
+    # choose best place to put it
+    if rho > 0:
+        ha = "left"
+        xpos = 0.03
+    else:
+        ha = "right"
+        xpos = 0.98
+
+    text = f"$r = {rho:.2f}$"
+    # rho_null might be interesting here too
+    text += f"\n${np.abs(rho/srho):.1f}\\sigma$"
+
+    ax.text(
+        xpos,
+        0.96,
+        text,
+        transform=ax.transAxes,
+        horizontalalignment=ha,
+        # bbox=dict(facecolor="white", edgecolor='none', alpha=0.5),
+        verticalalignment="top",
+    )
+
+    
+def pearson_mock_test(mocker, plot_hists=False):
     """mocker: subclass of PearsonNullMock, which also contains the data. It
     is recommended to rescale the data to avoid floating point issues.
 
@@ -230,12 +269,13 @@ def pearson_mock_test(mocker):
     data_rhos = all_rhos(data_x_shift, data_y_shift)
     real_rho = np.corrcoef(xs, ys)[0, 1]
 
-    bins = np.linspace(-1, 1, 128)
-    plt.hist(physical_nullrhos, bins=bins, label="physical null", alpha=1)
-    plt.hist(measured_nullrhos, bins=bins, label="measured null", alpha=0.5)
-    plt.hist(data_rhos, bins=bins, label="data wiggle", alpha=0.25)
-    plt.legend()
-    plt.axvline(real_rho, label="measured data", color="k")
+    if plot_hists:
+        bins = np.linspace(-1, 1, 128)
+        plt.hist(physical_nullrhos, bins=bins, label="physical null", alpha=1)
+        plt.hist(measured_nullrhos, bins=bins, label="measured null", alpha=0.5)
+        plt.hist(data_rhos, bins=bins, label="data wiggle", alpha=0.25)
+        plt.legend()
+        plt.axvline(real_rho, label="measured data", color="k")
 
     # num_sigma_to_null_physical = (real_rho - np.median(physical_rhos)) / np.std(physical_rhos)
     num_sigma_to_null_measured = (real_rho - np.median(measured_nullrhos)) / np.std(
@@ -245,6 +285,8 @@ def pearson_mock_test(mocker):
         np.median(data_rhos) - np.median(measured_nullrhos)
     ) / np.std(measured_nullrhos)
     return {
+        "real_rho": real_rho,
+        "null_rho": np.median(measured_nullrhos),
         "as measured": num_sigma_to_null_measured,
         "median of wiggle": num_sigma_to_null_wiggled,
     }

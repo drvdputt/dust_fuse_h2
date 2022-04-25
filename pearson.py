@@ -161,7 +161,7 @@ def new_rho_method(xs, ys, covs):
     mocker = RandomCovMock(xs, ys, covs)
     results = pearson_mock_test(mocker)
     rho = results['real_rho']
-    srho = results['numsigma']
+    srho = results['numsigma_median']
     return rho, srho
     
 
@@ -236,12 +236,14 @@ def pearson_mock_test(mocker, plot_hists=False):
     num_sigma_to_null_wiggled = (
         np.median(data_rhos) - np.median(measured_nullrhos)
     ) / np.std(measured_nullrhos)
-    return {
+    ret = {
         "real_rho": real_rho,
         "null_rho": np.median(measured_nullrhos),
         "numsigma": num_sigma_to_null_measured,
-        "median of wiggle": num_sigma_to_null_wiggled,
+        "numsigma_median": num_sigma_to_null_wiggled,
     }
+    print(ret)
+    return ret
 
 
 class PearsonNullMock:

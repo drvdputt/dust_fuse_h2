@@ -181,7 +181,7 @@ def plot_rho_box(ax, xs, ys, covs, method='nocov', optional_plot_fname=None):
 
     text = f"$r = {rho:.2f}$"
     if not HIDE_SIGMA:
-        text += f"\n${np.abs(rho/srho):.1f}\\sigma$"
+        text += f"\n${np.abs(srho):.1f}\\sigma$"
 
     ax.text(
         xpos,

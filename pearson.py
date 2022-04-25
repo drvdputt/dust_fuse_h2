@@ -46,25 +46,22 @@ def draw_points(xs, ys, covs, M):
     return x_samples / rd.factor_x, y_samples / rd.factor_y
 
 
-def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
+def pearson_mc_nocov(xs, ys, covs, hist_fname=None, hist_ax=None):
     """Calculate Pearson correlation coefficient and uncertainty on it in a MC way.
 
     Repeatedly resample xs, ys using 2D gaussian described by covs.
 
-    KNOWN DEFICIENCY: does not work with correlated uncertainties.
-    Alternate methods to generate a null hypothesis sample, and simulate
-    the shift from r=0 due to measurement correlations, will be
-    attempted below.
-
-    This function only does a good job of estimating the r-distribution
-    under the null hypothesis that the physical rho=0, when the
-    uncertainties are uncorrelated. Any correlations induced by the
-    covariance, are removed again because of the scrambling.
+    KNOWN DEFICIENCY: does not work with correlated uncertainties,
+    because the scrambling removes any correlation that might be
+    induced, and there is no straightforward way to add the offsets
+    after the scramble step. See "mocker" stuff developed below as the
+    alternative. Keeping this method because it works well for the case
+    without covariance.
 
     Parameters
     ----------
 
-    save_hist : string
+    hist_fname : string
         File name for figure of histogram for rho and rho0.
 
     hist_ax : figure, axes
@@ -74,35 +71,13 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
     -------
     rho : correlation coefficient
 
-    std : standard deviation of the rho samples
+    numsigma : rho / standard deviation of the rho_null samples
+
     """
     M = 6000  # number of resamples
     # scramble test to create null hypothesis distribution of rho.
-    # Technically, only the y samples need to be scrambled, but I'm
-    # going to do both just to be sure.
     x_samples, y_samples = draw_points(xs, ys, covs, M)
     x_samples_scrambled, y_samples_scrambled = draw_points(xs, ys, covs, M)
-    # TODO: current way is actually wrong. Works fine for uncorrelated
-    # data, but does not do what it needs to do when there are
-    # correlations. Need to shift according to noise AFTER scrambling x
-    # with respect to y. To be clear: 1. create uncorrelated data 2.
-    # induce correlation due to correlated uncertainties 3. see if
-    # observed correlation is significantly higher than the typical
-    # induced correlation
-
-    # the hard part: need covariance matrix for each point in the
-    # scrambled data set. We can use the covariance equations that we
-    # used for the original data for this though. See get_xs_ys_covs in
-    # get_data.
-
-    # possible way to go would be choosing the "worst case scenario".
-    # Pick the biggest correlation coefficient, and then use the same
-    # covariance matrix to sample the shifts of all the scrambled pairs.
-
-    # but that won't work, because often the points with the biggest
-    # error bars have smaller covariances.
-
-    # other options: order covariance matrices randomly?
     for i in range(M):
         # np.random.shuffle(x_samples_scrambled[i])
         RNG.shuffle(y_samples_scrambled[i])
@@ -125,24 +100,22 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
     std = np.std(rhos)
     # std = (p84 - p16) / 2
 
+    rho_naive = np.corrcoef(xs, ys)[0, 1]
+    num_sigmas = rho_naive / std_null
     def rho_sigma_message(rho):
-        num_sigmas = rho / std_null
         num_sigmas_lo = p16 / std_null
         num_sigmas_hi = p84 / std_null
         return f"rho = {rho:.2f} +- {std:.2f} ({num_sigmas:.2f} sigma0)\n sigmas range = {num_sigmas_lo:.2f} - {num_sigmas_hi:.2f}"
 
-    print("+++ MC pearson result +++")
-    rho_naive = np.corrcoef(xs, ys)[0, 1]
+    print("+++ MC pearson result (\"nocov\" method) +++")
     print("raw: ", rho_sigma_message(rho_naive))
     avg = np.average(rhos)
     print("avg: ", rho_sigma_message(avg))
     med = np.median(rhos)
     print("median: ", rho_sigma_message(med))
 
-    outputs = [med, std_null]
-
     # any of these this implies that we have to plot
-    if save_hist is not None or hist_ax is not None:
+    if hist_fname is not None or hist_ax is not None:
         # make new fig, ax if none was given
         if hist_ax is None:
             fig, ax = plt.subplots()
@@ -166,12 +139,13 @@ def pearson_mc(xs, ys, covs, save_hist=None, hist_ax=None):
         )
 
         # save hist to file if requested
-        if save_hist is not None:
-            d = Path(save_hist).parent
+        if hist_fname is not None:
+            d = Path(hist_fname).parent
             d.mkdir(exist_ok=True)
-            fig.savefig("rho_histograms/" + save_hist)
+            fig.savefig("rho_histograms/" + hist_fname)
 
-    return outputs
+    return med, num_sigmas
+
 
 def new_rho_method(ax, xs, ys, covs):
     """Driver for pearson_mock_test and setting up one of the mockers below.
@@ -186,33 +160,11 @@ def new_rho_method(ax, xs, ys, covs):
     """
     mocker = RandomCovMock(xs, ys, covs)
     results = pearson_mock_test(mocker)
-    # numbers to use for box
     rho = results['real_rho']
-    srho = results['as measured']
-
-    # choose best place to put it
-    if rho > 0:
-        ha = "left"
-        xpos = 0.03
-    else:
-        ha = "right"
-        xpos = 0.98
-
-    text = f"$r = {rho:.2f}$"
-    # rho_null might be interesting here too
-    text += f"\n${np.abs(rho/srho):.1f}\\sigma$"
-
-    ax.text(
-        xpos,
-        0.96,
-        text,
-        transform=ax.transAxes,
-        horizontalalignment=ha,
-        # bbox=dict(facecolor="white", edgecolor='none', alpha=0.5),
-        verticalalignment="top",
-    )
-
+    srho = results['numsigma']
+    return rho, srho
     
+
 def pearson_mock_test(mocker, plot_hists=False):
     """mocker: subclass of PearsonNullMock, which also contains the data. It
     is recommended to rescale the data to avoid floating point issues.
@@ -287,7 +239,7 @@ def pearson_mock_test(mocker, plot_hists=False):
     return {
         "real_rho": real_rho,
         "null_rho": np.median(measured_nullrhos),
-        "as measured": num_sigma_to_null_measured,
+        "numsigma": num_sigma_to_null_measured,
         "median of wiggle": num_sigma_to_null_wiggled,
     }
 

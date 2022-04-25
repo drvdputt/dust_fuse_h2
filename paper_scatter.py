@@ -191,11 +191,10 @@ def plot1_column_column():
         # data_comp=comp,
         data_bohlin=bohlin,
         # ignore_comments=["lo_h_av", "hi_h_av"],
-        report_rho=False,
     )
     out = np.where(match_comments(data, ["lo_h_av", "hi_h_av"]))[0]
     r = plot_results_fit(
-        xs, ys, covs, ax, report_rho=True, outliers=out, auto_outliers=True
+        xs, ys, covs, ax, outliers=out, auto_outliers=True
     )
     fit_results_table.append(latex_table_line("\\av", "\\nh", r))
     # print("AV vs nhtot outliers: ", data['name'][
@@ -231,9 +230,8 @@ def plot1_column_column():
         data_bohlin=bohlin,
         mark_comments=MARK_STRING,
         # ignore_comments=["hi_h_av"],
-        report_rho=False,
     )
-    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
+    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=True)
     fit_results_table.append(latex_table_line("\\ebv", "\\nh", r))
 
     ax = choose_ax("EBV", "nhi")
@@ -286,7 +284,6 @@ def plot1_column_column():
         "nh2",
         data_bohlin=bohlin,
         mark_comments=MARK_STRING,
-        report_rho=False,
     )
     r = plot_results_fit(
         xs,
@@ -295,7 +292,6 @@ def plot1_column_column():
         ax,
         auto_outliers=True,
         fit_includes_outliers=True,
-        report_rho=True,
     )
     fit_results_table.append(latex_table_line("\\ak", "\\nhtwo", r))
 
@@ -345,9 +341,8 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
         # data_comp=comp,
         ignore_comments=["hi_h_av"],
         mark_comments=MARK_STRING,
-        report_rho=False,
     )
-    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False, report_rho=False)
+    r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     # add a rho box using the method specialized for rho with covariance
     out = r['outlier_idxs']
     pearson.new_rho_method(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0))
@@ -420,9 +415,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             data_bohlin=bohlin,
             # ignore_comments=mark_comments,
             mark_comments=MARK_STRING,
-            report_rho=True,
         )
-        # plot_results_fit(xs, ys, covs, ax, auto_outliers=True, report_rho=True)
 
         ax = axs[1, 1]
         xs, ys, covs = plot_results_scatter(
@@ -682,7 +675,6 @@ def plot5_null():
         # data_comp=comp,
         ignore_comments=["hi_h_av"],
         mark_comments=MARK_STRING,
-        report_rho=True,
     )
     fig.set_size_inches(paper_rcparams.column_width, paper_rcparams.column_width)
     save(fig, "null")

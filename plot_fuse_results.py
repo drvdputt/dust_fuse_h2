@@ -10,7 +10,7 @@ import linear_ortho_fit
 import pearson
 
 # quick workaround to hide sigma number for talk plots 
-HIDE_SIGMA = True
+HIDE_SIGMA = False
 
 # some easily customizable constants
 BOHLIN_COLOR = "xkcd:gray"
@@ -147,9 +147,29 @@ def format_colname(name):
     return out_name
 
 
-def plot_rho_box(ax, xs, ys, covs, save_hist=None):
-    """Draw box with correlation coefficient for given data on given ax."""
-    rho, srho = pearson.pearson_mc(xs, ys, covs, save_hist)
+def plot_rho_box(ax, xs, ys, covs, method='nocov', optional_plot_fname=None):
+    """Draw box with correlation coefficient for given data on given ax.
+
+    Method needs to be chosen. See pearson.py for explanation.
+
+    Parameters
+    ----------
+    ax: axes where a box with rho and a number of sigma will be put
+
+    xs, ys, covs: the data
+
+    method: str
+        "nocov" or "cov approx". Nocov is only applicable if the
+        covariances are small. Cov approx tries model the offset of
+        rho_null caused by the covariance.
+
+    optional_plot_fname: str
+        file name for plot of histogram, illustrating the method (if supported)
+    """
+    if method == 'nocov':
+        rho, srho = pearson.pearson_mc_nocov(xs, ys, covs)
+    else: # method == 'cov approx'
+        rho, srho = pearson.new_rho_method(xs, ys, covs)
 
     # choose best place to put it
     if rho > 0:
@@ -212,12 +232,8 @@ def plot_results_scatter(
     figsize=None,
     ignore_comments=None,
     mark_comments=None,
-    report_rho=True,
 ):
     """Do only the scatter plot of plot_results2, not the fit
-
-    report_rho : bool
-        Draw a box with the correlation coefficient BEFORE outlier removal
 
     Returns
     -------
@@ -343,23 +359,8 @@ def plot_results_scatter(
     if pyrange is not None:
         ax.set_ylim(pyrange)
 
-    if report_rho:
-        print("VVV-no outlier removal-VVV")
-        if not_ignored.all():
-            plot_rho_box(ax, xs, ys, covs, f"{xparam}-{yparam}.pdf")
-        else:
-            pearson.pearson_mc(xs, ys, covs)
-            print("VVV-manual outlier removal-VVV")
-            plot_rho_box(
-                ax,
-                xs[not_ignored],
-                ys[not_ignored],
-                covs[not_ignored],
-                save_hist=f"{xparam}-{yparam}.pdf",
-            )
-
-    # return all data, for use in fitting
-    return xs, ys, covs
+    # return all data, except ignored
+    return xs[not_ignored], ys[not_ignored], covs[not_ignored]
 
 
 def plot_results_fit(
@@ -371,7 +372,6 @@ def plot_results_fit(
     outliers=None,
     auto_outliers=False,
     fit_includes_outliers=False,
-    report_rho=False,
 ):
     """Do the fit and plot the result.
 
@@ -399,8 +399,6 @@ def plot_results_fit(
 
     fit_includes_outliers : bool
         Use the detected outliers in the fitting, despite them being outliers.
-
-    report_rho: draw a box with the correlation coefficient AFTER outlier removal
 
     Returns
     -------
@@ -483,16 +481,6 @@ def plot_results_fit(
             cov_mb=sample_cov_mb,
             what="L",
             extra_points=zip(sampled_b_perp, sampled_m),
-        )
-    # pearson coefficient without outliers (gives us an idea of how
-    # reasonable the trend is)
-    print("VVV-auto outlier removal-VVV")
-    if report_rho:
-        plot_rho_box(
-            line_ax,
-            xs_used,
-            ys_used,
-            covs_used,
         )
 
     # plot the fitted line
@@ -615,7 +603,7 @@ def plot_results2(
         mark_comments,
     )
     out = np.where(match_comments(data, ignore_comments))[0]
-    auto_out = plot_results_fit(
+    _ = plot_results_fit(
         xs, ys, covs, ax, lh_ax, outliers=out, auto_outliers=True
     )
     # print("Outliers: ", data["Name"][auto_out])

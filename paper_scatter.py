@@ -21,7 +21,6 @@ from uncertainties import ufloat
 import math
 import paper_rcparams
 import argparse
-import pearson
 
 OUTPUT_TYPE = "pdf"
 MARK4 = False  # switch to enable marking of low NH/AV points
@@ -343,13 +342,14 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     # add a rho box using the method specialized for rho with covariance
-    out = r["outlier_idxs"]
+    # out = r["outlier_idxs"]
     plot_rho_box(
         ax,
-        np.delete(xs, out),
-        np.delete(ys, out),
-        np.delete(covs, out, 0),
+        xs,
+        ys,
+        covs,
         method="cov approx",
+        optional_plot_fname="rv_nhav_rho.pdf",
     )
     fit_results_table.append(latex_table_line("\\rvi", "\\nhav", r))
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
@@ -388,13 +388,14 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\akav", "\\nhav", r))
-    out = r["outlier_idxs"]
+    # out = r["outlier_idxs"]
     plot_rho_box(
         ax,
-        np.delete(xs, out),
-        np.delete(ys, out),
-        np.delete(covs, out, 0),
+        xs,
+        ys,
+        covs,
         method="cov approx",
+        optional_plot_fname="a1000_nhav_rho.pdf"
     )
 
     ax = axs[0, 2]

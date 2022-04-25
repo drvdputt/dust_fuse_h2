@@ -12,6 +12,7 @@ from plot_fuse_results import (
     plot_results_scatter,
     plot_results_fit,
     match_comments,
+    plot_rho_box
 )
 from matplotlib import pyplot as plt
 from astropy.table import Column
@@ -345,7 +346,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     # add a rho box using the method specialized for rho with covariance
     out = r['outlier_idxs']
-    pearson.new_rho_method(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0))
+    plot_rho_box(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0), method="cov approx")
     fit_results_table.append(latex_table_line("\\rvi", "\\nhav", r))
     print("Average NH/AV = ", np.average(ys, weights=1 / covs[:, 1, 1]))
 
@@ -384,7 +385,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     fit_results_table.append(latex_table_line("\\akav", "\\nhav", r))
     out = r['outlier_idxs']
-    pearson.new_rho_method(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0))
+    plot_rho_box(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0), method="cov approx")
     # print out biggest correlation coefficient in the data, so that we can argue that the effect is small
     # alternative idea: some quantity for diagonal displacement
     print("A1000_AV vs NH_AV data corrs", covs[:, 0, 1] / np.sqrt(covs[:,0,0]*covs[:,1,1]))
@@ -401,7 +402,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     out = r['outlier_idxs']
-    pearson.new_rho_method(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0))
+    plot_rho_box(ax, np.delete(xs, out), np.delete(ys, out), np.delete(covs, out, 0), method="cov approx")
     fit_results_table.append(latex_table_line("\\abumpav", "\\nhav", r))
 
     if not no_fh2:
@@ -416,6 +417,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             # ignore_comments=mark_comments,
             mark_comments=MARK_STRING,
         )
+        plot_rho_box(ax, xs, ys, covs, method="cov approx")
 
         ax = axs[1, 1]
         xs, ys, covs = plot_results_scatter(
@@ -427,7 +429,8 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             # ignore_comments=["hi_h_av"],
             mark_comments=MARK_STRING,
         )
-
+        plot_rho_box(ax, xs, ys, covs, method="cov approx")
+        
         ax = axs[1, 2]
         xs, ys, covs = plot_results_scatter(
             ax,
@@ -438,6 +441,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             # ignore_comments=["hi_h_av"],
             mark_comments=MARK_STRING,
         )
+        plot_rho_box(ax, xs, ys, covs, method="cov approx")
 
     # plt.show()
     finalize_double_grid(fig, axs, "rv_trends")
@@ -689,7 +693,7 @@ if __name__ == "__main__":
     # for presentations, we clean up the plots a bit with some of the
     # parameters given here
     # plot1_column_column()
-    plot2_ratio_ratio(no_fh2=True)
+    plot2_ratio_ratio(no_fh2=False)
     # plot2b_perh()
     # plot3_fm90(hide_alternative=True)
     # plot4()

@@ -147,7 +147,7 @@ def pearson_mc_nocov(xs, ys, covs, hist_fname=None, hist_ax=None):
     return med, num_sigmas
 
 
-def new_rho_method(xs, ys, covs):
+def new_rho_method(xs, ys, covs, plot_fname=None):
     """Driver for pearson_mock_test and setting up one of the mockers below.
     This is what will go on most plots. Draws a box with rho and num
     sigma on top of the given axes.
@@ -159,13 +159,13 @@ def new_rho_method(xs, ys, covs):
 
     """
     mocker = RandomCovMock(xs, ys, covs)
-    results = pearson_mock_test(mocker)
+    results = pearson_mock_test(mocker, plot_fname)
     rho = results['real_rho']
     srho = results['numsigma_median']
     return rho, srho
     
 
-def pearson_mock_test(mocker, plot_hists=False):
+def pearson_mock_test(mocker, plot_fname=None):
     """mocker: subclass of PearsonNullMock, which also contains the data. It
     is recommended to rescale the data to avoid floating point issues.
 
@@ -221,13 +221,15 @@ def pearson_mock_test(mocker, plot_hists=False):
     data_rhos = all_rhos(data_x_shift, data_y_shift)
     real_rho = np.corrcoef(xs, ys)[0, 1]
 
-    if plot_hists:
+    if plot_fname is not None:
         bins = np.linspace(-1, 1, 128)
-        plt.hist(physical_nullrhos, bins=bins, label="physical null", alpha=1)
-        plt.hist(measured_nullrhos, bins=bins, label="measured null", alpha=0.5)
-        plt.hist(data_rhos, bins=bins, label="data wiggle", alpha=0.25)
-        plt.legend()
-        plt.axvline(real_rho, label="measured data", color="k")
+        fig, ax = plt.subplots()
+        ax.hist(physical_nullrhos, bins=bins, label="physical null", alpha=1)
+        ax.hist(measured_nullrhos, bins=bins, label="measured null", alpha=0.5)
+        ax.hist(data_rhos, bins=bins, label="data wiggle", alpha=0.25)
+        fig.legend()
+        ax.axvline(real_rho, label="measured data", color="k")
+        fig.savefig(plot_fname)
 
     # num_sigma_to_null_physical = (real_rho - np.median(physical_rhos)) / np.std(physical_rhos)
     num_sigma_to_null_measured = (real_rho - np.median(measured_nullrhos)) / np.std(

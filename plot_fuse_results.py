@@ -169,7 +169,7 @@ def plot_rho_box(ax, xs, ys, covs, method='nocov', optional_plot_fname=None):
     if method == 'nocov':
         rho, srho = pearson.pearson_mc_nocov(xs, ys, covs)
     else: # method == 'cov approx'
-        rho, srho = pearson.new_rho_method(xs, ys, covs)
+        rho, srho = pearson.new_rho_method(xs, ys, covs, optional_plot_fname)
 
     # choose best place to put it
     if rho > 0:
@@ -238,7 +238,7 @@ def plot_results_scatter(
     Returns
     -------
     xs, ys, covs: 1D array, 1D array, 3D array with shape (len(data), 2, 2)
-        Main data to be used for fitting
+        Main data to be used for fitting (not ignored)
 
     """
 

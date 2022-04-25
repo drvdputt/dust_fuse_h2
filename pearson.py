@@ -147,7 +147,7 @@ def pearson_mc_nocov(xs, ys, covs, hist_fname=None, hist_ax=None):
     return med, num_sigmas
 
 
-def new_rho_method(ax, xs, ys, covs):
+def new_rho_method(xs, ys, covs):
     """Driver for pearson_mock_test and setting up one of the mockers below.
     This is what will go on most plots. Draws a box with rho and num
     sigma on top of the given axes.

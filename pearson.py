@@ -15,6 +15,7 @@ import rescale
 from pathlib import Path
 from covariance import cov_common_denominator
 
+
 RNG = np.random.default_rng(4321)
 
 
@@ -158,7 +159,8 @@ def new_rho_method(xs, ys, covs, plot_fname=None):
     method chosen is just hardcoded here too.
 
     """
-    mocker = RandomCovMock(xs, ys, covs)
+    rd = rescale.RescaledData(xs, ys, covs)
+    mocker = RandomCovMock(rd.xs, rd.ys, rd.covs)
     results = pearson_mock_test(mocker, plot_fname)
     rho = results['real_rho']
     srho = results['numsigma_median']
@@ -320,7 +322,7 @@ def random_order(size):
     return order
 
 
-def shift_data(xs, ys, covs, plot=False):
+def shift_data(xs, ys, covs):
     shifted = np.array(
         [np.random.multivariate_normal((xs[i], ys[i]), covs[i]) for i in range(len(xs))]
     )

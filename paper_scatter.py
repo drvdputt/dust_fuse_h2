@@ -195,6 +195,15 @@ def plot1_column_column():
     out = np.where(match_comments(data, ["lo_h_av", "hi_h_av"]))[0]
     r = plot_results_fit(xs, ys, covs, ax, outliers=out, auto_outliers=True)
     fit_results_table.append(latex_table_line("\\av", "\\nh", r))
+    out = r["outlier_idxs"]
+    plot_rho_box(
+        ax,
+        np.delete(xs, out),
+        np.delete(ys, out),
+        np.delete(covs, out, 0),
+        method="nocov",
+    )
+
     # print("AV vs nhtot outliers: ", data['name'][
 
     ax = choose_ax("AV", "nhi")
@@ -207,6 +216,8 @@ def plot1_column_column():
         data_bohlin=bohlin,
         mark_comments=MARK_STRING,
     )
+    plot_rho_box(ax, xs, ys, covs)
+
     ax = choose_ax("AV", "nh2")
     xs, ys, covs = plot_results_scatter(
         ax,
@@ -217,6 +228,7 @@ def plot1_column_column():
         data_bohlin=bohlin,
         mark_comments=MARK_STRING,
     )
+    plot_rho_box(ax, xs, ys, covs)
 
     ax = choose_ax("EBV", "nhtot")
     xs, ys, covs = plot_results_scatter(
@@ -231,6 +243,14 @@ def plot1_column_column():
     )
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=True)
     fit_results_table.append(latex_table_line("\\ebv", "\\nh", r))
+    out = r["outlier_idxs"]
+    plot_rho_box(
+        ax,
+        np.delete(xs, out),
+        np.delete(ys, out),
+        np.delete(covs, out, 0),
+        method="nocov",
+    )
 
     ax = choose_ax("EBV", "nhi")
     xs, ys, covs = plot_results_scatter(
@@ -242,6 +262,7 @@ def plot1_column_column():
         data_bohlin=bohlin,
         mark_comments=MARK_STRING,
     )
+    plot_rho_box(ax, xs, ys, covs)
 
     ax = choose_ax("EBV", "nh2")
     xs, ys, covs = plot_results_scatter(
@@ -253,6 +274,7 @@ def plot1_column_column():
         data_bohlin=bohlin,
         mark_comments=MARK_STRING,
     )
+    plot_rho_box(ax, xs, ys, covs)
 
     ax = choose_ax("A1000", "nhtot")
     xs, ys, covs = plot_results_scatter(
@@ -263,6 +285,7 @@ def plot1_column_column():
         data_bohlin=bohlin,
         mark_comments=MARK_STRING,
     )
+    plot_rho_box(ax, xs, ys, covs)
 
     ax = choose_ax("A1000", "nhi")
     xs, ys, covs = plot_results_scatter(
@@ -273,6 +296,7 @@ def plot1_column_column():
         data_bohlin=bohlin,
         mark_comments=MARK_STRING,
     )
+    plot_rho_box(ax, xs, ys, covs)
 
     ax = choose_ax("A1000", "nh2")
     xs, ys, covs = plot_results_scatter(
@@ -292,6 +316,7 @@ def plot1_column_column():
         fit_includes_outliers=True,
     )
     fit_results_table.append(latex_table_line("\\ak", "\\nhtwo", r))
+    plot_rho_box(ax, xs, ys, covs)
 
     for ax in axs[1:, 0]:
         ax.yaxis.offsetText.set_visible(False)
@@ -390,12 +415,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     fit_results_table.append(latex_table_line("\\akav", "\\nhav", r))
     # out = r["outlier_idxs"]
     plot_rho_box(
-        ax,
-        xs,
-        ys,
-        covs,
-        method="cov approx",
-        optional_plot_fname="a1000_nhav_rho.pdf"
+        ax, xs, ys, covs, method="cov approx", optional_plot_fname="a1000_nhav_rho.pdf"
     )
 
     ax = axs[0, 2]
@@ -509,63 +529,88 @@ def plot3_fm90(hide_alternative=False):
     else:
         nrows = 4
     fig, axs = plt.subplots(nrows, 2, sharey=True)
-    _ = plot_results_scatter(
-        axs[0, 0],
+
+    ax = axs[0, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
         data,
         "CAV1",
         "fh2",
         mark_comments=MARK_STRING,
     )
-    _ = plot_results_scatter(
-        axs[0, 1],
+    plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[0, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
         data,
         "CAV2",
         "fh2",
         mark_comments=MARK_STRING,
     )
-    _ = plot_results_scatter(
-        axs[1, 0],
+    plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[1, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
         data,
         "CAV3",
         "fh2",
         mark_comments=MARK_STRING,
     )
-    _ = plot_results_scatter(
-        axs[1, 1],
+    plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[1, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
         data,
         "CAV4",
         "fh2",
         mark_comments=MARK_STRING,
     )
-    _ = plot_results_scatter(
-        axs[2, 0],
+    plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[2, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
         data,
         "gamma",
         "fh2",
         mark_comments=MARK_STRING,
     )
-    _ = plot_results_scatter(
-        axs[2, 1],
+    plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[2, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
         data,
         "x_o",
         "fh2",
         mark_comments=MARK_STRING,
     )
+    plot_rho_box(ax, xs, ys, covs)
+
     if not hide_alternative:
-        _ = plot_results_scatter(
-            axs[3, 0],
+
+        ax = axs[3, 0]
+        xs, ys, covs = plot_results_scatter(
+            ax,
             data,
             "bump_amp",
             "fh2",
             mark_comments=MARK_STRING,
         )
-        _ = plot_results_scatter(
-            axs[3, 1],
+        plot_rho_box(ax, xs, ys, covs)
+
+        ax = axs[3, 1]
+        xs, ys, covs = plot_results_scatter(
+            ax,
             data,
             "bump_area",
             "fh2",
             mark_comments=MARK_STRING,
         )
+        plot_rho_box(ax, xs, ys, covs)
 
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height)
     for (ax_l, ax_r) in axs:
@@ -589,16 +634,17 @@ def plot4():
     """
     fig, axs = plt.subplots(2, 2, sharex="col")
     ax = axs[0, 0]
-    _ = plot_results_scatter(
+    xs, ys, covs = plot_results_scatter(
         ax,
         data,
         "CAV4",
         "T01",
         mark_comments=MARK_STRING,
     )
+    plot_rho_box(ax, xs, ys, covs)
 
     ax = axs[1, 0]
-    _ = plot_results_scatter(
+    xs, ys, covs = plot_results_scatter(
         ax,
         data,
         "CAV4",
@@ -606,9 +652,10 @@ def plot4():
         mark_comments=MARK_STRING,
     )
     ax.set_yscale("log")
+    plot_rho_box(ax, xs, ys, covs)
 
     ax = axs[1, 1]
-    _ = plot_results_scatter(
+    xs, ys, covs = plot_results_scatter(
         ax,
         data,
         "T01",
@@ -617,8 +664,10 @@ def plot4():
         # mark_comments=MARK_STRING,
     )
     ax.set_yscale("log")
+    plot_rho_box(ax, xs, ys, covs)
+
     ax = axs[0, 1]
-    _ = plot_results_scatter(
+    xs, ys, covs = plot_results_scatter(
         ax,
         data,
         "T01",
@@ -627,6 +676,7 @@ def plot4():
         # mark_comments=MARK_STRING,
     )
     ax.set_xlim(40, 140)
+    plot_rho_box(ax, xs, ys, covs)
 
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3)
     fig.subplots_adjust(wspace=0.3)
@@ -708,11 +758,11 @@ if __name__ == "__main__":
         OUTPUT_TYPE = args.outputtype
     # for presentations, we clean up the plots a bit with some of the
     # parameters given here
-    # plot1_column_column()
+    plot1_column_column()
     plot2_ratio_ratio(no_fh2=False)
     # plot2b_perh()
-    # plot3_fm90(hide_alternative=True)
-    # plot4()
+    plot3_fm90(hide_alternative=True)
+    plot4()
     # plot5_null()
     # plot_c4_talk()
     for line in fit_results_table:

@@ -8,6 +8,7 @@ import photometric_distance
 from extinction_curve_set import ExtinctionCurveSet
 import covariance
 
+
 def add_lin_column_from_log(logcolname, data):
     log = data[logcolname]
     log_unc = data[logcolname + "_unc"]
@@ -385,23 +386,6 @@ def add_distance(table, comp=False):
     table_edit["d"] = table_edit["d_gaia"]
     table_edit["d_unc"] = table_edit["d_gaia_unc"]
 
-    ### photometric
-    dphot, dphot_unc = photometric_distance.calc_distance(
-        table_edit["SpType"],
-        table_edit["V"],
-        # table_edit["V_unc"], not available, so use zeros instead
-        np.zeros(len(table_edit)),
-        table_edit["AV"],
-        table_edit["AV_unc"],
-    )
-    table_edit.add_column(dphot, name="dphot")
-    table_edit.add_column(dphot_unc, name="dphot_unc")
-
-    # replace the main distance measurement where possible
-    replace = np.isfinite(table_edit["dphot"])
-    table_edit["d"][replace] = dphot[replace]
-    table_edit["d_unc"][replace] = dphot_unc[replace]
-
     ### Shull+21 data. If available, overwrite our value.
     count = 0
     sh = Table.read("data/shull-2021/table1.txt", format="ascii.cds")
@@ -414,6 +398,24 @@ def add_distance(table, comp=False):
             table_edit["d_unc"][our_index] = dphot_shull * 0.1
             count += 1
     print(f"Took {count} distances from Shull+21")
+
+    ### home made photometric method
+    dphot, dphot_unc = photometric_distance.calc_distance(
+        table_edit["SpType"],
+        table_edit["V"],
+        # table_edit["V_unc"], not available, so use zeros instead
+        np.zeros(len(table_edit)),
+        table_edit["AV"],
+        table_edit["AV_unc"],
+    )
+    table_edit.add_column(dphot, name="dphot")
+    table_edit.add_column(dphot_unc, name="dphot_unc")
+
+    # Use if data are unreasonable (> 15 kpc) and our alternative is reasonalbe
+    too_big = table_edit["d"] > 15
+    replace = np.logical_and(too_big, np.isfinite(table_edit["dphot"]))
+    table_edit["d"][replace] = dphot[replace]
+    table_edit["d_unc"][replace] = dphot_unc[replace]
 
     return table_edit
 
@@ -458,10 +460,10 @@ def get_merged_table(comp=False):
         merged_table[uncname] = merged_table[newname] * frac
         # convert to cm-3
         merged_table[newname] = (
-            (merged_table[newname] * u.kpc ** -1 * u.cm ** -2).to(u.cm ** -3).value
+            (merged_table[newname] * u.kpc**-1 * u.cm**-2).to(u.cm**-3).value
         )
         merged_table[uncname] = (
-            (merged_table[uncname] * u.kpc ** -1 * u.cm ** -2).to(u.cm ** -3).value
+            (merged_table[uncname] * u.kpc**-1 * u.cm**-2).to(u.cm**-3).value
         )
 
     add_den_column("nhtot")
@@ -542,9 +544,9 @@ def get_merged_table(comp=False):
             + np.square(merged_table["gamma_unc"] / merged_table["gamma"])
         )
         merged_table["bump_area_unc"] = merged_table["bump_area"] * bump_area_unc
-        merged_table["bump_amp"] = C3 / gamma ** 2
+        merged_table["bump_amp"] = C3 / gamma**2
         bump_amp_unc = np.sqrt(
-            (C3_unc / gamma ** 2) ** 2 + (gamma_unc * C3 * -2 / gamma ** 3) ** 2
+            (C3_unc / gamma**2) ** 2 + (gamma_unc * C3 * -2 / gamma**3) ** 2
         )
         merged_table["bump_amp_unc"] = bump_amp_unc
 
@@ -574,7 +576,7 @@ def get_merged_table(comp=False):
             nhtot_Alambda = merged_table["nhtot"] / Alambda
             merged_table["NH_" + absval] = nhtot_Alambda
             nhtot_Alambda_rel_unc = np.sqrt(
-                rel_unc ** 2 + (merged_table["nhtot_unc"] / merged_table["nhtot"]) ** 2
+                rel_unc**2 + (merged_table["nhtot_unc"] / merged_table["nhtot"]) ** 2
             )
             merged_table["NH_" + absval + "_unc"] = (
                 nhtot_Alambda * nhtot_Alambda_rel_unc
@@ -593,6 +595,7 @@ def get_merged_table(comp=False):
 
     return merged_table
 
+
 def get_param_and_unc(param, data):
     """
     Returns the unc column if it is in the table
@@ -601,6 +604,7 @@ def get_param_and_unc(param, data):
     unc_key = param + "_unc"
     unc = data[unc_key] if unc_key in data.colnames else None
     return d, unc
+
 
 def get_xs_ys_covs(data, xparam, yparam):
     """
@@ -668,7 +672,7 @@ def get_xs_ys_covs(data, xparam, yparam):
         nh2, nh2_unc = get_param_and_unc("nh2", data)
         av, av_unc = get_param_and_unc("AV", data)
         cov_nhi_nhi = covariance.make_cov_matrix(
-            nhi_unc ** 2, nhi_unc ** 2, nhi_unc ** 2
+            nhi_unc**2, nhi_unc**2, nhi_unc**2
         )
         # add variance due to nh2
         cov_nhi_nhtot = cov_nhi_nhi + np.diag([nh2_unc, nh2_unc]) ** 2
@@ -719,7 +723,7 @@ def get_xs_ys_covs(data, xparam, yparam):
         # print(
         #     "No covariances implemented for this parameter pair. If x and y are uncorrelated, you can dismiss this."
         # )
-        covs = covariance.make_cov_matrix(px_unc ** 2, py_unc ** 2)
+        covs = covariance.make_cov_matrix(px_unc**2, py_unc**2)
 
     # Check if cauchy schwarz is satisfied. If not, enforce using fudge
     # factor.

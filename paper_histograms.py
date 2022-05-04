@@ -16,7 +16,7 @@ def rho_histogram(ax, xparam, yparam, comment, vert_label=False):
     """
     annotation_size = 9
     xs, ys, covs = get_data.get_xs_ys_covs(data, xparam, yparam)
-    rho_median, std_null = pearson.pearson_mc(xs, ys, covs, hist_ax=ax)
+    rho_median, std_null = pearson.pearson_mc_nocov(xs, ys, covs, hist_ax=ax)
     xlabel = format_colname(xparam).split(" ")[0]
     ylabel = format_colname(yparam).split(" ")[0]
     text = f"$x = ${xlabel}\n$y = ${ylabel}\n{comment}"

@@ -163,7 +163,14 @@ def new_rho_method(xs, ys, covs, plot_fname=None):
     mocker = RandomCovMock(rd.xs, rd.ys, rd.covs)
     results = pearson_mock_test(mocker, plot_fname)
     rho = results['real_rho']
-    srho = results['numsigma_median']
+    # srho = results['numsigma_median']
+    # Using the median is not good. If the covariance is small, taking
+    # the median of the wiggled data will reduce the correlation
+    # coefficient (physics + noise + wiggle = double noise --> lose
+    # correlation). On the other hand, if the xy covariance is very
+    # strong, we get (physics + noise (induces correlation) + wiggle
+    # (induces even more correlation!))
+    srho = results['numsigma']
     return rho, srho
     
 

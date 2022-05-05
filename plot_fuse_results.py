@@ -167,9 +167,12 @@ def plot_rho_box(ax, xs, ys, covs, method='nocov', optional_plot_fname=None):
         file name for plot of histogram, illustrating the method (if supported)
     """
     if method == 'nocov':
-        rho, srho = pearson.pearson_mc_nocov(xs, ys, covs)
+        results = pearson.pearson_mc_nocov(xs, ys, covs)
     else: # method == 'cov approx'
-        rho, srho = pearson.new_rho_method(xs, ys, covs, optional_plot_fname)
+        results = pearson.new_rho_method(xs, ys, covs, optional_plot_fname)
+
+    rho = results['measured_rho']
+    srho = results['numsigma']
 
     # choose best place to put it
     if rho > 0:

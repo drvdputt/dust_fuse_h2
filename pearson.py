@@ -90,7 +90,7 @@ def pearson_mc_nocov(xs, ys, covs, hist_fname=None, hist_ax=None):
     # p16_null = np.percentile(rhos_null, 16)
     # p84_null = np.percentile(rhos_null, 84)
     # std_null = (p84_null - p16_null) / 2
-    std_null = np.std(rhos_null)
+    null_std = np.std(rhos_null)
 
     corrcoefs = np.array([np.corrcoef(x_samples[i], y_samples[i]) for i in range(M)])
     rhos = corrcoefs[:, 0, 1]
@@ -101,15 +101,16 @@ def pearson_mc_nocov(xs, ys, covs, hist_fname=None, hist_ax=None):
     std = np.std(rhos)
     # std = (p84 - p16) / 2
 
-    rho_naive = np.corrcoef(xs, ys)[0, 1]
-    num_sigmas = rho_naive / std_null
+    rho_measured = np.corrcoef(xs, ys)[0, 1]
+    num_sigmas = rho_measured / null_std
+
     def rho_sigma_message(rho):
-        num_sigmas_lo = p16 / std_null
-        num_sigmas_hi = p84 / std_null
+        num_sigmas_lo = p16 / null_std
+        num_sigmas_hi = p84 / null_std
         return f"rho = {rho:.2f} +- {std:.2f} ({num_sigmas:.2f} sigma0)\n sigmas range = {num_sigmas_lo:.2f} - {num_sigmas_hi:.2f}"
 
-    print("+++ MC pearson result (\"nocov\" method) +++")
-    print("raw: ", rho_sigma_message(rho_naive))
+    print('+++ MC pearson result ("nocov" method) +++')
+    print("raw: ", rho_sigma_message(rho_measured))
     avg = np.average(rhos)
     print("avg: ", rho_sigma_message(avg))
     med = np.median(rhos)
@@ -123,7 +124,7 @@ def pearson_mc_nocov(xs, ys, covs, hist_fname=None, hist_ax=None):
         else:
             fig, ax = hist_ax.get_figure(), hist_ax
 
-        bins = 64
+        bins = 48
         ax.hist(
             rhos_null,
             bins=bins,
@@ -145,10 +146,17 @@ def pearson_mc_nocov(xs, ys, covs, hist_fname=None, hist_ax=None):
             d.mkdir(exist_ok=True)
             fig.savefig("rho_histograms/" + hist_fname)
 
-    return med, num_sigmas
+    results = {
+        "real_rho": rho_measured,
+        "null_rho": 0,
+        "null_std": null_std,
+        "numsigma": num_sigmas,
+        "numsigma_median": num_sigmas,
+    }
+    return results
 
 
-def new_rho_method(xs, ys, covs, plot_fname=None):
+def new_rho_method(xs, ys, covs, hist_fname=None, hist_ax=None):
     """Driver for pearson_mock_test and setting up one of the mockers below.
     This is what will go on most plots. Draws a box with rho and num
     sigma on top of the given axes.
@@ -161,20 +169,17 @@ def new_rho_method(xs, ys, covs, plot_fname=None):
     """
     rd = rescale.RescaledData(xs, ys, covs)
     mocker = RandomCovMock(rd.xs, rd.ys, rd.covs)
-    results = pearson_mock_test(mocker, plot_fname)
-    rho = results['real_rho']
-    # srho = results['numsigma_median']
-    # Using the median is not good. If the covariance is small, taking
-    # the median of the wiggled data will reduce the correlation
-    # coefficient (physics + noise + wiggle = double noise --> lose
-    # correlation). On the other hand, if the xy covariance is very
-    # strong, we get (physics + noise (induces correlation) + wiggle
-    # (induces even more correlation!))
-    srho = results['numsigma']
-    return rho, srho
-    
+    results = pearson_mock_test(mocker, hist_fname, hist_ax)
+    # Reminder that using the median is not good. If the covariance is
+    # small, taking the median of the wiggled data will reduce the
+    # correlation coefficient (physics + noise + wiggle = double noise
+    # --> lose correlation). On the other hand, if the xy covariance is
+    # very strong, we get (physics + noise (induces correlation) +
+    # wiggle (induces even more correlation!))
+    return results
 
-def pearson_mock_test(mocker, plot_fname=None):
+
+def pearson_mock_test(mocker, hist_fname=None, hist_ax=None):
     """mocker: subclass of PearsonNullMock, which also contains the data. It
     is recommended to rescale the data to avoid floating point issues.
 
@@ -228,33 +233,53 @@ def pearson_mock_test(mocker, plot_fname=None):
     physical_nullrhos = all_rhos(mock_x_p, mock_y_p)
     measured_nullrhos = all_rhos(mock_x_meas, mock_y_meas)
     data_rhos = all_rhos(data_x_shift, data_y_shift)
-    real_rho = np.corrcoef(xs, ys)[0, 1]
+    measured_rho = np.corrcoef(xs, ys)[0, 1]
 
-    if plot_fname is not None:
-        bins = np.linspace(-1, 1, 128)
-        fig, ax = plt.subplots()
-        ax.hist(physical_nullrhos, bins=bins, label="physical null", alpha=1)
-        ax.hist(measured_nullrhos, bins=bins, label="measured null", alpha=0.5)
-        ax.hist(data_rhos, bins=bins, label="data wiggle", alpha=0.25)
-        fig.legend()
-        ax.axvline(real_rho, label="measured data", color="k")
-        fig.savefig(plot_fname)
+    if hist_fname is not None or hist_ax is not None:
+        if hist_ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig, ax = hist_ax.get_figure(), hist_ax
 
-    # num_sigma_to_null_physical = (real_rho - np.median(physical_rhos)) / np.std(physical_rhos)
-    num_sigma_to_null_measured = (real_rho - np.median(measured_nullrhos)) / np.std(
-        measured_nullrhos
-    )
+        bins = 48
+        ax.hist(
+            physical_nullrhos,
+            bins=bins,
+            label="no corr",
+            color="xkcd:gray",
+            alpha=0.15,
+        )
+        ax.hist(
+            measured_nullrhos,
+            bins=bins,
+            label="mock",
+            color="xkcd:bright blue",
+            alpha=0.15,
+        )
+
+        ax.axvline(measured_rho, label="_nolegend_", color="k")
+
+        # save hist to file if requested
+        if hist_fname is not None:
+            d = Path(hist_fname).parent
+            d.mkdir(exist_ok=True)
+            fig.savefig("rho_histograms/" + hist_fname)
+
+    # num_sigma_to_null_physical = (measured_rho - np.median(physical_rhos)) / np.std(physical_rhos)
+    null_std = np.std(measured_nullrhos)
+    num_sigma_to_null_measured = (measured_rho - np.median(measured_nullrhos)) / null_std
     num_sigma_to_null_wiggled = (
-        np.median(data_rhos) - np.median(measured_nullrhos)
-    ) / np.std(measured_nullrhos)
-    ret = {
-        "real_rho": real_rho,
+        np.median(data_rhos) - np.median(measured_nullrhos) / null_std
+    )
+    results = {
+        "measured_rho": measured_rho,
         "null_rho": np.median(measured_nullrhos),
+        "null_std": null_std,
         "numsigma": num_sigma_to_null_measured,
         "numsigma_median": num_sigma_to_null_wiggled,
     }
-    print(ret)
-    return ret
+    print(results)
+    return results
 
 
 class PearsonNullMock:

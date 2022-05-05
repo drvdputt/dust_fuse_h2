@@ -411,8 +411,10 @@ def add_distance(table, comp=False):
     table_edit.add_column(dphot, name="dphot")
     table_edit.add_column(dphot_unc, name="dphot_unc")
 
-    # Use if data are unreasonable (> 15 kpc) and our alternative is reasonalbe
+    # Use if data are unreasonable (> 15 kpc) and our alternative is
+    # reasonable
     too_big = table_edit["d"] > 15
+    print(f"Replaced {np.count_nonzero(too_big)} distances by my photometric distances")
     replace = np.logical_and(too_big, np.isfinite(table_edit["dphot"]))
     table_edit["d"][replace] = dphot[replace]
     table_edit["d_unc"][replace] = dphot_unc[replace]

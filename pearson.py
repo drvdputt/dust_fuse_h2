@@ -147,7 +147,7 @@ def pearson_mc_nocov(xs, ys, covs, hist_fname=None, hist_ax=None):
             fig.savefig("rho_histograms/" + hist_fname)
 
     results = {
-        "real_rho": rho_measured,
+        "measured_rho": rho_measured,
         "null_rho": 0,
         "null_std": null_std,
         "numsigma": num_sigmas,

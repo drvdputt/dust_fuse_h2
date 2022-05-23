@@ -327,6 +327,110 @@ def plot1_column_column():
     finalize_double_grid(fig, axs, "column_vs_column")
 
 
+def plot1_poster():
+    """Poster version of column vs column plot."""
+    fig, axs = plt.subplots(3, 2, sharey="row", sharex="col")
+    fig.set_size_inches(paper_rcparams.base_width * 2 / 3, paper_rcparams.base_width)
+
+    ax = axs[0, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "AV",
+        "nhtot",
+        # data_comp=comp,
+        data_bohlin=bohlin,
+        # ignore_comments=["lo_h_av", "hi_h_av"],
+    )
+    out = np.where(match_comments(data, ["lo_h_av", "hi_h_av"]))[0]
+    r = plot_results_fit(xs, ys, covs, ax, outliers=out, auto_outliers=True)
+    fit_results_table.append(latex_table_line("\\av", "\\nh", r))
+    # out = r["outlier_idxs"]
+    # plot_rho_box(
+    #     ax,
+    #     np.delete(xs, out),
+    #     np.delete(ys, out),
+    #     np.delete(covs, out, 0),
+    #     method="nocov",
+    # )
+
+    # print("AV vs nhtot outliers: ", data['name'][
+
+    ax = axs[1, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "AV",
+        "nhi",
+        # data_comp=comp,
+        data_bohlin=bohlin,
+        mark_comments=MARK_STRING,
+    )
+    # plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[2, 0]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "AV",
+        "nh2",
+        # data_comp=comp,
+        data_bohlin=bohlin,
+        mark_comments=MARK_STRING,
+    )
+    # plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[0, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000",
+        "nhtot",
+        data_bohlin=bohlin,
+        mark_comments=MARK_STRING,
+    )
+    # plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[1, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000",
+        "nhi",
+        data_bohlin=bohlin,
+        mark_comments=MARK_STRING,
+    )
+    # plot_rho_box(ax, xs, ys, covs)
+
+    ax = axs[2, 1]
+    xs, ys, covs = plot_results_scatter(
+        ax,
+        data,
+        "A1000",
+        "nh2",
+        data_bohlin=bohlin,
+        mark_comments=MARK_STRING,
+    )
+    r = plot_results_fit(
+        xs,
+        ys,
+        covs,
+        ax,
+        # auto_outliers=True,
+        fit_includes_outliers=True,
+    )
+    fit_results_table.append(latex_table_line("\\ak", "\\nhtwo", r))
+    # plot_rho_box(ax, xs, ys, covs)
+
+    for ax in axs[1:, 0]:
+        ax.yaxis.offsetText.set_visible(False)
+
+    axs[0][0].legend(bbox_to_anchor=(1, 1), loc="lower center", ncol=4)
+
+    fig.tight_layout()
+    finalize_double_grid(fig, axs, "column_vs_column_poster")
+
+
 def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     """Ratio vs ratio.
 
@@ -758,12 +862,14 @@ if __name__ == "__main__":
         OUTPUT_TYPE = args.outputtype
     # for presentations, we clean up the plots a bit with some of the
     # parameters given here
-    plot1_column_column()
-    plot2_ratio_ratio(no_fh2=False)
+    # plot1_column_column()
+    # plot2_ratio_ratio(no_fh2=False)
     # plot2b_perh()
-    plot3_fm90(hide_alternative=True)
-    plot4()
+    # plot3_fm90(hide_alternative=True)
+    # plot4()
     # plot5_null()
     # plot_c4_talk()
-    for line in fit_results_table:
-        print(line)
+    # for line in fit_results_table:
+    # print(line)
+
+    plot1_poster()

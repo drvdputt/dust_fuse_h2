@@ -24,29 +24,33 @@ tjenkins_overlap = np.isin(tjenkins_F['HD'], list(hd_set))
 # our data overlap based on number
 data_overlap = [name[:2] == 'HD' and int(name[2:]) in hd_set for name in data['Name']]
 
-our_names = data['Name'][data_overlap]
-nhav = data['NH_AV'][data_overlap]
-nhav_unc = data['NH_AV_unc'][data_overlap]
-
 jenkins_names = tjenkins_F['Name'][tjenkins_overlap]
-fstar = tjenkins_F['F*o'][tjenkins_overlap]
-fstar_unc = tjenkins_F['e_F*o'][tjenkins_overlap]
-
+our_names = data['Name'][data_overlap]
 #the above matches by name
 
-# now, another cut because some of the F* values are masked
+# now, another cut because some of the F* values are masked. Also some
+# workaround for a numpy problem here (complains about this being a
+# masked array but also says does not have mask)
+fstar = tjenkins_F['F*o'][tjenkins_overlap]
+fstar_unc = tjenkins_F['e_F*o'][tjenkins_overlap]
 keep = ~fstar.mask
-nhav = nhav[keep]
-nhav_unc = nhav_unc[keep]
-# also some workaround for a numpy problem here (complains about this
-# being a masked array but also says does not have mask)
 fstar = fstar[keep].data.data
 fstar_unc = fstar_unc[keep].data.data
 
-covs = make_cov_matrix(fstar_unc**2, nhav_unc**2)
-plot_scatter_auto(plt.gca(), fstar, nhav, covs, 1)
-plot_rho_box(plt.gca(), fstar, nhav, covs)
-ax = plt.gca()
-ax.set_ylabel(format_colname('NH_AV'))
-ax.set_xlabel("$F_*$")
+def plot_vs_fstar(ax, yparam):
+    ys = data[yparam][data_overlap][keep]
+    ys_unc = data[yparam + '_unc'][data_overlap][keep]
+    covs = make_cov_matrix(fstar_unc**2, ys_unc**2)
+    plot_scatter_auto(ax, fstar, ys, covs, 1)
+    plot_rho_box(ax, fstar, ys, covs)
+    ax.set_ylabel(format_colname(yparam))
+    ax.set_xlabel("$F_*$")
+
+
+fig, axs = plt.subplots(4, 1, sharex=True)
+plot_vs_fstar(axs[0], 'CAV3')
+plot_vs_fstar(axs[1], 'CAV4')
+plot_vs_fstar(axs[2], 'gamma')
+plot_vs_fstar(axs[3], 'A1000_NH')
+fig.set_size_inches(3, 9)
 plt.show()

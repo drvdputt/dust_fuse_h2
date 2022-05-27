@@ -32,7 +32,8 @@ ax.text(4.8, 4.4, "bump\n$C_3, \\gamma, x_0$", color=BUMP_COLOR, ha='center')
 ax.text(8.30, 6.3, "rise\n$C_4$", color=RISE_COLOR, ha='center')
 ax.text(5.2, 3.0, "linear\n$C_1 + C_2x$", color=LIN_COLOR)
 
-ax.set_xlabel(r"$x$ [$\mu m^{-1}$]") # 1/lambda label
+# ax.set_xlabel(r"$x$ [$\mu m^{-1}$]") # x = 1/lambda label
+ax.set_xlabel(r"$1/\lambda$ [$\mu m^{-1}$]") # 1/lambda label
 # ax.set_xlabel(r"$\lambda [$\mu m$]") # lambda label
 ax.set_ylabel(r"$A(\lambda)/A(V)$")
 

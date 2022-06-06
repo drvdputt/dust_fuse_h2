@@ -23,31 +23,33 @@ set_comment("HD096675", "hi_h_av")
 
 qnames = [
     # "T01",
-    # "nhtot",
-    # "denhtot",
+    "nhtot",
+    "denhtot",
     # "nhi",
     # "denhi",
     # "nh2",
     # "denh2",
-    "fh2",
+    # "fh2",
     # "NH_AV",
     # "AV_d",
     # "EBV",
     # "A1000",
     # "A2175",
     # "AV",
-    "AV_NH",
+    # "AV_NH",
     # "A1000_d",
-    "1_RV",
+    # "1_RV",
     # "RV",
-    "A1000_AV",
-    "A1000_NH",
-    "A2175_AV",
-    "A2175_NH",
-    # "CAV3",
+    # "A1000_AV",
+    # "A1000_NH",
+    # "A2175_AV",
+    # "A2175_NH",
+    "CAV1",
+    "CAV2",
+    "CAV3",
     "CAV4",
     "gamma",
-    # "x0",
+    # "xo",
     # "bump_amp",
     # "C3",
     # "C4",
@@ -69,7 +71,7 @@ for yi, xi in itertools.combinations_with_replacement(range(nq), 2):
     xparam = qnames[xi]
     yparam = qnames[yi]
     plot_results_scatter(
-        ax, data, xparam, yparam, alpha=1, mark_comments=["lo_h_av"], report_rho=False
+        ax, data, xparam, yparam, mark_comments=["lo_h_av"], 
     )
 
     if ypos < nq - 1:

@@ -23,7 +23,7 @@ import paper_rcparams
 import argparse
 
 OUTPUT_TYPE = "pdf"
-MARK4 = False  # switch to enable marking of low NH/AV points
+MARK4 = True  # switch to enable marking of low NH/AV points
 if MARK4:
     MARK_STRING = ["lo_h_av"]
 else:
@@ -863,9 +863,9 @@ if __name__ == "__main__":
     # for presentations, we clean up the plots a bit with some of the
     # parameters given here
     # plot1_column_column()
-    # plot2_ratio_ratio(no_fh2=False)
+    plot2_ratio_ratio(no_fh2=False)
     # plot2b_perh()
-    # plot3_fm90(hide_alternative=True)
+    plot3_fm90(hide_alternative=True)
     # plot4()
     # plot5_null()
     # plot_c4_talk()

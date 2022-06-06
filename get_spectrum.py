@@ -342,7 +342,7 @@ def coadd_general(spectrums):
         #         = flux * sensitivity * exptime / (sensitivity * exptime)**2
         #         = flux / (sensitivity * exptime)
 
-        # sens = counts per flux unit
+        # sensitivity = counts per flux unit
 
         weight_sum[good_wi] += wi[good_wi]
         flux_sum[good_wi] += wi[good_wi] * fi[good_wi]

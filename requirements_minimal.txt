@@ -1,0 +1,8 @@
+        pip
+pandas
+numpy
+scipy
+astropy
+matplotlib
+cmasher
+uncertainties

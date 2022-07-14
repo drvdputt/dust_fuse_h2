@@ -4,13 +4,24 @@ This script loads in the data, and uses it to create the latex tables
 for the paper. Useful to update them, if some of our calculations
 change.
 
+Some notes about the output: 
+
+1. It is not the most recent version!. The data can be copy pasted into
+the tables used for the paper, but everything around it has been
+manually edited (including some of the footnotes!). So watch out when
+updating whatever is in the paper.
+
+2. Distance is missing for HD099872 (no shull or gaia data). Could
+replace this with my own photometric method, but the error bar was very
+large anyway (.1 errorbar on .2 kpc distance).
+
 """
 import get_data
 import itertools
 import numpy as np
 
 # columns we want from the astropy Table (with and without uncertainties)
-quantities_and_unc = ["lognhtot", "lognhi", "lognh2", "dphot"]
+quantities_and_unc = ["lognhtot", "lognhi", "lognh2", "d"]
 quantities_only = ["fh2", "denhtot"]
 qu_headers = [
     r"$\log_{10} N(\text{H})$",

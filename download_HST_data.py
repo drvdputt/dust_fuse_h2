@@ -3,6 +3,7 @@ from pathlib import Path
 
 
 def main():
+    # list of stars for which to download data
     with open("download_data_list.csv", "r") as f:
         star_names = [s.strip(" \n") for s in f.readlines()]
 

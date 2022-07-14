@@ -78,20 +78,9 @@ The chi2 function that is minimized to perform the linear fits is the one presen
 It uses the perpendicular distance and projected variance to calculate chi2.
 This way, the shape of the uncertainty ellipse of each point (x,y) is taken into account when estimating the slope of one of our scatter plots.
 
-``pearson.py`` contains our method to calculate the pearson correlation coefficient r.
-To take the xy-covariance of each data point into account, we redraw the data set many times in a Monte Carlo way.
-For each realization of the data set, each of the 75 data points is redrawn according to the bivariate normal distribution described by its covariance ellipse, and r is calculated for this new data set.
-Taking the average value of r gives us a more conservative estimate for the correlation coefficient, taking the xy correlations and into account.
-
-We want to express the significance of r as a number of sigma, where sigma is the width of the r distribution if the data set was fully uncorrelated (r=0).
-This gives the reader an idea of how likely it is that the measured value of r occurs out of an uncorrelated data set, solely becuase of statistical fluctuations, which is the null hypothesis.
-The typical textbook equations for the standard deviation of r only work when the underlying x and y originate from a bivariate normal distribution.
-Because of the way the sightlines in our sample were chosen, the distribution for the measrued quantities is generally non-normal.
-Therefore, we perform a permutation test instead, to construct a collection of uncorrelated data sets which represent the null hypothesis that r=0.
-To do this, We again resample the data points as described above, but as an added step the x and y are randomly and independently permuted, which makes x and y uncorrelated by construction.
-We calculate the correlation coefficient for each of these uncorrelated realizations of the (x,y) sample, and use the standard deviation on the sample of r-values as our sigma.
-
-The reported significance level is then average(r) / sigma(r0)
+``pearson.py`` contains our method to calculate the pearson correlation coefficient r, as described in the paper.
+The significance of r is expressed as a number of sigma, where sigma is the width of the r distribution if the data set was fully uncorrelated (r=0).
+There is also a method to deal with correlations induced by correlated error bars between x and y.
 
 ``plot_fuse_results.py`` defines functions that make use of the above modules to do the analysis and make the desired plots
 

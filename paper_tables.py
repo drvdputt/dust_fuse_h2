@@ -1,4 +1,4 @@
-"""Make latex tables for paper.
+"""Make latex tables for paper. Writes to paper-tables/
 
 This script loads in the data, and uses it to create the latex tables
 for the paper. Useful to update them, if some of our calculations
@@ -40,7 +40,17 @@ num_columns = len(quantities_and_unc) * 2 + len(quantities_only) + 1
 
 def format_row(table, index):
 
+    # first column: name and optional footnote
     name = table["Name"][index]
+
+    d_type = table["d_type"][index]
+    if d_type == "shul":
+        # footnote for shull data
+        name += r"\tablenotemark{a}"
+    elif d_type == "myph":
+        # footnote for unavailable data
+        name += r"\tablenotemark{b}"
+    
     values_and_unc = itertools.chain.from_iterable(
         (table[q][index], table[q + "_unc"][index]) for q in quantities_and_unc
     )
@@ -144,7 +154,7 @@ def main():
     lines += data_lines(True)
     lines += footer()
 
-    with open("gastable.tex", "w") as f:
+    with open("paper-tables/gastable.tex", "w") as f:
         f.writelines(lines)
 
 main()

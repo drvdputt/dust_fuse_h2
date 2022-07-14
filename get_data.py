@@ -385,6 +385,8 @@ def add_distance(table, comp=False):
     table_edit = join(table, gaia_dist, keys="Name")
     table_edit["d"] = table_edit["d_gaia"]
     table_edit["d_unc"] = table_edit["d_gaia_unc"]
+    # remember which distance we finally decided to use
+    table_edit.add_column(["gaia"] * len(table_edit), name='d_type')
 
     ### Shull+21 data. If available, overwrite our value.
     count = 0
@@ -396,6 +398,7 @@ def add_distance(table, comp=False):
             our_index = np.where(our_format == table_edit["Name"])[0][0]
             table_edit["d"][our_index] = dphot_shull
             table_edit["d_unc"][our_index] = dphot_shull * 0.1
+            table_edit["d_type"][our_index] = "shul"
             count += 1
     print(f"Took {count} distances from Shull+21")
 
@@ -418,6 +421,7 @@ def add_distance(table, comp=False):
     replace = np.logical_and(too_big, np.isfinite(table_edit["dphot"]))
     table_edit["d"][replace] = dphot[replace]
     table_edit["d_unc"][replace] = dphot_unc[replace]
+    table_edit["d_type"][replace] = "myph"
 
     return table_edit
 

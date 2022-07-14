@@ -724,7 +724,7 @@ def plot3_fm90(hide_alternative=False):
     save(fig, "fh2_vs_fm90", need_hspace=True)
 
 
-def plot4():
+def plot4(add_t_vs_n=False, mark=False):
     """
     This should show some extra things I discovered in my big corner
     plot. Most important ones: When CAV4 is high, T01 is low and denhtot
@@ -736,14 +736,18 @@ def plot4():
     x values: CAV4
     y values: T01 and denhtot
     """
-    fig, axs = plt.subplots(2, 2, sharex="col")
+    mark_string = MARK_STRING if mark else None
+    cols = 1
+    if add_t_vs_n:
+        cols += 1
+    fig, axs = plt.subplots(2, cols, sharex="col", squeeze=False)
     ax = axs[0, 0]
     xs, ys, covs = plot_results_scatter(
         ax,
         data,
         "CAV4",
         "T01",
-        mark_comments=MARK_STRING,
+        mark_comments=mark_string,
     )
     plot_rho_box(ax, xs, ys, covs)
 
@@ -753,37 +757,41 @@ def plot4():
         data,
         "CAV4",
         "denhtot",
-        mark_comments=MARK_STRING,
+        mark_comments=mark_string,
     )
     ax.set_yscale("log")
     plot_rho_box(ax, xs, ys, covs)
 
-    ax = axs[1, 1]
-    xs, ys, covs = plot_results_scatter(
-        ax,
-        data,
-        "T01",
-        "denhtot",
-        # data_comp=comp,
-        # mark_comments=MARK_STRING,
-    )
-    ax.set_yscale("log")
-    plot_rho_box(ax, xs, ys, covs)
+    if add_t_vs_n:
+        ax = axs[1, 1]
+        xs, ys, covs = plot_results_scatter(
+            ax,
+            data,
+            "T01",
+            "denhtot",
+            # data_comp=comp,
+            # mark_comments=MARK_STRING,
+        )
+        ax.set_yscale("log")
+        plot_rho_box(ax, xs, ys, covs)
 
-    ax = axs[0, 1]
-    xs, ys, covs = plot_results_scatter(
-        ax,
-        data,
-        "T01",
-        "fh2",
-        # data_comp=comp,
-        # mark_comments=MARK_STRING,
-    )
-    ax.set_xlim(40, 140)
-    plot_rho_box(ax, xs, ys, covs)
+        ax = axs[0, 1]
+        xs, ys, covs = plot_results_scatter(
+            ax,
+            data,
+            "T01",
+            "fh2",
+            # data_comp=comp,
+            # mark_comments=MARK_STRING,
+        )
+        ax.set_xlim(40, 140)
+        plot_rho_box(ax, xs, ys, covs)
 
-    fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3)
-    fig.subplots_adjust(wspace=0.3)
+    if add_t_vs_n:
+        fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3)
+        fig.subplots_adjust(wspace=0.3)
+    else:
+        fig.set_size_inches(paper_rcparams.column_width, paper_rcparams.base_height * 2 / 3)
     save(fig, "temp_dens", need_wspace=True)
 
 

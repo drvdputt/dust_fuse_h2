@@ -1,6 +1,9 @@
 Analysis for FUSE H2/Extinction paper
 =====================================
 
+.. image:: https://zenodo.org/badge/376953484.svg
+   :target: https://zenodo.org/badge/latestdoi/376953484
+
 This is the data and code used for the paper by Van De Putte, Clayton, Gordon, et al. (in prep).
 The code requires Python 3 (tested with >3.8), and an untested list of dependencies can be found in ``requirements_minimal.txt``
 

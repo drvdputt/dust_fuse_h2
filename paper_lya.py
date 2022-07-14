@@ -34,7 +34,7 @@ def plot_common(ax, target):
     ax.text(0.1, 0.9, f"{target} | $\\mathrm{{log}}\\,N(\\mathrm{{HI}}) = {lognhi:.2f}$", transform=ax.transAxes,)
     fig.tight_layout()
     fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height / 3)
-    fig.savefig(f"./paper-plots/lyafit-{target}.pdf")
+    fig.savefig(f"./paper-plots/lyafit-{target}.pdf", bbox_inches='tight')
 
 for t in data['Name']:
     if t in get_spectrum.target_use_which_spectrum:

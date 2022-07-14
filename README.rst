@@ -1,37 +1,45 @@
 Analysis for FUSE H2/Extinction paper
 =====================================
 
-This paper is Van De Putte, Clayton, Gordon, et al. (in prep).
+This is the data and code used for the paper by Van De Putte, Clayton, Gordon, et al. (in prep).
+The code requires Python 3 (tested with >3.8), and an untested list of dependencies can be found in ``requirements_minimal.txt``
 
-The H2 absorption line modeling to the FUSE data is done.
-The results are used to determine NH2
+In this readme, I describe the most important data files, scripts, and modules, with the goal of providing a reference for later.
+Some of the smaller files have been skipped over, if they are self-explanatory, or just small experiments.
+The various notebooks are also not described here, as all of them contain highly experimental data exploration code.
 
-More recently, Lyman alpha absorption fitting was done to determine NHI.
-For this, IUE and HST STIS data were used.
+Starting data
+=============
 
-The rest of the analysis compares the extinction results from Gordon+2009 with the newly obtained H2 and HI results
+The initial work for this paper, done before 2009, resulted in several data files.
+In late 2021, work on this paper was continued.
+We describe the data files included at that point here.
+For the H2 absorption line modeling to the FUSE data, the results are included in `data/fuse_h2_details.dat`.
 
-Below follows a quick overview of the available scripts and modules.
-Some might no longer be used, but have been kept for reference.
+The total H2 columns, and literature data for NHI were collected in `data/fuse_h1_h2.dat`.
+Of the NHI values, 23 were replaced by the results of the Lyman alpha absorption fitting in this work.
 
-HI fitting scripts
-------------------
+The details about the extinction and the FM90 extinction curve fits are in
+`fuse_ext_details.dat` and `fuse_ext_fm90.dat`.
 
-To perform continuum reconstruction fitting and determine NHI, spectral data were downloaded in an automated way.
+The analysis compares the extinction results from Gordon+2009 with the newly obtained H2 and HI results.
+During the analysis, other data were downloaded and included in this repo.
+Those will be described further below, in the relevant part of the analysis.
 
-``download_data_list.csv``: list of stars for which to search and download data
+HI fitting
+----------
+
+To perform continuum reconstruction fitting and determine NHI, spectral data were downloaded in
+an automated way. Here are the relevant files and a short description.
+
+Scripts
+.......
+
+``download_data_list.csv``: list of stars which need lya fits
 
 ``download_HST_data.py``: searches MAST for HST STIS data and downloads it if available.
 The data are placed in ``data/<target>/mastDownload/HST/``
 Also downloads IUE SWP data (high and low dispersion), into ``data/<target>/mastDownload/IUE``.
-
-This script did not find data for HD216898, so I downloaded those from the IUE archive manually. - Dries
-
-``download_IUE_data.py``: obsolete script, used before the above was generalized.
-
-``get_spectrum.py``: functions to load and process the downloaded spectral data, given the name of a star.
-The data to use for each star can be chosen by manually filling out a dictionary at the top of the file.
-The function ``processed()`` automatically chooses the right functions to load the data based on the filename, and performs coadding and rebinning as necessary.
 
 ``lyafitting.py``: performs the HI fitting.
 Wavelength ranges used to fit the continuum and the Lyman alpha line are individually chosen per star, using two manually filled-in dictionaries at the top of the file.
@@ -40,12 +48,22 @@ Wavelength ranges used to fit the continuum and the Lyman alpha line are individ
 
 ``--update_catalog``: replace the HI values in the given file (one of the data files in ``data/*hi_h2*``), so that they can be used for the rest of the analysis (next section)
 
+Modules
+.......
+
+``get_spectrum.py``: functions to load and process the downloaded spectral data, given the name of a star.
+The data to use for each star can be chosen by manually filling out a dictionary at the top of the file.
+The function ``processed()`` automatically chooses the right functions to load the data based on the filename, and performs coadding and rebinning as necessary.
+
 Correlation and slope analysis
 ------------------------------
 
 The uncertainties in x and y are both significant, and some of the chosen quantities are inherently correlated because they have a common factor.
 For example, NH/AV and AV are anti-correlated because of the common AV factor.
 We visualize the errors and covariance between x and y for each point as an ellipse.
+
+Modules
+.......
 
 ``covariance.py`` contains the function that draws the scatter plot and the covariance ellipses, as well as helper functions to calculate the covariance between certain quantities
 
@@ -74,7 +92,30 @@ The reported significance level is then average(r) / sigma(r0)
 
 ``plot_fuse_results.py`` defines functions that make use of the above modules to do the analysis and make the desired plots
 
-``paper_scatter.py`` calls those functions for the various xy pairs of interest.
+Scripts
+.......
+
+``paper_scatter.py`` calls functions from the above modules to do the analysis and make the plots for the various xy pairs of interest.
+
+Misc scripts and modules
+========================
+
+``get_gaia.py`` looks up gaia data for each source. Results are written to ``data/gaia/merged.dat``. Distances are derived from this in ``get_data.py``.
+
+``jenkins2009_fstar.py`` figure out the overlap with the sample of Jenkins (2009), and make some plots that involve the depletion ``F*``. Plots not used in paper, but they are mentioned.
+
+``update_data_with_jenkins2019.py`` replace some of the values in ``data/fuse_h1_h2.dat`` with those provided by Jenkins et al. (2019).
+Needs ``jenkins2019_hi_h2.fits``, which can be obtained by running ``get_jenkins2019_hi_h2.sh``.
+
+``match_shull21`` compares some quantities of our sample to the values of Shull et al. (2021)
+
+Any script starting in ``paper_`` makes plots that are used in the paper. They are run without arguments.
+
+``paper_tables.tex`` generates Table 2 for the paper. It is no longer up to date with the headers and footnotes etc. Those edited updated manually before submission.
+
+``photometric_distance.py`` contains some methods to calculate our own photometric distance for some sources.
+It makes use of the file ``data/ob_mags.dat``, which contains magnitude models from Wegner 2007 Table 8 and Bowen 2008 appendix 3B.
+In the end it went unused, as most of the sources had distances from Gaia DR2 and/or Shull et al. (2021). 
 
 Workflow
 ========
@@ -120,7 +161,8 @@ The data were replaced by new values in several ways, with priority as numbered 
 
         python download_HST_data.py
 
-      The results are stored in ``data/<star name>``
+      The results are stored in ``data/<star name>``.
+      This script did not find data for HD216898, so I downloaded those from the IUE archive manually.
 
    b. Choose which spectra to use by editing the dict ``target_use_which_spectrum`` at the top of ``get_spectrum.py``
       This script will co-add data if multiple files are listed using an asterisk wildcard.
@@ -146,14 +188,8 @@ To calculate the average number density along each line of sight, the distance o
 1. First I downloaded data from Gaia DR2 using ``python get_gaia.py``
 This data is saved at ``data/gaia/``, one file per star, and is merged into ``data/gaia/merged.dat``.
 
-2. Since Gaia parallaxes are known to be inaccurate for OB stars, we instead use photometric distances with the following priority
-
-   a. From Shull+2021 (about half the sample)
-
-   b. Using AV and spectral types from Gordon+2009, combined with absolute magnitudes for those spectral types from Bowen+2008, appendix 3B, and Wegner+2007, Table 8.
-      These tables were copied into ``data/ob_mags.dat``
-      The equation is simply ``d = 1 pc * 10 ** ((V - AV - MV) / 5)``.
-
+2. Since Gaia parallaxes are known to be inaccurate for OB stars, we instead use photometric distances from Shull et al. 2021 for the 39 stars that overlap with our sample.
+   The distance data are calculated / combined somewhere in ``get_data.py``
 
 Scatter plots and fits
 ----------------------

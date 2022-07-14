@@ -479,7 +479,7 @@ def plot_fit(target, ax, wavs, flux, fc, lognhi, lower_upper=None):
 
     # continuum fit
     fcs = fc(wavs)
-    ax.plot(wavs, fcs, label="continuum", color=cont_color, zorder=30)
+    ax.plot(wavs, fcs, label="cont. model", color=cont_color, zorder=30)
 
     # lya extinction
     e = extinction_factor(lognhi, wavs)

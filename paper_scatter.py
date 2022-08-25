@@ -21,6 +21,7 @@ from uncertainties import ufloat
 import math
 import paper_rcparams
 import argparse
+from misc import delete_from_arrays
 
 OUTPUT_TYPE = "pdf"
 MARK4 = True  # switch to enable marking of low NH/AV points
@@ -198,9 +199,7 @@ def plot1_column_column():
     out = r["outlier_idxs"]
     plot_rho_box(
         ax,
-        np.delete(xs, out),
-        np.delete(ys, out),
-        np.delete(covs, out, 0),
+        *delete_from_arrays((xs, ys, covs), out),
         method="nocov",
     )
 
@@ -246,9 +245,7 @@ def plot1_column_column():
     out = r["outlier_idxs"]
     plot_rho_box(
         ax,
-        np.delete(xs, out),
-        np.delete(ys, out),
-        np.delete(covs, out, 0),
+        *delete_from_arrays((xs, ys, covs), out),
         method="nocov",
     )
 
@@ -431,7 +428,7 @@ def plot1_poster():
     finalize_double_grid(fig, axs, "column_vs_column_poster")
 
 
-def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
+def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False, ignore4: bool = False):
     """Ratio vs ratio.
 
     x: RV and maybe A1000/AV (extinction ratios)
@@ -444,6 +441,9 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
 
     mark4: bool
         show the 4 points with low NH/AV on all the plots
+
+    ignore4: bool
+        ignore the 4 special points in the calculation of the correlation coefficient
     """
     if no_fh2:
         nrows = 1
@@ -472,6 +472,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     r = plot_results_fit(xs, ys, covs, ax, auto_outliers=False)
     # add a rho box using the method specialized for rho with covariance
     # out = r["outlier_idxs"]
+
     plot_rho_box(
         ax,
         xs,
@@ -536,14 +537,17 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
     out = r["outlier_idxs"]
     plot_rho_box(
         ax,
-        np.delete(xs, out),
-        np.delete(ys, out),
-        np.delete(covs, out, 0),
+        *delete_from_arrays((xs, ys, covs), out),
         method="cov approx",
     )
     fit_results_table.append(latex_table_line("\\abumpav", "\\nhav", r))
 
     if not no_fh2:
+        if ignore4:
+            special4 = np.where(data["comment"] == "lo_h_av")
+        else:
+            special4 = []
+
         ax = axs[1, 0]
         xs, ys, covs = plot_results_scatter(
             ax,
@@ -555,6 +559,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             # ignore_comments=mark_comments,
             mark_comments=MARK_STRING,
         )
+        xs, ys, covs = delete_from_arrays((xs, ys, covs), special4)
         plot_rho_box(ax, xs, ys, covs, method="nocov")
 
         ax = axs[1, 1]
@@ -567,6 +572,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             # ignore_comments=["hi_h_av"],
             mark_comments=MARK_STRING,
         )
+        xs, ys, covs = delete_from_arrays((xs, ys, covs), special4)
         plot_rho_box(ax, xs, ys, covs, method="nocov")
 
         ax = axs[1, 2]
@@ -579,6 +585,7 @@ def plot2_ratio_ratio(mark4: bool = True, no_fh2: bool = False):
             # ignore_comments=["hi_h_av"],
             mark_comments=MARK_STRING,
         )
+        xs, ys, covs = delete_from_arrays((xs, ys, covs), special4)
         plot_rho_box(ax, xs, ys, covs, method="nocov")
 
     # plt.show()
@@ -788,10 +795,14 @@ def plot4(add_t_vs_n=False, mark=False):
         plot_rho_box(ax, xs, ys, covs)
 
     if add_t_vs_n:
-        fig.set_size_inches(paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3)
+        fig.set_size_inches(
+            paper_rcparams.base_width, paper_rcparams.base_height * 2 / 3
+        )
         fig.subplots_adjust(wspace=0.3)
     else:
-        fig.set_size_inches(paper_rcparams.column_width, paper_rcparams.base_height * 2 / 3)
+        fig.set_size_inches(
+            paper_rcparams.column_width, paper_rcparams.base_height * 2 / 3
+        )
     save(fig, "temp_dens", need_wspace=True)
 
 

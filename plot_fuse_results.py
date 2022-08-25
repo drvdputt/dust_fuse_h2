@@ -8,6 +8,7 @@ from get_data import get_merged_table, get_bohlin78, get_param_and_unc, get_xs_y
 import covariance
 import linear_ortho_fit
 import pearson
+from misc import delete_from_arrays
 
 # quick workaround to hide sigma number for talk plots 
 HIDE_SIGMA = False
@@ -436,9 +437,7 @@ def plot_results_fit(
         ys_used = ys
         covs_used = covs
     else:
-        xs_used = np.delete(xs, outlier_idxs, axis=0)
-        ys_used = np.delete(ys, outlier_idxs, axis=0)
-        covs_used = np.delete(covs, outlier_idxs, axis=0)
+        xs_used, ys_used, covs_used = delete_from_arrays((xs, ys, covs), outlier_idxs)
 
     # Looking at bootstrap with and without outliers might be interesting.
     # boot_cov_mb = linear_ortho_fit.bootstrap_fit_errors(xs_no_out, ys_no_out, covs_no_out)

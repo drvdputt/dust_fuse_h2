@@ -28,7 +28,8 @@ for row in range(len(data)):
 # try dividing by average curve too, and hope my brain survives trying to interpret this.
 avgcurve = np.average(curves, axis=0)
 sigmacurve = np.std(curves, axis=0)
-curves = (curves - avgcurve[None, :]) / sigmacurve[None, :]
+# curves = (curves - avgcurve[None, :]) / sigmacurve[None, :]
+# curves = curves / avgcurve
 
 def plot_all_curves(fig, ax, color_axis):
     color_data = data[color_axis]
@@ -44,7 +45,7 @@ def plot_all_curves(fig, ax, color_axis):
         ax.set_xlabel(lambdam1label)
         ax.set_ylabel("$A(\\lambda)/N(\\rm{H})$ [$\\rm{mag\\,cm}^{-2}$]")
         
-    ax.set_yscale("log")
+    # ax.set_yscale("log")
     cb = fig.colorbar(mp, ax=ax)
     cb.set_label(color_axis)
 
@@ -66,7 +67,7 @@ def slope_all_wavelengths(variable='1_RV'):
         
     fig, axs = plt.subplots(2, 1, sharex=True)
     axs[0].plot(xpoints, ypoints)
-    axs[0].set_ylabel("$\\Delta A(\\lambda)/N(\\rm{H}) / \\Delta$" + variable + "relative to $\\langle A(\\lambda)/N(\\rm{H})\\rangle$")
+    axs[0].set_ylabel("slope $A(\\lambda)/N(\\rm{H})$ vs " + variable)# + "relative to $\\langle A(\\lambda)/N(\\rm{H})\\rangle$")
     axs[0].axhline(0)
     axs[1].plot(xpoints, extrapoints)
     axs[1].set_ylabel("$R^2$")
@@ -79,8 +80,9 @@ for c, ax in zip(color_axis, axs):
 
 plt.tight_layout()
 
-slope_all_wavelengths()
-slope_all_wavelengths("AV_NH")
+# slope_all_wavelengths()
+# slope_all_wavelengths("AV_NH")
+slope_all_wavelengths("A3000_NH")
 
 plt.show()
 

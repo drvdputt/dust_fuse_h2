@@ -5,7 +5,7 @@ from matplotlib.patches import Polygon
 from scipy.stats import multivariate_normal
 from rescale import RescaledData
 import cmasher
-
+from paper_rcparams import column_width
 
 def cov_ellipse(x, y, cov, num_sigma=1, **kwargs):
     """
@@ -58,12 +58,12 @@ def plot_scatter_auto(ax, xs, ys, covs, num_sigma, **scatter_kwargs):
     """Automatically chooses between error bars or ellipses"""
     if np.any(np.nonzero(covs[:, 0, 1])):
         # if True:
-        scatter_kwargs["marker"] = "+"
+        scatter_kwargs.setdefault("marker", "+")
         # plot_scatter_with_ellipses(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
         plot_scatter_density(ax, xs, ys, covs)
     else:
-        scatter_kwargs["marker"] = "o"
-        scatter_kwargs["s"] = 12
+        scatter_kwargs.setdefault("marker", "o")
+        scatter_kwargs.setdefault("s", 12)
         plot_scatter_with_errbars(ax, xs, ys, covs, num_sigma, **scatter_kwargs)
 
 

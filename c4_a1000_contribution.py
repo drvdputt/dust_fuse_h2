@@ -37,15 +37,19 @@ a2175_av_bump = ecs.cav3 / ecs.gamma**2
 # quick check if this matters at 2175 A
 a2175_av_rise = ecs.cav4_unc * ecs.F(x)
 
-# try getting bump area (area of lorentian is pi * gamma. Not sure about drude)
+# try getting bump area (area of lorentian is pi * gamma (in x units for
+# one dimension. Converting from x to wavelength units is not trivial,
+# because x = 10000 / w). Not sure about drude)
 bump_area_approx = pi * ecs.gamma * ecs.cav3
 
-wgrid = np.linspace(1000, 3000, 2000)
+wmin = 1000
+wmax = 3000
+xgrid = np.linspace(ecs.w_to_x(wmax), ecs.w_to_x(wmin), 2000)
 N = len(ecs.cav1)
-y = np.zeros((N, len(wgrid)))
-for iw, w in enumerate(wgrid):
-    y[:, iw] = ecs.cav3 * ecs.D(ecs.w_to_x(w))
-bump_area_exact = integrate.trapezoid(y, x=wgrid, axis=1)
+y = np.zeros((N, len(xgrid)))
+for ix, x in enumerate(xgrid):
+    y[:, ix] = ecs.cav3 * ecs.D(x)
+bump_area_exact = integrate.trapezoid(y, x=xgrid, axis=1)
 
 marker = itertools.cycle(("x", "+", ".", "o", "*"))
 
@@ -194,6 +198,26 @@ paper_style_scatter(
 plt.legend(loc="lower right")
 plt.tight_layout()
 plt.savefig("paper-plots/c4_contribution.pdf", bbox_inches="tight")
+
+plt.figure()
+paper_style_scatter(
+    "nh2",
+    "$A(2175)$",
+    # "$A_{\\mathrm{rise}}(1000)$",
+    a2175_av_bump,
+    # a2175_av_bump_unc,
+    # need unc
+    a2175_av_bump * 0.1,
+    do_rho_box=True,
+    legend_label="Bump",
+    s=10,
+    aw_av_diff=a2175_av - a2175_av_bump,
+)
+plt.xlim(-0.2, None)
+plt.legend(loc="lower right")
+plt.tight_layout()
+plt.savefig("paper-plots/c3_contribution.pdf", bbox_inches="tight")
+
 
 # plt.figure()
 # paper_style_scatter(

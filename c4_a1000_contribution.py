@@ -34,13 +34,18 @@ w = 2175
 x = ecs.w_to_x(w)
 a2175_av = ecs.evaluate(w)
 a2175_av_bump = ecs.cav3 / ecs.gamma**2
+# did this on paper:
+a2175_av_bump_unc = np.sqrt(
+    (ecs.cav3_unc / ecs.gamma**2) ** 2
+    + (-2 * ecs.cav3 / ecs.gamma**3 * ecs.gamma_unc) ** 2
+)
 # quick check if this matters at 2175 A
 a2175_av_rise = ecs.cav4_unc * ecs.F(x)
 
 # try getting bump area (area of lorentian is pi * gamma (in x units for
 # one dimension. Converting from x to wavelength units is not trivial,
 # because x = 10000 / w). Not sure about drude)
-bump_area_approx = pi * ecs.gamma * ecs.cav3
+bump_area_approx = pi * ecs.cav3 / (2 * ecs.gamma)
 
 wmin = 1000
 wmax = 3000
@@ -87,7 +92,7 @@ if show_2175:
     # quick_rho_and_scatter(a2175_av, label="Total")
     quick_rho_and_scatter(a2175_av_bump, label="$A(V) C_3 / \\gamma^2$")
     quick_rho_and_scatter(a2175_av - a2175_av_bump, label="Rest")
-    quick_rho_and_scatter(bump_area_exact, label="area")
+    # quick_rho_and_scatter(bump_area_exact, label="area")
     quick_rho_and_scatter(bump_area_approx, label="area approx")
     plt.legend()
 
@@ -106,7 +111,7 @@ if show_uvdiff:
 
 plt.legend()
 
-# plt.show()
+plt.show()
 # exit()
 
 # copied over the main plot command from. Doing it this way because I
@@ -118,6 +123,7 @@ av_unc_r = av_unc / av
 
 
 def paper_style_scatter(
+    ax,
     yparam,
     awlabel,
     aw_av,
@@ -140,7 +146,6 @@ def paper_style_scatter(
     aw_unc = aw * (aw_av_unc / aw_av)
     covs = covariance.make_cov_matrix(aw_unc**2, y_unc**2)
 
-    ax = plt.gca()
     covariance.plot_scatter_auto(
         ax,
         aw,
@@ -169,12 +174,11 @@ def paper_style_scatter(
     # fit
     plot_results_fit(aw, y, covs, ax)
 
-    plt.gcf().set_size_inches(column_width, column_width)
-
 
 a1000_av, a1000_av_unc = get_param_and_unc("A1000_AV", data)
 
-plt.figure()
+fig, axs = plt.subplots(2, 1)
+
 # paper_style_scatter(
 #     "nh2",
 #     "A(1000)",
@@ -185,6 +189,7 @@ plt.figure()
 #     legend_label="Total",
 # )
 paper_style_scatter(
+    axs[0],
     "nh2",
     "$A(1000)$",
     # "$A_{\\mathrm{rise}}(1000)$",
@@ -195,54 +200,29 @@ paper_style_scatter(
     s=10,
     aw_av_diff=a1000_av - a1000_av_rise,
 )
-plt.legend(loc="lower right")
-plt.tight_layout()
-plt.savefig("paper-plots/c4_contribution.pdf", bbox_inches="tight")
 
-plt.figure()
+
 paper_style_scatter(
+    axs[1],
     "nh2",
     "$A(2175)$",
     # "$A_{\\mathrm{rise}}(1000)$",
     a2175_av_bump,
-    # a2175_av_bump_unc,
-    # need unc
-    a2175_av_bump * 0.1,
+    a2175_av_bump_unc,
     do_rho_box=True,
     legend_label="Bump",
     s=10,
     aw_av_diff=a2175_av - a2175_av_bump,
 )
-plt.xlim(-0.2, None)
-plt.legend(loc="lower right")
-plt.tight_layout()
-plt.savefig("paper-plots/c3_contribution.pdf", bbox_inches="tight")
+axs[1].set_xlim(-0.2, None)
+axs[0].legend(loc="lower right")
+axs[1].legend(loc="lower right")
 
-
-# plt.figure()
-# paper_style_scatter(
-#     "nhtot",
-#     "$A(1000)$",
-#     # "$A_{\\mathrm{rise}}(1000)$",
-#     a1000_av_rise,
-#     a1000_av_rise_unc,
-#     do_rho_box=True,
-#     legend_label="Rise",
-#     s=10,
-#     aw_av_diff=a1000_av - a1000_av_rise,
-# )
-# plt.legend(loc="lower right")
-# plt.tight_layout()
-
-
-# plt.figure()
-# a1000_av, a1000_av_unc = get_param_and_unc("A1000_AV", data)
-# paper_style_scatter("nhtot", "A(1000)", a1000_av, a1000_av_unc, color="orange")
-# paper_style_scatter("nhtot", "A(1000)", a1000_av_rise, a1000_av_rise_unc, do_rho_box=True)
-plt.show()
+fig.set_size_inches(column_width, 2 * column_width)
+fig.tight_layout()
+fig.savefig("paper-plots/c34_contribution.pdf", bbox_inches="tight")
 
 # just out of curiosity, lets also take a look at the ratio
-plt.figure()
 ratio = a1000_av_rise / a1000_av
 plt.scatter(data["nh2"], ratio)
-plt.show()
+# plt.show()

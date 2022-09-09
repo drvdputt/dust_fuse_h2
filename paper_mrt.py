@@ -8,6 +8,9 @@ data = get_merged_table()
 main_stars = data["Name"]
 data_comp = get_merged_table(comp=True)
 comp_stars = data_comp["Name"]
+other_stars = [
+    "HD003827, HD022586, HD177989, HD210121, HD210839, HD220057, HD239683, HD303308, HD315021"
+]
 
 
 def convert_gastable_to_mrt(data, fn):
@@ -45,6 +48,7 @@ convert_gastable_to_mrt(data_comp, "paper-tables/mrt_gas_comp.dat")
 
 h2data = get_fuse_h2_details(components=True, stars=main_stars)
 h2data_comp = get_fuse_h2_details(components=True, stars=comp_stars)
+h2data_other = get_fuse_h2_details(components=True, stars=other_stars)
 
 
 def convert_h2table_to_mrt(h2data, fn):
@@ -65,5 +69,6 @@ def convert_h2table_to_mrt(h2data, fn):
         h2mrt.write(fn, format="mrt", overwrite=True)
 
 
-h2mrt = convert_h2table_to_mrt(h2data, "paper-tables/mrt_h2.dat")
-h2mrt_comp = convert_h2table_to_mrt(h2data_comp, "paper-tables/mrt_h2_comp.dat")
+convert_h2table_to_mrt(h2data, "paper-tables/mrt_h2.dat")
+convert_h2table_to_mrt(h2data_comp, "paper-tables/mrt_h2_comp.dat")
+convert_h2table_to_mrt(h2data_other, "paper-tables/mrt_h2_other.dat")

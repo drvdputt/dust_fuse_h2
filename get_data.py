@@ -377,7 +377,11 @@ def add_distance(table, comp=False):
     d = p_to_d(plx)
     dplus = p_to_d(plx - plx_unc)
     dmin = p_to_d(plx + plx_unc)
-    d_unc = 0.5 * (dplus - dmin)
+    if dplus > 0:
+        d_unc = 0.5 * (dplus - dmin)
+    else:
+        # in case of negative parallax, just do a symmetrical approximation
+        d_unc = d - dmin
 
     # make containing names and distance, to join with main table and to
     # make the names match
@@ -386,7 +390,7 @@ def add_distance(table, comp=False):
     table_edit["d"] = table_edit["d_gaia"]
     table_edit["d_unc"] = table_edit["d_gaia_unc"]
     # remember which distance we finally decided to use
-    table_edit.add_column(["gaia"] * len(table_edit), name='d_type')
+    table_edit.add_column(["gaia"] * len(table_edit), name="d_type")
 
     ### Shull+21 data. If available, overwrite our value.
     count = 0
